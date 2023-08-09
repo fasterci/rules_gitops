@@ -28,17 +28,7 @@ load(
     "@io_bazel_rules_docker//skylib:path.bzl",
     "runfile",
 )
-
-K8sPushInfo = provider(
-    "Information required to inject image into a manifest",
-    fields = [
-        "image_label",  # bazel target label of the image
-        "legacy_image_name",  # optional short name
-        "registry",
-        "repository",
-        "digestfile",
-    ],
-)
+load("//gitops:provider.bzl", "K8sPushInfo")
 
 def _get_runfile_path(ctx, f):
     return "${RUNFILES}/%s" % runfile(ctx, f)
