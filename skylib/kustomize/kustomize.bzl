@@ -12,7 +12,7 @@ load(
     "@io_bazel_rules_docker//skylib:path.bzl",
     _get_runfile_path = "runfile",
 )
-load("//skylib:push.bzl", "K8sPushInfo")
+load("//gitops:provider.bzl", "K8sPushInfo")
 load("//skylib:stamp.bzl", "stamp")
 
 _binaries = {
@@ -191,17 +191,16 @@ def _kustomize_impl(ctx):
         tmpfiles.append(ctx.executable._resolver)
         for img in ctx.attr.images:
             kpi = img[K8sPushInfo]
-            regrepo = kpi.registry + "/" + kpi.repository
+            regrepo = kpi.repository
             if "{" in regrepo:
                 regrepo = stamp(ctx, regrepo, tmpfiles, ctx.attr.name + regrepo.replace("/", "_"))
 
-            resolver_part += " --image {}={}@$(cat {})".format(kpi.image_label, regrepo, kpi.digestfile.path)
+            label_str = kpi.image_label
+            resolver_part += " --image {}={}@$(cat {})".format(label_str, regrepo, kpi.digestfile.path)
             if str(kpi.image_label).startswith("@//"):
                 # Bazel 6 add a @ prefix to the image label https://github.com/bazelbuild/bazel/issues/17069
                 label = str(kpi.image_label)[1:]
                 resolver_part += " --image {}={}@$(cat {})".format(label, regrepo, kpi.digestfile.path)
-            if kpi.legacy_image_name:
-                resolver_part += " --image {}={}@$(cat {})".format(kpi.legacy_image_name, regrepo, kpi.digestfile.path)
             tmpfiles.append(kpi.digestfile)
             transitive_runfiles.append(img[DefaultInfo].default_runfiles)
 
@@ -231,7 +230,7 @@ def _kustomize_impl(ctx):
         if ctx.attr.images:
             for _, img in enumerate(ctx.attr.images):
                 kpi = img[K8sPushInfo]
-                regrepo = kpi.registry + "/" + kpi.repository
+                regrepo = kpi.repository
                 if "{" in regrepo:
                     regrepo = stamp(ctx, regrepo, tmpfiles, ctx.attr.name + regrepo.replace("/", "_"))
                 template_part += " --variable={}={}@$(cat {})".format(kpi.image_label, regrepo, kpi.digestfile.path)
@@ -248,9 +247,6 @@ def _kustomize_impl(ctx):
                     label = str(kpi.image_label)[1:]
                     template_part += " --variable={}=$(cat {} | cut -d ':' -f 2)".format(str(label) + ".digest", kpi.digestfile.path)
                     template_part += " --variable={}=$(cat {} | cut -c 8-17)".format(str(label) + ".short-digest", kpi.digestfile.path)
-
-                if kpi.legacy_image_name:
-                    template_part += " --variable={}={}@$(cat {})".format(kpi.legacy_image_name, regrepo, kpi.digestfile.path)
 
         template_part += " "
 
@@ -362,7 +358,7 @@ def _push_all_impl(ctx):
         template = ctx.file._tpl,
         substitutions = {
             "%{statements}": "\n".join([
-                                 "echo pushing {}/{}".format(exe[K8sPushInfo].registry, exe[K8sPushInfo].repository)
+                                 "echo pushing {}".format(exe[K8sPushInfo].repository)
                                  for exe in trans_img_pushes
                              ]) + "\n" +
                              "\n".join([
@@ -410,7 +406,7 @@ def imagePushStatements(
     statements = ""
     trans_img_pushes = depset(transitive = [obj[KustomizeInfo].image_pushes for obj in kustomize_objs]).to_list()
     statements += "\n".join([
-        "echo  pushing {}/{}".format(exe[K8sPushInfo].registry, exe[K8sPushInfo].repository)
+        "echo  pushing {}".format(exe[K8sPushInfo].repository)
         for exe in trans_img_pushes
     ]) + "\n"
     statements += "\n".join([
@@ -526,7 +522,7 @@ def _kubectl_impl(ctx):
         trans_img_pushes = depset(transitive = [obj[KustomizeInfo].image_pushes for obj in ctx.attr.srcs]).to_list()
         statements += "\n".join([
             "# {}\n".format(exe[K8sPushInfo].image_label) +
-            "echo  pushing {}/{}".format(exe[K8sPushInfo].registry, exe[K8sPushInfo].repository)
+            "echo  pushing {}".format(exe[K8sPushInfo].repository)
             for exe in trans_img_pushes
         ]) + "\n"
         statements += "\n".join([

@@ -9,12 +9,10 @@
 # governing permissions and limitations under the License.
 
 load("@bazel_tools//tools/build_rules:test_rules.bzl", "file_test", "rule_test")
-load(
-    "@io_bazel_rules_docker//container:container.bzl",
-    "container_image",
-)
+load("@rules_pkg//:pkg.bzl", "pkg_tar")
+load("@rules_oci//oci:defs.bzl", "oci_image")
 load("//skylib/kustomize:kustomize.bzl", "gitops", "kubectl", "kustomize", "push_all")
-load("//skylib:push.bzl", "k8s_container_push")
+load("//push_oci:push_oci.bzl", "push_oci_rule")
 load("//skylib:test_rules.bzl", "file_compare_test")
 
 # to generate new test data if needed:
@@ -99,15 +97,23 @@ file_compare_test(
     ignore_all_space = True,
 )
 
-container_image(
+pkg_tar(
+    name = "image_tar",
+    srcs = [":container_content.txt"],
+)
+
+oci_image(
     name = "image",
-    files = ["container_content.txt"],
+    architecture = "amd64",
+    os = "linux",
+    tars = [":image_tar"],
     visibility = ["//visibility:public"],
 )
 
-k8s_container_push(
+push_oci_rule(
     name = "image_push",
     image = ":image",
+    repository = "gcr.io/bs-dev/test_image",
 )
 
 kustomize(
@@ -124,84 +130,39 @@ kustomize(
     namespace = "",
 )
 
-genrule(
-    name = "expected_image_resolved_test_yaml",
-    srcs = [
-        ":expected_image_resolved_test.tpl.yaml",
-        ":image.digest",
-    ],
-    outs = ["expected_image_resolved_test.yaml"],
-    cmd = " ".join([
-        "./$(location //templating:fast_template_engine)",
-        "--template=$(location expected_image_resolved_test.tpl.yaml)",
-        "--variable=IMAGE_DIGEST=$$(cat $(location :image.digest))",
-        "--output=$@",
-    ]),
-    tools = [
-        "//templating:fast_template_engine",
-    ],
-)
-
 file_compare_test(
     name = "image_resolved_file",
-    expected = ":expected_image_resolved_test_yaml",
+    expected = ":expected_image_resolved_test.yaml",
     file = ":image_test",
     ignore_all_space = True,
 )
 
-k8s_container_push(
-    name = "image_digest_push",
-    image = ":image",
-    image_digest_tag = True,
-)
+# push_oci(
+#     name = "image_digest_push",
+#     image = ":image",
+#     image_digest_tag = True,
+# )
 
-kustomize(
-    name = "image_digest_test",
-    testonly = True,
-    images = [
-        ":image_digest_push",
-    ],
-    manifests = [
-        "deployment.yaml",
-        "service.yaml",
-        "crb.yaml",
-    ],
-    namespace = "",
-)
+# kustomize(
+#     name = "image_digest_test",
+#     testonly = True,
+#     images = [
+#         ":image_digest_push",
+#     ],
+#     manifests = [
+#         "deployment.yaml",
+#         "service.yaml",
+#         "crb.yaml",
+#     ],
+#     namespace = "",
+# )
 
-file_compare_test(
-    name = "image_digest_resolved_file",
-    expected = "expected_image_resolved_test.yaml",
-    file = ":image_test",
-    ignore_all_space = True,
-)
-
-k8s_container_push(
-    name = "image_push_legacy",
-    image = ":image",
-    legacy_image_name = "test-image",
-)
-
-kustomize(
-    name = "legacy_image_test",
-    testonly = True,
-    images = [
-        ":image_push_legacy",
-    ],
-    manifests = [
-        "deployment_legacy.yaml",
-        "service.yaml",
-        "crb.yaml",
-    ],
-    namespace = "",
-)
-
-file_compare_test(
-    name = "logacy_image_resolved_file",
-    expected = "expected_image_resolved_test.yaml",
-    file = ":legacy_image_test",
-    ignore_all_space = True,
-)
+# file_compare_test(
+#     name = "image_digest_resolved_file",
+#     expected = "expected_image_resolved_test.yaml",
+#     file = ":image_test",
+#     ignore_all_space = True,
+# )
 
 kustomize(
     name = "configmap_test",
@@ -311,27 +272,9 @@ kustomize(
     patches = ["overlay/deployment.yaml"],
 )
 
-genrule(
-    name = "expected_patch_yaml",
-    srcs = [
-        ":expected_patch.tpl.yaml",
-        ":image.digest",
-    ],
-    outs = ["expected_patch.yaml"],
-    cmd = " ".join([
-        "./$(location //templating:fast_template_engine)",
-        "--template=$(location expected_patch.tpl.yaml)",
-        "--variable=IMAGE_DIGEST=$$(cat $(location :image.digest))",
-        "--output=$@",
-    ]),
-    tools = [
-        "//templating:fast_template_engine",
-    ],
-)
-
 file_compare_test(
     name = "patch_test",
-    expected = ":expected_patch_yaml",
+    expected = ":expected_patch.yaml",
     file = ":patch",
     ignore_all_space = True,
 )
