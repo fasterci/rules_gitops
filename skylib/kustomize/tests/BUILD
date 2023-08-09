@@ -114,6 +114,7 @@ push_oci_rule(
     name = "image_push",
     image = ":image",
     repository = "gcr.io/bs-dev/test_image",
+    visibility = ["//visibility:public"],
 )
 
 kustomize(
