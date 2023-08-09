@@ -1,0 +1,23 @@
+load("@rules_pkg//:pkg.bzl", "pkg_tar")
+load("@rules_oci//oci:defs.bzl", "oci_image")
+load("//push_oci:push_oci.bzl", "push_oci")
+
+pkg_tar(
+    name = "image_tar",
+    srcs = [":container_content.txt"],
+)
+
+oci_image(
+    name = "image",
+    architecture = "amd64",
+    os = "linux",
+    tars = [":image_tar"],
+    visibility = ["//visibility:public"],
+)
+
+push_oci(
+    name = "image_push",
+    image = ":image",
+    # tag = "test_tag",
+    repository = "us-central1-docker.pkg.dev/fasterci/internal/push_oci/tests/image_push",
+)
