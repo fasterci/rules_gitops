@@ -46,6 +46,22 @@ def rules_gitops_dependencies():
 
     maybe(
         http_archive,
+        name = "aspect_bazel_lib",
+        sha256 = "d488d8ecca98a4042442a4ae5f1ab0b614f896c0ebf6e3eafff363bcc51c6e62",
+        strip_prefix = "bazel-lib-1.33.0",
+        url = "https://github.com/aspect-build/bazel-lib/releases/download/v1.33.0/bazel-lib-v1.33.0.tar.gz",
+    )
+
+    maybe(
+        http_archive,
+        name = "rules_oci",
+        sha256 = "176e601d21d1151efd88b6b027a24e782493c5d623d8c6211c7767f306d655c8",
+        strip_prefix = "rules_oci-1.2.0",
+        url = "https://github.com/bazel-contrib/rules_oci/releases/download/v1.2.0/rules_oci-v1.2.0.tar.gz",
+    )
+
+    maybe(
+        http_archive,
         name = "io_bazel_rules_docker",
         sha256 = "b1e80761a8a8243d03ebca8845e9cc1ba6c82ce7c5179ce2b295cd36f7e394bf",
         urls = ["https://github.com/bazelbuild/rules_docker/releases/download/v0.25.0/rules_docker-v0.25.0.tar.gz"],
