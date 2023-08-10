@@ -12,7 +12,6 @@ load(
     "//skylib:runfile.bzl",
     _get_runfile_path = "runfile",
 )
-load("@aspect_bazel_lib//lib:utils.bzl", "file_exists")
 load(
     "@com_adobe_rules_gitops//skylib/kustomize:kustomize.bzl",
     "KustomizeInfo",
@@ -93,11 +92,8 @@ def _image_pushes(name_suffix, images, image_registry, image_repository, image_d
     for image in images:
         # assume that presence of .digest file means that image is already pushed
         img_label = native.package_relative_label(image)
-        print("img_label:", img_label, native.existing_rule(image))
-        if not file_exists(str(img_label) + ".digest"):
-            print("digest is not found")
-            image = process_image(image)
-        image_pushes.append(image)
+        image_push = process_image(image)
+        image_pushes.append(image_push)
     return image_pushes
 
 def k8s_deploy(

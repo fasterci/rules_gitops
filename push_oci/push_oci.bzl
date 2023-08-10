@@ -113,8 +113,6 @@ def push_oci(
         remote_tags = None,  # file with tags to push
         digestfile = None,
         visibility = None):
-    print("push:", name, image, repository, registry, image_digest_tag, tag, remote_tags, digestfile, visibility)
-
     if tag:
         tags_label = "_{}_write_tags".format(name)
         write_file(
