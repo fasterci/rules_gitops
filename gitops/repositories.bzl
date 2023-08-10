@@ -31,9 +31,9 @@ def rules_gitops_repositories():
     aspect_bazel_lib_dependencies(override_local_config_platform = True)
     register_jq_toolchains()
     rules_pkg_dependencies()
-    rules_oci_dependencies()
     kustomize_setup(name = "kustomize_bin")
 
+    rules_oci_dependencies()
     oci_register_toolchains(
         name = "oci",
         crane_version = LATEST_CRANE_VERSION,

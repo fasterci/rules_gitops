@@ -195,12 +195,8 @@ def _kustomize_impl(ctx):
             if "{" in regrepo:
                 regrepo = stamp(ctx, regrepo, tmpfiles, ctx.attr.name + regrepo.replace("/", "_"))
 
-            label_str = kpi.image_label
+            label_str = str(kpi.image_label).lstrip("@")
             resolver_part += " --image {}={}@$(cat {})".format(label_str, regrepo, kpi.digestfile.path)
-            if str(kpi.image_label).startswith("@//"):
-                # Bazel 6 add a @ prefix to the image label https://github.com/bazelbuild/bazel/issues/17069
-                label = str(kpi.image_label)[1:]
-                resolver_part += " --image {}={}@$(cat {})".format(label, regrepo, kpi.digestfile.path)
             tmpfiles.append(kpi.digestfile)
             transitive_runfiles.append(img[DefaultInfo].default_runfiles)
 
@@ -233,11 +229,8 @@ def _kustomize_impl(ctx):
                 regrepo = kpi.repository
                 if "{" in regrepo:
                     regrepo = stamp(ctx, regrepo, tmpfiles, ctx.attr.name + regrepo.replace("/", "_"))
-                template_part += " --variable={}={}@$(cat {})".format(kpi.image_label, regrepo, kpi.digestfile.path)
-                if str(kpi.image_label).startswith("@//"):
-                    # Bazel 6 add a @ prefix to the image label https://github.com/bazelbuild/bazel/issues/17069
-                    label = str(kpi.image_label)[1:]
-                    template_part += " --variable={}={}@$(cat {})".format(label, regrepo, kpi.digestfile.path)
+                label_str = str(kpi.image_label).lstrip("@")
+                template_part += " --variable={}={}@$(cat {})".format(label_str, regrepo, kpi.digestfile.path)
 
                 # Image digest
                 template_part += " --variable={}=$(cat {} | cut -d ':' -f 2)".format(str(kpi.image_label) + ".digest", kpi.digestfile.path)
