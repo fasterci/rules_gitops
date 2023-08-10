@@ -9,7 +9,7 @@
 # governing permissions and limitations under the License.
 
 load(
-    "@io_bazel_rules_docker//skylib:path.bzl",
+    "//skylib:runfile.bzl",
     _get_runfile_path = "runfile",
 )
 load("@aspect_bazel_lib//lib:utils.bzl", "file_exists")

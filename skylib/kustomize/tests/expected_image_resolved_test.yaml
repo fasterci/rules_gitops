@@ -35,5 +35,5 @@ spec:
         app: myapp
     spec:
       containers:
-        - image: gcr.io/bs-dev/test_image@sha256:ea1f87dc8a4ec65c8c43999267fca1a1e4a15414f1591739490a37be2a16ceac
-          name: myapp
+      - image: gcr.io/bs-dev/test_image@sha256:1fa852d8eaf0f0a491713fb8c62c13ab8d25e2d6b32f024e49513f12a2e57b7a
+        name: myapp

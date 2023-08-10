@@ -49,9 +49,9 @@ rules_gitops_repositories()
 # examples dependencies
 #
 
-load(
-    "@io_bazel_rules_docker//go:image.bzl",
-    go_image_repositories = "repositories",
-)
+# load(
+#     "@io_bazel_rules_docker//go:image.bzl",
+#     go_image_repositories = "repositories",
+# )
 
 go_image_repositories()

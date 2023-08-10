@@ -6,7 +6,7 @@ load("//gitops:provider.bzl", "K8sPushInfo")
 load("@rules_oci//oci/private:push.bzl", "oci_push_lib")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load(
-    "@io_bazel_rules_docker//skylib:path.bzl",
+    "//skylib:runfile.bzl",
     "runfile",
 )
 

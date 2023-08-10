@@ -138,33 +138,6 @@ file_compare_test(
     ignore_all_space = True,
 )
 
-# push_oci(
-#     name = "image_digest_push",
-#     image = ":image",
-#     image_digest_tag = True,
-# )
-
-# kustomize(
-#     name = "image_digest_test",
-#     testonly = True,
-#     images = [
-#         ":image_digest_push",
-#     ],
-#     manifests = [
-#         "deployment.yaml",
-#         "service.yaml",
-#         "crb.yaml",
-#     ],
-#     namespace = "",
-# )
-
-# file_compare_test(
-#     name = "image_digest_resolved_file",
-#     expected = "expected_image_resolved_test.yaml",
-#     file = ":image_test",
-#     ignore_all_space = True,
-# )
-
 kustomize(
     name = "configmap_test",
     testonly = True,
