@@ -9,7 +9,7 @@
 # governing permissions and limitations under the License.
 
 # gazelle:build_tags darwin,linux
-# gazelle:exclude examples
+# gazelle:exclude examples e2e
 # gazelle:proto disable_global
 
 load("@bazel_gazelle//:def.bzl", "gazelle")

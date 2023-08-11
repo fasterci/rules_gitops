@@ -46,9 +46,9 @@ copy the WORKSPACE snippet into your `WORKSPACE` file.
 The `k8s_deploy` creates rules that produce the `.apply` and `.gitops` targets `k8s_deploy` is defined in [k8s.bzl](./skylib/k8s.bzl). `k8s_deploy` takes the files listed in the `manifests`, `patches`, and `configmaps_srcs` attributes and combines (**renders**) them into one  YAML file. This happens when you `bazel build` or `bazel run` a target created by the `k8s_deploy`. The file is created at `bazel-bin/path/to/package/name.yaml`. When you run a `.apply` target, it runs `kubectl apply` on this file. When you run a `.gitops` target, it copies this file to
 the appropriate location in the same os separate repository.
 
-For example, let's look at the [example's k8s_deploy](./examples/helloworld/BUILD). We can peek at the file containing the rendered K8s manifests:
+For example, let's look at the [example's k8s_deploy](./e2e/helloworld/BUILD). We can peek at the file containing the rendered K8s manifests:
 ```bash
-cd examples
+cd e2e
 bazel run //helloworld:mynamespace.show
 ```
 When you run `bazel run ///helloworld:mynamespace.apply`, it applies this file into your personal (`{BUILD_USER}`) namespace. Viewing the rendered files with `.show` can be useful for debugging issues with invalid or misconfigured manifests.
@@ -229,9 +229,9 @@ spec:
 <a name="injecting-docker-images"></a>
 ### Injecting Docker Images
 
-Third-party Docker images can be referenced directly in K8s manifests, but for most apps, we need to run our own images. The images are built in the Bazel build pipeline using [rules_docker](https://github.com/bazelbuild/rules_docker). For example, the `java_image` rule creates an image of a Java application from Java source code, dependencies, and configuration.
+Third-party Docker images can be referenced directly in K8s manifests, but for most apps, we need to run our own images. The images are built in the Bazel build pipeline using [rules_oci](https://github.com/bazel-contrib/rules_oci).
 
-Here's a (very contrived) example of how this ties in with `k8s_deploy`. Here's the `BUILD` file located in the package `//examples`:
+Here's a (very contrived) example of how this ties in with `k8s_deploy`. Here's the `BUILD` file located in the package `//e2e`:
 ```starlark
 java_image(
     name = "helloworld_image",
@@ -254,9 +254,9 @@ metadata:
   name: helloworld
 spec:
   containers:
-    - image: //examples:helloworld_image  # (2)
+    - image: //e2e:helloworld_image  # (2)
 ```
-There `images` attribute dictionary `(1)` defines the images available for the substitution. The manifest file references the fully qualified image target path `//examples:helloworld_image` `(2)`.
+There `images` attribute dictionary `(1)` defines the images available for the substitution. The manifest file references the fully qualified image target path `//e2e:helloworld_image` `(2)`.
 
 The `image` key value in the dictionary is used as an image push identifier. The best practice (as provided in the example) is to use image key that matches the [label name](https://docs.bazel.build/versions/master/skylark/lib/Label.html#name) of the image target.
 

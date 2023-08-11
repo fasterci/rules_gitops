@@ -39,7 +39,7 @@ set +o xtrace
 trap "echo FAILED ; delete" EXIT
 set -o xtrace
 
-./examples/e2e-test.sh
+./e2e/e2e-test.sh
 
 delete
 
