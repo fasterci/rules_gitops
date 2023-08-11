@@ -9,7 +9,7 @@
 # governing permissions and limitations under the License.
 
 load("//skylib:runfile.bzl", "get_runfile_path")
-load("//gitops:provider.bzl", "K8sPushInfo")
+load("//gitops:provider.bzl", "GitopsArtifactsInfo", "K8sPushInfo")
 load("//skylib:stamp.bzl", "stamp")
 
 _binaries = {
@@ -70,11 +70,6 @@ _script_template = """\
 set -euo pipefail
 {kustomize} build --load-restrictor LoadRestrictionsNone --reorder legacy {kustomize_dir} {template_part} {resolver_part} >{out}
 """
-
-# buildifier: disable=provider-params
-KustomizeInfo = provider(fields = [
-    "image_pushes",
-])
 
 def _kustomize_impl(ctx):
     kustomization_yaml_file = ctx.actions.declare_file(ctx.attr.name + "/kustomization.yaml")
@@ -260,11 +255,11 @@ def _kustomize_impl(ctx):
 
     runfiles = ctx.runfiles(files = ctx.files.deps).merge_all(transitive_runfiles)
 
-    transitive_files = [m[DefaultInfo].files for m in ctx.attr.manifests if KustomizeInfo in m]
+    transitive_files = [m[DefaultInfo].files for m in ctx.attr.manifests if GitopsArtifactsInfo in m]
     transitive_files += [obj[DefaultInfo].files for obj in ctx.attr.objects]
 
-    transitive_image_pushes = [m[KustomizeInfo].image_pushes for m in ctx.attr.manifests if KustomizeInfo in m]
-    transitive_image_pushes += [obj[KustomizeInfo].image_pushes for obj in ctx.attr.objects]
+    transitive_image_pushes = [m[GitopsArtifactsInfo].image_pushes for m in ctx.attr.manifests if GitopsArtifactsInfo in m]
+    transitive_image_pushes += [obj[GitopsArtifactsInfo].image_pushes for obj in ctx.attr.objects]
 
     return [
         DefaultInfo(
@@ -274,7 +269,7 @@ def _kustomize_impl(ctx):
             ),
             runfiles = runfiles,
         ),
-        KustomizeInfo(
+        GitopsArtifactsInfo(
             image_pushes = depset(
                 ctx.attr.images,
                 transitive = transitive_image_pushes,
@@ -295,7 +290,7 @@ kustomize = rule(
         "name_prefix": attr.string(),
         "name_suffix": attr.string(),
         "namespace": attr.string(),
-        "objects": attr.label_list(doc = "a list of dependent kustomize objects", providers = (KustomizeInfo,)),
+        "objects": attr.label_list(doc = "a list of dependent kustomize objects", providers = (GitopsArtifactsInfo,)),
         "patches": attr.label_list(allow_files = True),
         "image_name_patches": attr.string_dict(default = {}, doc = "set new names for selected images"),
         "image_tag_patches": attr.string_dict(default = {}, doc = "set new tags for selected images"),
@@ -342,7 +337,7 @@ kustomize = rule(
 )
 
 def _push_all_impl(ctx):
-    trans_img_pushes = depset(transitive = [obj[KustomizeInfo].image_pushes for obj in ctx.attr.srcs]).to_list()
+    trans_img_pushes = depset(transitive = [obj[GitopsArtifactsInfo].image_pushes for obj in ctx.attr.srcs]).to_list()
 
     ctx.actions.expand_template(
         template = ctx.file._tpl,
@@ -372,7 +367,7 @@ push_all run all pushes referred in images attribute
 k8s_container_push should be used.
     """,
     attrs = {
-        "srcs": attr.label_list(doc = "a list of images used in manifests", providers = (KustomizeInfo,)),
+        "srcs": attr.label_list(doc = "a list of images used in manifests", providers = (GitopsArtifactsInfo,)),
         "_tpl": attr.label(
             default = Label("//skylib/kustomize:run-all.sh.tpl"),
             allow_single_file = True,
@@ -394,7 +389,7 @@ def imagePushStatements(
         kustomize_objs,
         files = []):
     statements = ""
-    trans_img_pushes = depset(transitive = [obj[KustomizeInfo].image_pushes for obj in kustomize_objs]).to_list()
+    trans_img_pushes = depset(transitive = [obj[GitopsArtifactsInfo].image_pushes for obj in kustomize_objs]).to_list()
     statements += "\n".join([
         "echo  pushing {}".format(exe[K8sPushInfo].repository)
         for exe in trans_img_pushes
@@ -454,14 +449,14 @@ fi
         rf = rf.merge(dep_rf)
     return [
         DefaultInfo(runfiles = rf),
-        KustomizeInfo(
-            image_pushes = depset(transitive = [obj[KustomizeInfo].image_pushes for obj in ctx.attr.srcs]),
+        GitopsArtifactsInfo(
+            image_pushes = depset(transitive = [obj[GitopsArtifactsInfo].image_pushes for obj in ctx.attr.srcs]),
         ),
     ]
 
 gitops = rule(
     attrs = {
-        "srcs": attr.label_list(providers = (KustomizeInfo,)),
+        "srcs": attr.label_list(providers = (GitopsArtifactsInfo,)),
         "cluster": attr.string(mandatory = True),
         "namespace": attr.string(mandatory = True),
         "deployment_branch": attr.string(),
@@ -509,7 +504,7 @@ def _kubectl_impl(ctx):
     files += [ctx.executable._template_engine, ctx.file._info_file]
 
     if ctx.attr.push:
-        trans_img_pushes = depset(transitive = [obj[KustomizeInfo].image_pushes for obj in ctx.attr.srcs]).to_list()
+        trans_img_pushes = depset(transitive = [obj[GitopsArtifactsInfo].image_pushes for obj in ctx.attr.srcs]).to_list()
         statements += "\n".join([
             "# {}\n".format(exe[K8sPushInfo].image_label) +
             "echo  pushing {}".format(exe[K8sPushInfo].repository)
@@ -553,7 +548,7 @@ def _kubectl_impl(ctx):
 
 kubectl = rule(
     attrs = {
-        "srcs": attr.label_list(providers = (KustomizeInfo,)),
+        "srcs": attr.label_list(providers = (GitopsArtifactsInfo,)),
         "cluster": attr.string(mandatory = True),
         "namespace": attr.string(mandatory = True),
         "command": attr.string(default = "apply"),

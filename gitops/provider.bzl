@@ -8,3 +8,11 @@ K8sPushInfo = provider(
         "digestfile",
     ],
 )
+
+# buildifier: disable=provider-params
+GitopsArtifactsInfo = provider(fields = [
+    """
+    List of of executable targets required to be executed before deployment. Typically pushes images to a registry.
+    """,
+    "image_pushes",
+])

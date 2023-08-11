@@ -9,9 +9,9 @@
 # governing permissions and limitations under the License.
 
 load("//skylib:runfile.bzl", "get_runfile_path")
+load("//gitops:provider.bzl", "GitopsArtifactsInfo")
 load(
     "//skylib/kustomize:kustomize.bzl",
-    "KustomizeInfo",
     "imagePushStatements",
     "kubectl",
     "kustomize",
@@ -467,7 +467,7 @@ def _k8s_test_setup_impl(ctx):
     files += ctx.files._set_namespace
     files += ctx.files.cluster
 
-    push_statements, files, pushes_runfiles = imagePushStatements(ctx, [o for o in ctx.attr.objects if KustomizeInfo in o], files)
+    push_statements, files, pushes_runfiles = imagePushStatements(ctx, [o for o in ctx.attr.objects if GitopsArtifactsInfo in o], files)
 
     # execute all objects targets
     for obj in ctx.attr.objects:
