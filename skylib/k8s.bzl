@@ -10,7 +10,7 @@
 
 load("//skylib:runfile.bzl", "get_runfile_path")
 load(
-    "@com_adobe_rules_gitops//skylib/kustomize:kustomize.bzl",
+    "//skylib/kustomize:kustomize.bzl",
     "KustomizeInfo",
     "imagePushStatements",
     "kubectl",
@@ -132,8 +132,8 @@ def k8s_deploy(
         manifests = native.glob(["*.yaml", "*.yaml.tpl"])
     if prefix_suffix_app_labels:
         configurations = configurations + [
-            "@com_adobe_rules_gitops//skylib/kustomize:nameprefix_deployment_labels_config.yaml",
-            "@com_adobe_rules_gitops//skylib/kustomize:namesuffix_deployment_labels_config.yaml",
+            "@rules_gitops//skylib/kustomize:nameprefix_deployment_labels_config.yaml",
+            "@rules_gitops//skylib/kustomize:namesuffix_deployment_labels_config.yaml",
         ]
     for reservedname in ["CLUSTER", "NAMESPACE"]:
         if substitutions.get(reservedname):

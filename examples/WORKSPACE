@@ -11,7 +11,7 @@
 workspace(name = "examples")
 
 local_repository(
-    name = "com_adobe_rules_gitops",
+    name = "rules_gitops",
     path = "..",
 )
 
@@ -35,11 +35,11 @@ go_rules_dependencies()
 
 go_register_toolchains(version = "1.19.2")
 
-load("@com_adobe_rules_gitops//gitops:deps.bzl", "rules_gitops_dependencies")
+load("@rules_gitops//gitops:deps.bzl", "rules_gitops_dependencies")
 
 rules_gitops_dependencies()
 
-load("@com_adobe_rules_gitops//gitops:repositories.bzl", "rules_gitops_repositories")
+load("@rules_gitops//gitops:repositories.bzl", "rules_gitops_repositories")
 
 rules_gitops_repositories()
 

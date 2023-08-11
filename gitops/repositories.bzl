@@ -18,7 +18,7 @@ load("@rules_pkg//:deps.bzl", "rules_pkg_dependencies")
 load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies")
 load("@rules_oci//oci:dependencies.bzl", "rules_oci_dependencies")
 load("@rules_oci//oci:repositories.bzl", "LATEST_CRANE_VERSION", "oci_register_toolchains")
-load("@com_adobe_rules_gitops//skylib/kustomize:kustomize.bzl", "kustomize_setup")
+load("@rules_gitops//skylib/kustomize:kustomize.bzl", "kustomize_setup")
 
 def rules_gitops_repositories():
     """Initializes Declares workspaces the GitOps rules depend on.

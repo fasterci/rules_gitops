@@ -10,7 +10,7 @@
 
 load("@io_bazel_rules_docker//go:image.bzl", "go_image")
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
-load("@com_adobe_rules_gitops//gitops:defs.bzl", "k8s_deploy")
+load("@rules_gitops//gitops:defs.bzl", "k8s_deploy")
 
 licenses(["notice"])  # Apache 2.0
 

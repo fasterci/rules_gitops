@@ -15,10 +15,10 @@ WORKSPACE snippet:
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 http_archive(
-    name = "com_adobe_rules_gitops",
+    name = "rules_gitops",
     sha256 = "${SHA}",
     strip_prefix = "${PREFIX}",
-    urls = ["https://github.com/adobe/rules_gitops/archive/refs/tags/${TAG}.tar.gz"],
+    urls = ["https://github.com/fasterci/rules_gitops/archive/refs/tags/${TAG}.tar.gz"],
 )
 EOF
 
