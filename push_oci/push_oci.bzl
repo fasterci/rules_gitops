@@ -5,13 +5,7 @@ Implementation of the `k8s_push` rule based on rules_oci
 load("//gitops:provider.bzl", "K8sPushInfo")
 load("@rules_oci//oci/private:push.bzl", "oci_push_lib")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
-load(
-    "//skylib:runfile.bzl",
-    "runfile",
-)
-
-def _get_runfile_path(ctx, f):
-    return "${RUNFILES}/%s" % runfile(ctx, f)
+load("//skylib:runfile.bzl", "get_runfile_path")
 
 def _impl(ctx):
     if K8sPushInfo in ctx.attr.image:
@@ -22,7 +16,7 @@ def _impl(ctx):
                 template = ctx.file._tag_tpl,
                 substitutions = {
                     "%{args}": "",
-                    "%{container_pusher}": _get_runfile_path(ctx, ctx.attr.image[DefaultInfo].files_to_run.executable),
+                    "%{container_pusher}": get_runfile_path(ctx, ctx.attr.image[DefaultInfo].files_to_run.executable),
                 },
                 output = ctx.outputs.executable,
                 is_executable = True,

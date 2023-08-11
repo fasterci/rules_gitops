@@ -8,11 +8,10 @@
 # the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
 # OF ANY KIND, either express or implied. See the License for the specific language
 # governing permissions and limitations under the License.
-
+set -e
 set -o nounset
 set -o pipefail
 
-is_bazel_run=true
 DEPLOYMENT_ROOT=""
 PERFORM_PUSH="1"
 # parse command line parameters
@@ -24,10 +23,6 @@ do
     DEPLOYMENT_ROOT="$2"
     shift # past argument
     shift # past value
-    ;;
-    --nobazel)
-    is_bazel_run=false
-    shift
     ;;
     --nopush)
     PERFORM_PUSH=""
@@ -41,9 +36,14 @@ do
 done
 
 function guess_runfiles() {
-    pushd ${BASH_SOURCE[0]}.runfiles > /dev/null 2>&1
-    pwd
-    popd > /dev/null 2>&1
+    if [ -d ${BASH_SOURCE[0]}.runfiles ]; then
+        # Runfiles are adjacent to the current script.
+        echo "$( cd ${BASH_SOURCE[0]}.runfiles && pwd )"
+    else
+        # The current script is within some other script's runfiles.
+        mydir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+        echo $mydir | sed -e 's|\(.*\.runfiles\)/.*|\1|'
+    fi
 }
 
 RUNFILES="${PYTHON_RUNFILES:-$(guess_runfiles)}"
@@ -63,8 +63,6 @@ function waitpids() {
         done
     fi
 }
-
-cd $BUILD_WORKSPACE_DIRECTORY
 
 if [ "%{deployment_branch}" != "" -a "${DEPLOYMENT_ROOT}" != "" ] ; then
   TARGET_DIR=${DEPLOYMENT_ROOT}

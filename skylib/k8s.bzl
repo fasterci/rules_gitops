@@ -8,10 +8,7 @@
 # OF ANY KIND, either express or implied. See the License for the specific language
 # governing permissions and limitations under the License.
 
-load(
-    "//skylib:runfile.bzl",
-    _get_runfile_path = "runfile",
-)
+load("//skylib:runfile.bzl", "get_runfile_path")
 load(
     "@com_adobe_rules_gitops//skylib/kustomize:kustomize.bzl",
     "KustomizeInfo",
@@ -21,9 +18,6 @@ load(
     kustomize_gitops = "gitops",
 )
 load("//push_oci:push_oci.bzl", "push_oci")
-
-def _runfiles(ctx, f):
-    return "${RUNFILES}/%s" % _get_runfile_path(ctx, f)
 
 def _show_impl(ctx):
     script_content = "#!/usr/bin/env bash\nset -e\n"
@@ -483,7 +477,7 @@ def _k8s_test_setup_impl(ctx):
             transitive.append(obj.default_runfiles.files)
 
             # add object' execution command
-            commands.append(_runfiles(ctx, obj.files_to_run.executable) + " | ${SET_NAMESPACE} $NAMESPACE | ${IT_MANIFEST_FILTER} | ${KUBECTL} apply -f -")
+            commands.append(get_runfile_path(ctx, obj.files_to_run.executable) + " | ${SET_NAMESPACE} $NAMESPACE | ${IT_MANIFEST_FILTER} | ${KUBECTL} apply -f -")
         else:
             files += obj.files.to_list()
             commands += [ctx.executable._template_engine.short_path + " --template=" + filename.short_path + " --variable=NAMESPACE=${NAMESPACE} | ${SET_NAMESPACE} $NAMESPACE | ${IT_MANIFEST_FILTER} | ${KUBECTL} apply -f -" for filename in obj.files.to_list()]
