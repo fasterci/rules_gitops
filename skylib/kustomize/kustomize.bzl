@@ -451,6 +451,7 @@ fi
         DefaultInfo(runfiles = rf),
         GitopsArtifactsInfo(
             image_pushes = depset(transitive = [obj[GitopsArtifactsInfo].image_pushes for obj in ctx.attr.srcs]),
+            deployment_branch = ctx.attr.deployment_branch,
         ),
     ]
 
