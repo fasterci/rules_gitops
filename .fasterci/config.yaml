@@ -20,8 +20,8 @@ workflows:
             - //...
           test_targets:
             - //...
-      - name: Build & test examples
-        working-directory: examples
+      - name: Build & test e2e
+        working-directory: e2e
         bazel:
           build_targets:
             - //...
