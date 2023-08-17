@@ -46,14 +46,14 @@ def kustomize_setup(name):
 def _stamp_file(ctx, infile, output):
     stamps = [ctx.file._info_file]
     stamp_args = [
-        "--stamp-info-file=%s" % sf.short_path
+        "--stamp-info-file=%s" % sf.path
         for sf in stamps
     ]
     ctx.actions.run(
         executable = ctx.executable._stamper,
         arguments = [
-            "--format-file=%s" % infile.short_path,
-            "--output=%s" % output.short_path,
+            "--format-file=%s" % infile.path,
+            "--output=%s" % output.path,
         ] + stamp_args,
         inputs = [infile] + stamps,
         outputs = [output],
