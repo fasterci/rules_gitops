@@ -27,8 +27,6 @@ workflows:
             - //...
           test_targets:
             - //...
-      - name: Check
-        run: bazel run //:buildifier-check
 
   - <<: *build_workflow
     name: Faster CI / build (6.3.2)

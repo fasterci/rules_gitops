@@ -84,8 +84,6 @@ def _image_pushes(name_suffix, images, image_registry, image_repository, image_d
         return rule_name + name_suffix
 
     for image in images:
-        # assume that presence of .digest file means that image is already pushed
-        img_label = native.package_relative_label(image)
         image_push = process_image(image)
         image_pushes.append(image_push)
     return image_pushes
