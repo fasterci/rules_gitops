@@ -120,7 +120,8 @@ def push_oci(
         remote_tags = tags_label
 
     if not repository:
-        repository = "{}/{}".format(native.package_relative_label(image).package, native.package_relative_label(image).name)
+        label = native.package_relative_label(image)
+        repository = "{}/{}".format(label.package, label.name)
     if registry:
         repository = "{}/{}".format(registry, repository)
     push_oci_rule(

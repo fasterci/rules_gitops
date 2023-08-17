@@ -3,9 +3,9 @@
 workflows:
 
   - &build_workflow
-    name: Faster CI / build (6.0.0)
+    name: Faster CI / build (6.1.0)
     env:
-      USE_BAZEL_VERSION: "6.0.0"
+      USE_BAZEL_VERSION: "6.1.0"
     on:
       push:
         branches:
