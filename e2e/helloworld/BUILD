@@ -8,7 +8,7 @@
 # OF ANY KIND, either express or implied. See the License for the specific language
 # governing permissions and limitations under the License.
 
-load("//lang:go.bzl", "go_image")
+load("@rules_gitops//lang:go.bzl", "go_image")
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
 load("@rules_gitops//gitops:defs.bzl", "k8s_deploy")
 
@@ -51,9 +51,7 @@ k8s_deploy(
     name = "mynamespace",
     cluster = CLUSTER,
     image_registry = REGISTRY,  # override the default registry host for developent
-    images = {
-        "helloworld-image": ":image",
-    },
+    images = [":image"],
     manifests = [
         "deployment.yaml",
         "service.yaml",
@@ -69,11 +67,8 @@ k8s_deploy(
     cluster = CLUSTER,
     deployment_branch = "helloworld-canary",
     image_digest_tag = True,  # test optional image tagging
-    image_registry = REGISTRY,  # override the default registry for production
-    image_repository_prefix = "k8s",
-    images = {
-        "helloworld-image": ":image",
-    },
+    image_registry = REGISTRY + "/k8s",  # override the default registry for production
+    images = [":image"],
     manifests = [
         "deployment.yaml",
         "service.yaml",
@@ -89,11 +84,8 @@ k8s_deploy(
     cluster = CLUSTER,
     deployment_branch = "helloworld-prod",
     image_digest_tag = True,  # test optional image tagging
-    image_registry = REGISTRY,  # override the default registry host for production
-    image_repository_prefix = "k8s",
-    images = {
-        "helloworld-image": ":image",
-    },
+    image_registry = REGISTRY + "/k8s",  # override the default registry for production
+    images = [":image"],
     manifests = [
         "deployment.yaml",
         "service.yaml",
@@ -108,11 +100,8 @@ k8s_deploy(
     deployment_branch = "helloworld-gitops-custom-path",
     gitops_path = "custom_cloud",
     image_digest_tag = True,  # test optional image tagging
-    image_registry = REGISTRY,  # override the default registry host for production
-    image_repository_prefix = "k8s",
-    images = {
-        "helloworld-image": ":image",
-    },
+    image_registry = REGISTRY + "/k8s",  # override the default registry for production
+    images = [":image"],
     manifests = [
         "deployment.yaml",
         "service.yaml",
