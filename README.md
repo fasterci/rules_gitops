@@ -82,7 +82,7 @@ When you run `bazel run ///helloworld:mynamespace.apply`, it applies this file i
 | ***image_registry***      | `docker.io`    | The registry to push images to.
 | ***image_repository***    | `None`         | The repository to push images to. By default, this is generated from the current package path.
 | ***image_repository_prefix*** | `None`     | Add a prefix to the image_repository. Can be used to upload the images in
-| ***image_pushes***        | `[]`           | A list of labels implementing K8sPushInfo referring image uploaded into registry. See [Injecting Docker Images](#injecting-docker-images).
+| ***image_pushes***        | `[]`           | A list of labels implementing GitopsPushInfo referring image uploaded into registry. See [Injecting Docker Images](#injecting-docker-images).
 | ***release_branch_prefix*** | `master`     | A git branch name/prefix. Automatically run GitOps while building this branch. See [GitOps and Deployment](#gitops_and_deployment).
 | ***deployment_branch***   | `None`         | Automatic GitOps output will appear in a branch and PR with this name. See [GitOps and Deployment](#gitops_and_deployment).
 | ***gitops_path***         | `cloud`        | Path within the git repo where gitops files get generated into
@@ -315,7 +315,7 @@ Docker image and the files in the image. So for example, here's what will happen
 1. A new `helloworld` manifest will be rendered using the new image
 1. The new `helloworld` pod will be deployed
 
-It is possible to use alternative ways to resolve images as long as respective rule implements K8sPushInfo provider. For example, this setup will mirror the referred image into a local registry and provide a reference to it. `k8s_deploy` will need to use `image_pushes` parameter:
+It is possible to use alternative ways to resolve images as long as respective rule implements GitopsPushInfo provider. For example, this setup will mirror the referred image into a local registry and provide a reference to it. `k8s_deploy` will need to use `image_pushes` parameter:
 
 ```starlark
 load("@com_fasterci_rules_mirror//mirror:defs.bzl", "mirror_image")

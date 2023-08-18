@@ -2,7 +2,7 @@
 Implementation of external image information provider suitable for injection into manifests
 """
 
-load("//gitops:provider.bzl", "K8sPushInfo")
+load("//gitops:provider.bzl", "GitopsPushInfo")
 
 def _external_image_impl(ctx):
     sv = ctx.attr.image.split("@", 1)
@@ -20,7 +20,7 @@ def _external_image_impl(ctx):
         DefaultInfo(
             files = depset([digest_file]),
         ),
-        K8sPushInfo(
+        GitopsPushInfo(
             image_label = ctx.label,
             repository = s,
             digestfile = digest_file,

@@ -1,4 +1,4 @@
-K8sPushInfo = provider(
+GitopsPushInfo = provider(
     "Information required to inject image into a manifest",
     fields = {
         "image_label": "bazel label of the image",

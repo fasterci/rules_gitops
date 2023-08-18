@@ -2,7 +2,7 @@
 Implementation of the `k8s_push` rule based on rules_oci
 """
 
-load("//gitops:provider.bzl", "K8sPushInfo")
+load("//gitops:provider.bzl", "GitopsPushInfo")
 
 # TODO: remove this once rules_oci is updated
 # buildifier: disable=bzl-visibility
@@ -11,9 +11,9 @@ load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("//skylib:runfile.bzl", "get_runfile_path")
 
 def _impl(ctx):
-    if K8sPushInfo in ctx.attr.image:
+    if GitopsPushInfo in ctx.attr.image:
         # the image was already pushed, just rename if needed. Ignore registry and repository parameters
-        kpi = ctx.attr.image[K8sPushInfo]
+        kpi = ctx.attr.image[GitopsPushInfo]
         if ctx.attr.image[DefaultInfo].files_to_run.executable:
             ctx.actions.expand_template(
                 template = ctx.file._tag_tpl,
@@ -57,7 +57,7 @@ def _impl(ctx):
                 executable = ctx.outputs.executable,
                 runfiles = runfiles,
             ),
-            K8sPushInfo(
+            GitopsPushInfo(
                 image_label = kpi.image_label,
                 repository = kpi.repository,
                 digestfile = digest,
@@ -80,7 +80,7 @@ def _impl(ctx):
 
     return [
         default_info,
-        K8sPushInfo(
+        GitopsPushInfo(
             image_label = ctx.attr.image.label,
             # registry = registry,
             repository = ctx.attr.repository,
@@ -97,7 +97,7 @@ push_oci_rule = rule(
             )},
     toolchains = oci_push_lib.toolchains,
     executable = True,
-    # provides = [K8sPushInfo, DefaultInfo],
+    # provides = [GitopsPushInfo, DefaultInfo],
 )
 
 def push_oci(

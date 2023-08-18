@@ -9,7 +9,7 @@
 # governing permissions and limitations under the License.
 
 load("//skylib:runfile.bzl", "get_runfile_path")
-load("//gitops:provider.bzl", "GitopsArtifactsInfo", "K8sPushInfo")
+load("//gitops:provider.bzl", "GitopsArtifactsInfo", "GitopsPushInfo")
 load("//skylib:stamp.bzl", "stamp")
 
 _binaries = {
@@ -182,7 +182,7 @@ def _kustomize_impl(ctx):
         resolver_part += " | {resolver} ".format(resolver = ctx.executable._resolver.path)
         tmpfiles.append(ctx.executable._resolver)
         for img in ctx.attr.images:
-            kpi = img[K8sPushInfo]
+            kpi = img[GitopsPushInfo]
             regrepo = kpi.repository
             if "{" in regrepo:
                 regrepo = stamp(ctx, regrepo, tmpfiles, ctx.attr.name + regrepo.replace("/", "_"))
@@ -217,7 +217,7 @@ def _kustomize_impl(ctx):
         # Image name substitutions
         if ctx.attr.images:
             for _, img in enumerate(ctx.attr.images):
-                kpi = img[K8sPushInfo]
+                kpi = img[GitopsPushInfo]
                 regrepo = kpi.repository
                 if "{" in regrepo:
                     regrepo = stamp(ctx, regrepo, tmpfiles, ctx.attr.name + regrepo.replace("/", "_"))
@@ -285,7 +285,7 @@ kustomize = rule(
         "deps_aliases": attr.string_dict(default = {}),
         "disable_name_suffix_hash": attr.bool(default = True),
         "end_tag": attr.string(default = "}}"),
-        "images": attr.label_list(doc = "a list of images used in manifests", providers = (K8sPushInfo,)),
+        "images": attr.label_list(doc = "a list of images used in manifests", providers = (GitopsPushInfo,)),
         "manifests": attr.label_list(allow_files = True),
         "name_prefix": attr.string(),
         "name_suffix": attr.string(),
@@ -343,7 +343,7 @@ def _push_all_impl(ctx):
         template = ctx.file._tpl,
         substitutions = {
             "%{statements}": "\n".join([
-                                 "echo pushing {}".format(exe[K8sPushInfo].repository)
+                                 "echo pushing {}".format(exe[GitopsPushInfo].repository)
                                  for exe in trans_img_pushes
                              ]) + "\n" +
                              "\n".join([
@@ -391,7 +391,7 @@ def imagePushStatements(
     statements = ""
     trans_img_pushes = depset(transitive = [obj[GitopsArtifactsInfo].image_pushes for obj in kustomize_objs]).to_list()
     statements += "\n".join([
-        "echo  pushing {}".format(exe[K8sPushInfo].repository)
+        "echo  pushing {}".format(exe[GitopsPushInfo].repository)
         for exe in trans_img_pushes
     ]) + "\n"
     statements += "\n".join([
@@ -507,8 +507,8 @@ def _kubectl_impl(ctx):
     if ctx.attr.push:
         trans_img_pushes = depset(transitive = [obj[GitopsArtifactsInfo].image_pushes for obj in ctx.attr.srcs]).to_list()
         statements += "\n".join([
-            "# {}\n".format(exe[K8sPushInfo].image_label) +
-            "echo  pushing {}".format(exe[K8sPushInfo].repository)
+            "# {}\n".format(exe[GitopsPushInfo].image_label) +
+            "echo  pushing {}".format(exe[GitopsPushInfo].repository)
             for exe in trans_img_pushes
         ]) + "\n"
         statements += "\n".join([
