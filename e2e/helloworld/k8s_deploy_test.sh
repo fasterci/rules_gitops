@@ -38,7 +38,7 @@ grep -F "namespace: $NAMESPACE" canary.show
 grep -F "name: helloworld-canary" canary.show
 grep -E "image: localhost:5000/k8s/helloworld/image@sha256" canary.show
 
-$(rlocation examples/helloworld/release.show) > release.show
+$(rlocation examples/helloworld/prod_west.show) > release.show
 echo "DEBUG: release.show:"
 cat release.show
 

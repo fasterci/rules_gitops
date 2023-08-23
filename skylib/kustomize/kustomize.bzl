@@ -485,22 +485,25 @@ gitops = rule(
 def _kubectl_impl(ctx):
     files = [] + ctx.files.srcs
 
+    statements = ""
+    transitive = None
+    transitive_runfiles = []
+
     cluster_arg = ctx.attr.cluster
     cluster_arg = ctx.expand_make_variables("cluster", cluster_arg, {})
     if "{" in ctx.attr.cluster:
         cluster_arg = stamp(ctx, cluster_arg, files, ctx.label.name + ".cluster-name", True)
 
-    user_arg = ctx.attr.user
-    user_arg = ctx.expand_make_variables("user", user_arg, {})
-    if "{" in ctx.attr.user:
-        user_arg = stamp(ctx, user_arg, files, ctx.label.name + ".user-name", True)
+    if ctx.attr.user:
+        user_arg = ctx.attr.user
+        user_arg = ctx.expand_make_variables("user", user_arg, {})
+        if "{" in ctx.attr.user:
+            user_arg = stamp(ctx, user_arg, files, ctx.label.name + ".user-name", True)
+    else:
+        user_arg = """$(kubectl config view -o jsonpath='{.users[?(@.name == '"\\"${CLUSTER}\\")].name}")"""
 
     kubectl_command_arg = ctx.attr.command
     kubectl_command_arg = ctx.expand_make_variables("kubectl_command", kubectl_command_arg, {})
-
-    statements = ""
-    transitive = None
-    transitive_runfiles = []
 
     files += [ctx.executable._template_engine, ctx.file._info_file]
 
@@ -522,10 +525,8 @@ def _kubectl_impl(ctx):
     namespace = ctx.attr.namespace
     for inattr in ctx.attr.srcs:
         for infile in inattr.files.to_list():
-            statements += "{template_engine} --template={infile} --variable=NAMESPACE={namespace} --stamp_info_file={info_file} | kubectl --cluster=\"{cluster}\" --user=\"{user}\" {kubectl_command} -f -\n".format(
+            statements += "{template_engine} --template={infile} --variable=NAMESPACE={namespace} --stamp_info_file={info_file} | kubectl --cluster=\"$CLUSTER\" --user=\"$USER\" {kubectl_command} -f -\n".format(
                 infile = infile.short_path,
-                cluster = cluster_arg,
-                user = user_arg,
                 kubectl_command = kubectl_command_arg,
                 template_engine = get_runfile_path(ctx, ctx.executable._template_engine),
                 namespace = namespace,
@@ -535,6 +536,8 @@ def _kubectl_impl(ctx):
     ctx.actions.expand_template(
         template = ctx.file._template,
         substitutions = {
+            "%{cluster}": cluster_arg,
+            "%{user}": user_arg,
             "%{statements}": statements,
         },
         output = ctx.outputs.executable,
@@ -553,7 +556,7 @@ kubectl = rule(
         "cluster": attr.string(mandatory = True),
         "namespace": attr.string(mandatory = True),
         "command": attr.string(default = "apply"),
-        "user": attr.string(default = "{BUILD_USER}"),
+        "user": attr.string(),
         "push": attr.bool(default = True),
         "_build_user_value": attr.label(
             default = Label("//skylib:build_user_value.txt"),
@@ -570,7 +573,7 @@ kubectl = rule(
             allow_files = True,
         ),
         "_template": attr.label(
-            default = Label("//skylib/kustomize:run-all.sh.tpl"),
+            default = Label("//skylib/kustomize:kubectl.sh.tpl"),
             allow_single_file = True,
         ),
         "_template_engine": attr.label(

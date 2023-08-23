@@ -49,7 +49,7 @@ set +e
 if [ -n "${K8S_MYNAMESPACE:-}" ]
 then
     # do not create random namesspace
-    NAMESPACE=${USER}
+    NAMESPACE=`whoami`
     # do not delete namespace after the test is complete
     DELETE_NAMESPACE_FLAG=""
 else

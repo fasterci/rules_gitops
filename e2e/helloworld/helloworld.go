@@ -21,7 +21,8 @@ import (
 )
 
 var (
-	port = flag.Int("port", 8080, "IP port")
+	port       = flag.Int("port", 8080, "IP port")
+	configFile = flag.String("config", "", "Config file")
 )
 
 func printenv(w http.ResponseWriter, r *http.Request) {
@@ -31,7 +32,10 @@ func printenv(w http.ResponseWriter, r *http.Request) {
 }
 
 func home(w http.ResponseWriter, r *http.Request) {
-	io.WriteString(w, "<html><body>Hello World!</body></html>")
+	io.WriteString(w, "<html><body>")
+	io.WriteString(w, "<h1>Hello World!</h1>")
+	fmt.Fprintf(w, "<p>Config file: %s</p>", *configFile)
+	io.WriteString(w, "Hello World!</body></html>")
 }
 
 func main() {

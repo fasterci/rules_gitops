@@ -12,22 +12,37 @@ governing permissions and limitations under the License.
 package helloworld
 
 import (
+	"fmt"
 	"io/ioutil"
-	"net/http/httptest"
+	"net/http"
 	"strings"
 	"testing"
+
+	"github.com/adobe/rules_gitops/testing/it_sidecar/client"
 )
 
-func TestHome(t *testing.T) {
-	req := httptest.NewRequest("GET", "http://example.com/foo", nil)
-	w := httptest.NewRecorder()
-	home(w, req)
+var setup client.K8STestSetup
 
-	resp := w.Result()
-	if resp.StatusCode != 200 {
-		t.Fatalf("Unexpected status code %d, expectted 200", resp.StatusCode)
+func TestMain(m *testing.M) {
+	setup = client.K8STestSetup{
+		WaitForPods: []string{"helloworld"},
+		PortForwardServices: map[string]int{
+			"helloworld": 8080,
+		},
 	}
-	body, _ := ioutil.ReadAll(resp.Body)
+	setup.TestMain(m)
+}
+
+func TestSimpleServer(t *testing.T) {
+	appServerPort := setup.GetServiceLocalPort("helloworld")
+	response, err := http.Get(fmt.Sprintf("http://localhost:%d", appServerPort))
+	if err != nil {
+		t.FailNow()
+	}
+	if response.StatusCode != 200 {
+		t.Errorf("Expected status code 200, got %d", response.StatusCode)
+	}
+	body, _ := ioutil.ReadAll(response.Body)
 	if !strings.Contains(string(body), "Hello World") {
 		t.Error("Unexpected content returned:", string(body))
 	}

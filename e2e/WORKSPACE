@@ -56,3 +56,11 @@ oci_pull(
     digest = "sha256:ebd8cc37d22551dce0957ba8e58f03b22a8448bbf844c8c9ded4feef883b36bc",
     image = "gcr.io/distroless/static",
 )
+
+load("@rules_gitops//skylib:k8s.bzl", "kubeconfig")
+
+kubeconfig(
+    name = "k8s_test",
+    cluster = "gke_rules-gitops-demo_us-central1_cluster-demo",
+    use_host_config = True,
+)
