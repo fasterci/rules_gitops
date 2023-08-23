@@ -1,5 +1,3 @@
-# configure vscode yaml support https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml
-# yaml-language-server: $schema=https://fasterci.com/config.schema.json
 workflows:
 
   - &build_workflow
@@ -27,6 +25,8 @@ workflows:
             - //...
           test_targets:
             - //...
+          test_flags:
+            - --test_size_filters=-large,-enormous
 
   - <<: *build_workflow
     name: Faster CI / build (6.3.2)
