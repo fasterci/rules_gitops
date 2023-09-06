@@ -102,36 +102,3 @@ go_test(
     deps = ["@rules_gitops//testing/it_sidecar/client:go_default_library"],
 )
 
-# k8s_deploy(
-#     name = "gitops_custom_path",
-#     cluster = CLUSTER,
-#     deployment_branch = "helloworld-gitops-custom-path",
-#     gitops_path = "custom_cloud",
-#     image_digest_tag = True,  # test optional image tagging
-#     image_registry = REGISTRY + "/k8s",  # override the default registry for production
-#     images = [":image"],
-#     manifests = [
-#         "deployment.yaml",
-#         "service.yaml",
-#     ],
-#     name_suffix = "-gitops-custom-path",
-#     namespace = NAMESPACE,
-#     user = USER,
-# )
-
-# sh_test(
-#     name = "k8s_deploy_test",
-#     srcs = ["k8s_deploy_test.sh"],
-#     args = [
-#         CLUSTER,
-#         NAMESPACE,
-#     ],
-#     data = [
-#         ":canary.show",
-#         ":mynamespace.show",
-#         ":prod_west.show",
-#     ],
-#     deps = [
-#         "@bazel_tools//tools/bash/runfiles",
-#     ],
-# )

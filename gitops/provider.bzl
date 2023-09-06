@@ -2,8 +2,6 @@ GitopsPushInfo = provider(
     "Information required to inject image into a manifest",
     fields = {
         "image_label": "bazel label of the image",
-        # "legacy_image_name",  # DEPRECATED AND REMOVED short name
-        # "registry", DEPRECATED AND REMOVED. use repository
         "repository": "{registry}/{repository} without tag or sha part",
         "digestfile": "file with sha256 digest of the image. Combine {repository}@{digestfile content} to get full image name",
     },
