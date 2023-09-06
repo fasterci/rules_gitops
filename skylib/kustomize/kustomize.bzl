@@ -100,6 +100,9 @@ def _kustomize_impl(ctx):
         for _, f in enumerate(ctx.files.configurations):
             kustomization_yaml += "- {}/{}\n".format(upupup, f.path)
 
+    if ctx.file.openapi_path:
+        kustomization_yaml += "openapi:\n  path: {}/{}\n".format(upupup, ctx.file.openapi_path.path)
+
     if ctx.files.patches:
         kustomization_yaml += "patches:\n"
         for _, f in enumerate(ctx.files.patches):
@@ -247,7 +250,7 @@ def _kustomize_impl(ctx):
 
     ctx.actions.run(
         outputs = [ctx.outputs.yaml],
-        inputs = ctx.files.manifests + ctx.files.configmaps_srcs + ctx.files.secrets_srcs + ctx.files.configurations + [kustomization_yaml_file] + tmpfiles + ctx.files.patches + ctx.files.deps,
+        inputs = ctx.files.manifests + ctx.files.configmaps_srcs + ctx.files.secrets_srcs + ctx.files.configurations + ctx.files.openapi_path + [kustomization_yaml_file] + tmpfiles + ctx.files.patches + ctx.files.deps,
         executable = script,
         mnemonic = "Kustomize",
         tools = [ctx.executable._kustomize_bin],
@@ -300,6 +303,7 @@ kustomize = rule(
         "configurations": attr.label_list(allow_files = True),
         "common_labels": attr.string_dict(default = {}),
         "common_annotations": attr.string_dict(default = {}),
+        "openapi_path": attr.label(allow_single_file = True, doc = "openapi schema file for the package. Use this attribute to add support for custom resources"),
         "_build_user_value": attr.label(
             default = Label("//skylib:build_user_value.txt"),
             allow_single_file = True,

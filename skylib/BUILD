@@ -17,6 +17,7 @@ exports_files([
     "k8s_cmd.sh.tpl",
     "k8s_test_namespace.sh.tpl",
     "push-tag.sh.tpl",
+    "run_schema.json",
 ])
 
 stamp_value(

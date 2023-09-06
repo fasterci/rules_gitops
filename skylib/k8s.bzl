@@ -107,6 +107,7 @@ def k8s_deploy(
         configurations = [],  # additional kustomize configuration files. rules_gitops provides
         common_labels = {},  # list of common labels to apply to all objects see commonLabels kustomize docs
         common_annotations = {},  # list of common annotations to apply to all objects see commonAnnotations kustomize docs
+        openapi_path = None,  # path to openapi schema file
         deps = [],
         deps_aliases = {},
         images = [],
@@ -177,6 +178,7 @@ def k8s_deploy(
             objects = objects,
             image_name_patches = image_name_patches,
             image_tag_patches = image_tag_patches,
+            openapi_path = openapi_path,
             visibility = visibility,
         )
         kubectl(
@@ -237,6 +239,7 @@ def k8s_deploy(
             patches = patches,
             image_name_patches = image_name_patches,
             image_tag_patches = image_tag_patches,
+            openapi_path = openapi_path,
         )
         kubectl(
             name = name + ".apply",

@@ -1,0 +1,26 @@
+load("@rules_gitops//gitops:defs.bzl", "external_image", "k8s_deploy")
+load("@aspect_bazel_lib//lib:write_source_files.bzl", "write_source_files")
+
+external_image(
+    name = "image",
+    digest = "sha:1234567890123",
+    image = "gcr.io/repo/someimage:thetag",
+)
+
+k8s_deploy(
+    name = "prod",
+    gitops = False,
+    manifests = ["run.yaml"],
+    namespace = "cloudrun_project",
+    images = [":image"],
+    openapi_path = "//skylib:run_schema.json",
+    patches = ["run_patch.yaml"],
+)
+
+write_source_files(
+    name = "expected_results",
+    files = {
+        # Do not use .yaml extension for the expected results files to avoid picking up by the k8s_deploy's glob()
+        "prod_expected.txt": ":prod",
+    },
+)
