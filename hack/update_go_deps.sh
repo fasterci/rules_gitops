@@ -29,6 +29,7 @@ find vendor -type f \
     -not -iname "COPYING*" \
     -not -iname "LICENSE*" \
     -not -iname "NOTICE*" \
+    -not -iname "modules.txt" \
     -delete
 
 

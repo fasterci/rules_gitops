@@ -1,0 +1,38 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  annotations:
+    run.googleapis.com/ingress: all
+    run.googleapis.com/ingress-status: all
+  labels:
+    cloud.googleapis.com/location: us-central1
+  name: webhook
+  namespace: cloudrun_project
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/maxScale: "5"
+        autoscaling.knative.dev/minScale: "1"
+        run.googleapis.com/execution-environment: gen1
+    spec:
+      containerConcurrency: 80
+      containers:
+      - args:
+        - --app_id=309678
+        - --measurement=ASDFGH
+        - --app_name=prodapp
+        - --api_key=WhatDidYouWantToSeeHere
+        image: gcr.io/repo/someimage@sha:1234567890123
+        name: main
+        ports:
+        - containerPort: 8080
+          name: http1
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 256Mi
+      timeoutSeconds: 10
+  traffic:
+  - latestRevision: true
+    percent: 100

@@ -46,9 +46,9 @@ copy the WORKSPACE snippet into your `WORKSPACE` file.
 The `k8s_deploy` creates rules that produce the `.apply` and `.gitops` targets `k8s_deploy` is defined in [k8s.bzl](./skylib/k8s.bzl). `k8s_deploy` takes the files listed in the `manifests`, `patches`, and `configmaps_srcs` attributes and combines (**renders**) them into one  YAML file. This happens when you `bazel build` or `bazel run` a target created by the `k8s_deploy`. The file is created at `bazel-bin/path/to/package/name.yaml`. When you run a `.apply` target, it runs `kubectl apply` on this file. When you run a `.gitops` target, it copies this file to
 the appropriate location in the same os separate repository.
 
-For example, let's look at the [example's k8s_deploy](./examples/helloworld/BUILD). We can peek at the file containing the rendered K8s manifests:
+For example, let's look at the [example's k8s_deploy](./e2e/helloworld/BUILD). We can peek at the file containing the rendered K8s manifests:
 ```bash
-cd examples
+cd e2e
 bazel run //helloworld:mynamespace.show
 ```
 When you run `bazel run ///helloworld:mynamespace.apply`, it applies this file into your personal (`{BUILD_USER}`) namespace. Viewing the rendered files with `.show` can be useful for debugging issues with invalid or misconfigured manifests.
@@ -57,7 +57,7 @@ When you run `bazel run ///helloworld:mynamespace.apply`, it applies this file i
 | ------------------------- | -------------- | -----------
 | ***cluster***             | `None`         | The name of the cluster in which these manifests will be applied.
 | ***namespace***           | `None`         | The target namespace to assign to all manifests. Any namespace value in the source manifests will be replaced or added if not specified.
-| ***user***                | `{BUILD_USER}` | The user passed to kubectl in .apply rule. Must exist in users ~/.kube/config
+| ***user***                | value from ~/.kube/config | The user passed to kubectl in .apply rule. Must exist in users ~/.kube/config
 | ***configmaps_srcs***     | `None`         | A list of files (of any type) that will be combined into configmaps. See [Generating Configmaps](#generating-configmaps).
 | ***configmaps_renaming*** | `None`         | Configmaps/Secrets renaming policy. Could be None or 'hash'. 'hash' renaming policy is used to add a unique suffix to the generated configmap or secret name. All references to the configmap or secret in other manifests will be replaced with the generated name.
 | ***secrets_srcs***        | `None`         | A list of files (of any type) that will be combined into a secret similar to configmaps.
@@ -82,7 +82,7 @@ When you run `bazel run ///helloworld:mynamespace.apply`, it applies this file i
 | ***image_registry***      | `docker.io`    | The registry to push images to.
 | ***image_repository***    | `None`         | The repository to push images to. By default, this is generated from the current package path.
 | ***image_repository_prefix*** | `None`     | Add a prefix to the image_repository. Can be used to upload the images in
-| ***image_pushes***        | `[]`           | A list of labels implementing K8sPushInfo referring image uploaded into registry. See [Injecting Docker Images](#injecting-docker-images).
+| ***image_pushes***        | `[]`           | A list of labels implementing GitopsPushInfo referring image uploaded into registry. See [Injecting Docker Images](#injecting-docker-images).
 | ***release_branch_prefix*** | `master`     | A git branch name/prefix. Automatically run GitOps while building this branch. See [GitOps and Deployment](#gitops_and_deployment).
 | ***deployment_branch***   | `None`         | Automatic GitOps output will appear in a branch and PR with this name. See [GitOps and Deployment](#gitops_and_deployment).
 | ***gitops_path***         | `cloud`        | Path within the git repo where gitops files get generated into
@@ -229,9 +229,9 @@ spec:
 <a name="injecting-docker-images"></a>
 ### Injecting Docker Images
 
-Third-party Docker images can be referenced directly in K8s manifests, but for most apps, we need to run our own images. The images are built in the Bazel build pipeline using [rules_docker](https://github.com/bazelbuild/rules_docker). For example, the `java_image` rule creates an image of a Java application from Java source code, dependencies, and configuration.
+Third-party Docker images can be referenced directly in K8s manifests, but for most apps, we need to run our own images. The images are built in the Bazel build pipeline using [rules_oci](https://github.com/bazel-contrib/rules_oci).
 
-Here's a (very contrived) example of how this ties in with `k8s_deploy`. Here's the `BUILD` file located in the package `//examples`:
+Here's a (very contrived) example of how this ties in with `k8s_deploy`. Here's the `BUILD` file located in the package `//e2e`:
 ```starlark
 java_image(
     name = "helloworld_image",
@@ -254,9 +254,9 @@ metadata:
   name: helloworld
 spec:
   containers:
-    - image: //examples:helloworld_image  # (2)
+    - image: //e2e:helloworld_image  # (2)
 ```
-There `images` attribute dictionary `(1)` defines the images available for the substitution. The manifest file references the fully qualified image target path `//examples:helloworld_image` `(2)`.
+There `images` attribute dictionary `(1)` defines the images available for the substitution. The manifest file references the fully qualified image target path `//e2e:helloworld_image` `(2)`.
 
 The `image` key value in the dictionary is used as an image push identifier. The best practice (as provided in the example) is to use image key that matches the [label name](https://docs.bazel.build/versions/master/skylark/lib/Label.html#name) of the image target.
 
@@ -315,7 +315,7 @@ Docker image and the files in the image. So for example, here's what will happen
 1. A new `helloworld` manifest will be rendered using the new image
 1. The new `helloworld` pod will be deployed
 
-It is possible to use alternative ways to resolve images as long as respective rule implements K8sPushInfo provider. For example, this setup will mirror the referred image into a local registry and provide a reference to it. `k8s_deploy` will need to use `image_pushes` parameter:
+It is possible to use alternative ways to resolve images as long as respective rule implements GitopsPushInfo provider. For example, this setup will mirror the referred image into a local registry and provide a reference to it. `k8s_deploy` will need to use `image_pushes` parameter:
 
 ```starlark
 load("@com_fasterci_rules_mirror//mirror:defs.bzl", "mirror_image")
@@ -368,7 +368,7 @@ The *Create GitOps PRs* step usually is the last step of a CI pipeline. `rules_g
 
 For the full list of `create_gitops_prs` command line options, run:
 ```bash
-bazel run @com_adobe_rules_gitops//gitops/prer:create_gitops_prs
+bazel run @rules_gitops//gitops/prer:create_gitops_prs
 ```
 
 <a name="gitops-and-deployment-supported-git-servers"></a>
@@ -405,7 +405,7 @@ GIT_ROOT_DIR=$(git rev-parse --show-toplevel)
 GIT_COMMIT_ID=$(git rev-parse HEAD)
 GIT_BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
 if [ "${GIT_BRANCH_NAME}" == "master"]; then
-    bazel run @com_adobe_rules_gitops//gitops/prer:create_gitops_prs -- \
+    bazel run @rules_gitops//gitops/prer:create_gitops_prs -- \
         --workspace $GIT_ROOT_DIR \
         --git_repo https://github.com/example/repo.git \
         --git_mirror $GIT_ROOT_DIR/.git \
@@ -482,7 +482,7 @@ GIT_BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)          # => release/team-20
 RELEASE_BRANCH_SUFFIX=${GIT_BRANCH_NAME#"release/team"}     # => -20200101
 RELEASE_BRANCH=${GIT_BRANCH_NAME%${RELEASE_BRANCH_SUFFIX}}  # => release/team
 if [ "${RELEASE_BRANCH}" == "release/team"]; then
-    bazel run @com_adobe_rules_gitops//gitops/prer:create_gitops_prs -- \
+    bazel run @rules_gitops//gitops/prer:create_gitops_prs -- \
         --workspace $GIT_ROOT_DIR \
         --git_repo https://github.com/example/repo.git \
         --git_mirror $GIT_ROOT_DIR/.git \
@@ -575,7 +575,7 @@ The test code launches the script to perform the test setup. The test code shoul
 The `@k8s_test//:kubeconfig` target referenced from `k8s_test_setup` rule serves the purpose of making Kubernetes configuration available in the test sandbox. The `kubeconfig` repository rule in the `WORKSPACE` file will need, at minimum, provide the cluster name.
 
 ```starlark
-load("@com_adobe_rules_gitops//gitops:defs.bzl", "kubeconfig")
+load("@rules_gitops//gitops:defs.bzl", "kubeconfig")
 
 kubeconfig(
     name = "k8s_test",

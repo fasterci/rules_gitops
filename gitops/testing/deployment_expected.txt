@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: myapp
+  namespace: ci
 spec:
   selector:
     matchLabels:
@@ -12,5 +13,5 @@ spec:
         app: myapp
     spec:
       containers:
-      - name: myapp
-        image: test-image
+      - image: docker.io/skylib/kustomize/tests/image@sha256:1fa852d8eaf0f0a491713fb8c62c13ab8d25e2d6b32f024e49513f12a2e57b7a
+        name: myapp

@@ -8,22 +8,16 @@
 # OF ANY KIND, either express or implied. See the License for the specific language
 # governing permissions and limitations under the License.
 
+load("//skylib:runfile.bzl", "get_runfile_path")
+load("//gitops:provider.bzl", "GitopsArtifactsInfo")
 load(
-    "@io_bazel_rules_docker//skylib:path.bzl",
-    _get_runfile_path = "runfile",
-)
-load(
-    "@com_adobe_rules_gitops//skylib/kustomize:kustomize.bzl",
-    "KustomizeInfo",
+    "//skylib/kustomize:kustomize.bzl",
     "imagePushStatements",
     "kubectl",
     "kustomize",
     kustomize_gitops = "gitops",
 )
-load("//skylib:push.bzl", "k8s_container_push")
-
-def _runfiles(ctx, f):
-    return "${RUNFILES}/%s" % _get_runfile_path(ctx, f)
+load("//push_oci:push_oci.bzl", "push_oci")
 
 def _show_impl(ctx):
     script_content = "#!/usr/bin/env bash\nset -e\n"
@@ -70,45 +64,34 @@ show = rule(
     executable = True,
 )
 
-def _image_pushes(name_suffix, images, image_registry, image_repository, image_repository_prefix, image_digest_tag):
+def _image_pushes(name_suffix, images, image_registry, image_repository, image_digest_tag):
     image_pushes = []
 
-    def process_image(image_label, legacy_name = None):
-        rule_name_parts = [image_label, image_registry, image_repository, legacy_name]
+    def process_image(image_label):
+        rule_name_parts = [image_label, image_registry, image_repository]
         rule_name_parts = [p for p in rule_name_parts if p]
         rule_name = "_".join(rule_name_parts)
-        rule_name = rule_name.replace("/", "_").replace(":", "_").replace("@", "_")
-        if rule_name.startswith("_"):
-            rule_name = rule_name[1:]
-        if rule_name.startswith("_"):
-            rule_name = rule_name[1:]
+        rule_name = rule_name.replace("/", "_").replace(":", "_").replace("@", "_").replace(".", "_")
+        rule_name = rule_name.strip("_")
         if not native.existing_rule(rule_name + name_suffix):
-            k8s_container_push(
+            push_oci(
                 name = rule_name + name_suffix,
                 image = image_label,  # buildifier: disable=uninitialized
                 image_digest_tag = image_digest_tag,
-                legacy_image_name = legacy_name,
                 registry = image_registry,
                 repository = image_repository,
-                repository_prefix = image_repository_prefix,
             )
         return rule_name + name_suffix
 
-    if type(images) == "dict":
-        for image_name in images:
-            image = images[image_name]
-            push = process_image(image, image_name)
-            image_pushes.append(push)
-    else:
-        for image in images:
-            push = process_image(image)
-            image_pushes.append(push)
+    for image in images:
+        image_push = process_image(image)
+        image_pushes.append(image_push)
     return image_pushes
 
 def k8s_deploy(
         name,  # name of the rule is important for gitops, since it will become a part of the target manifest file name in /cloud
         cluster = "dev",
-        user = "{BUILD_USER}",
+        user = None,
         namespace = None,
         configmaps_srcs = None,
         secrets_srcs = None,
@@ -124,13 +107,13 @@ def k8s_deploy(
         configurations = [],  # additional kustomize configuration files. rules_gitops provides
         common_labels = {},  # list of common labels to apply to all objects see commonLabels kustomize docs
         common_annotations = {},  # list of common annotations to apply to all objects see commonAnnotations kustomize docs
+        openapi_path = None,  # path to openapi schema file
         deps = [],
         deps_aliases = {},
         images = [],
         image_digest_tag = False,
         image_registry = "docker.io",  # registry to push container to. jenkins will need an access configured for gitops to work. Ignored for mynamespace.
         image_repository = None,  # repository (registry path) to push container to. Generated from the image bazel path if empty.
-        image_repository_prefix = None,  # Mutually exclusive with 'image_repository'. Add a prefix to the repository name generated from the image bazel path
         objects = [],
         gitops = True,  # make sure to use gitops = False to work with individual namespace. This option will be turned False if namespace is '{BUILD_USER}'
         gitops_path = "cloud",
@@ -142,12 +125,14 @@ def k8s_deploy(
     """ k8s_deploy
     """
 
+    if type(images) == "dict":
+        fail("image_pushes: dict type is deprecated. Use list instead.")
     if not manifests:
         manifests = native.glob(["*.yaml", "*.yaml.tpl"])
     if prefix_suffix_app_labels:
         configurations = configurations + [
-            "@com_adobe_rules_gitops//skylib/kustomize:nameprefix_deployment_labels_config.yaml",
-            "@com_adobe_rules_gitops//skylib/kustomize:namesuffix_deployment_labels_config.yaml",
+            "@rules_gitops//skylib/kustomize:nameprefix_deployment_labels_config.yaml",
+            "@rules_gitops//skylib/kustomize:namesuffix_deployment_labels_config.yaml",
         ]
     for reservedname in ["CLUSTER", "NAMESPACE"]:
         if substitutions.get(reservedname):
@@ -166,9 +151,8 @@ def k8s_deploy(
         image_pushes = _image_pushes(
             name_suffix = "-mynamespace.push",
             images = images,
-            image_registry = image_registry,
+            image_registry = image_registry + "/mynamespace",
             image_repository = image_repository,
-            image_repository_prefix = "{BUILD_USER}",
             image_digest_tag = image_digest_tag,
         )
         kustomize(
@@ -194,6 +178,7 @@ def k8s_deploy(
             objects = objects,
             image_name_patches = image_name_patches,
             image_tag_patches = image_tag_patches,
+            openapi_path = openapi_path,
             visibility = visibility,
         )
         kubectl(
@@ -229,7 +214,6 @@ def k8s_deploy(
             images = images,
             image_registry = image_registry,
             image_repository = image_repository,
-            image_repository_prefix = image_repository_prefix,
             image_digest_tag = image_digest_tag,
         )
         kustomize(
@@ -255,6 +239,7 @@ def k8s_deploy(
             patches = patches,
             image_name_patches = image_name_patches,
             image_tag_patches = image_tag_patches,
+            openapi_path = openapi_path,
         )
         kubectl(
             name = name + ".apply",
@@ -483,7 +468,7 @@ def _k8s_test_setup_impl(ctx):
     files += ctx.files._set_namespace
     files += ctx.files.cluster
 
-    push_statements, files, pushes_runfiles = imagePushStatements(ctx, [o for o in ctx.attr.objects if KustomizeInfo in o], files)
+    push_statements, files, pushes_runfiles = imagePushStatements(ctx, [o for o in ctx.attr.objects if GitopsArtifactsInfo in o], files)
 
     # execute all objects targets
     for obj in ctx.attr.objects:
@@ -493,7 +478,7 @@ def _k8s_test_setup_impl(ctx):
             transitive.append(obj.default_runfiles.files)
 
             # add object' execution command
-            commands.append(_runfiles(ctx, obj.files_to_run.executable) + " | ${SET_NAMESPACE} $NAMESPACE | ${IT_MANIFEST_FILTER} | ${KUBECTL} apply -f -")
+            commands.append(get_runfile_path(ctx, obj.files_to_run.executable) + " | ${SET_NAMESPACE} $NAMESPACE | ${IT_MANIFEST_FILTER} | ${KUBECTL} apply -f -")
         else:
             files += obj.files.to_list()
             commands += [ctx.executable._template_engine.short_path + " --template=" + filename.short_path + " --variable=NAMESPACE=${NAMESPACE} | ${SET_NAMESPACE} $NAMESPACE | ${IT_MANIFEST_FILTER} | ${KUBECTL} apply -f -" for filename in obj.files.to_list()]

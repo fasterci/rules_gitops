@@ -9,11 +9,11 @@
 # governing permissions and limitations under the License.
 
 # gazelle:build_tags darwin,linux
-# gazelle:exclude examples
+# gazelle:exclude examples e2e
 # gazelle:proto disable_global
 
 load("@bazel_gazelle//:def.bzl", "gazelle")
-load("@com_github_bazelbuild_buildtools//buildifier:def.bzl", "buildifier")
+load("@com_github_bazelbuild_buildtools//buildifier:def.bzl", "buildifier", "buildifier_test")
 
 licenses(["notice"])  # Apache 2.0
 
@@ -50,8 +50,8 @@ buildifier(
     lint_mode = "fix",
 )
 
-buildifier(
-    name = "buildifier-check",
+buildifier_test(
+    name = "buildifier_check",
     lint_mode = "warn",
     lint_warnings = [
         "-module-docstring",
@@ -60,5 +60,4 @@ buildifier(
         "-function-docstring-args",
         "-function-docstring-return",
     ],
-    mode = "check",
 )

@@ -8,11 +8,8 @@
 # OF ANY KIND, either express or implied. See the License for the specific language
 # governing permissions and limitations under the License.
 
-load(
-    "@io_bazel_rules_docker//skylib:path.bzl",
-    _get_runfile_path = "runfile",
-)
-load("//skylib:push.bzl", "K8sPushInfo")
+load("//skylib:runfile.bzl", "get_runfile_path")
+load("//gitops:provider.bzl", "GitopsArtifactsInfo", "GitopsPushInfo")
 load("//skylib:stamp.bzl", "stamp")
 
 _binaries = {
@@ -74,11 +71,6 @@ set -euo pipefail
 {kustomize} build --load-restrictor LoadRestrictionsNone --reorder legacy {kustomize_dir} {template_part} {resolver_part} >{out}
 """
 
-# buildifier: disable=provider-params
-KustomizeInfo = provider(fields = [
-    "image_pushes",
-])
-
 def _kustomize_impl(ctx):
     kustomization_yaml_file = ctx.actions.declare_file(ctx.attr.name + "/kustomization.yaml")
     root = kustomization_yaml_file.dirname
@@ -107,6 +99,9 @@ def _kustomize_impl(ctx):
         kustomization_yaml += "configurations:\n"
         for _, f in enumerate(ctx.files.configurations):
             kustomization_yaml += "- {}/{}\n".format(upupup, f.path)
+
+    if ctx.file.openapi_path:
+        kustomization_yaml += "openapi:\n  path: {}/{}\n".format(upupup, ctx.file.openapi_path.path)
 
     if ctx.files.patches:
         kustomization_yaml += "patches:\n"
@@ -190,18 +185,13 @@ def _kustomize_impl(ctx):
         resolver_part += " | {resolver} ".format(resolver = ctx.executable._resolver.path)
         tmpfiles.append(ctx.executable._resolver)
         for img in ctx.attr.images:
-            kpi = img[K8sPushInfo]
-            regrepo = kpi.registry + "/" + kpi.repository
+            kpi = img[GitopsPushInfo]
+            regrepo = kpi.repository
             if "{" in regrepo:
                 regrepo = stamp(ctx, regrepo, tmpfiles, ctx.attr.name + regrepo.replace("/", "_"))
 
-            resolver_part += " --image {}={}@$(cat {})".format(kpi.image_label, regrepo, kpi.digestfile.path)
-            if str(kpi.image_label).startswith("@//"):
-                # Bazel 6 add a @ prefix to the image label https://github.com/bazelbuild/bazel/issues/17069
-                label = str(kpi.image_label)[1:]
-                resolver_part += " --image {}={}@$(cat {})".format(label, regrepo, kpi.digestfile.path)
-            if kpi.legacy_image_name:
-                resolver_part += " --image {}={}@$(cat {})".format(kpi.legacy_image_name, regrepo, kpi.digestfile.path)
+            label_str = str(kpi.image_label).lstrip("@")
+            resolver_part += " --image {}={}@$(cat {})".format(label_str, regrepo, kpi.digestfile.path)
             tmpfiles.append(kpi.digestfile)
             transitive_runfiles.append(img[DefaultInfo].default_runfiles)
 
@@ -230,15 +220,12 @@ def _kustomize_impl(ctx):
         # Image name substitutions
         if ctx.attr.images:
             for _, img in enumerate(ctx.attr.images):
-                kpi = img[K8sPushInfo]
-                regrepo = kpi.registry + "/" + kpi.repository
+                kpi = img[GitopsPushInfo]
+                regrepo = kpi.repository
                 if "{" in regrepo:
                     regrepo = stamp(ctx, regrepo, tmpfiles, ctx.attr.name + regrepo.replace("/", "_"))
-                template_part += " --variable={}={}@$(cat {})".format(kpi.image_label, regrepo, kpi.digestfile.path)
-                if str(kpi.image_label).startswith("@//"):
-                    # Bazel 6 add a @ prefix to the image label https://github.com/bazelbuild/bazel/issues/17069
-                    label = str(kpi.image_label)[1:]
-                    template_part += " --variable={}={}@$(cat {})".format(label, regrepo, kpi.digestfile.path)
+                label_str = str(kpi.image_label).lstrip("@")
+                template_part += " --variable={}={}@$(cat {})".format(label_str, regrepo, kpi.digestfile.path)
 
                 # Image digest
                 template_part += " --variable={}=$(cat {} | cut -d ':' -f 2)".format(str(kpi.image_label) + ".digest", kpi.digestfile.path)
@@ -248,9 +235,6 @@ def _kustomize_impl(ctx):
                     label = str(kpi.image_label)[1:]
                     template_part += " --variable={}=$(cat {} | cut -d ':' -f 2)".format(str(label) + ".digest", kpi.digestfile.path)
                     template_part += " --variable={}=$(cat {} | cut -c 8-17)".format(str(label) + ".short-digest", kpi.digestfile.path)
-
-                if kpi.legacy_image_name:
-                    template_part += " --variable={}={}@$(cat {})".format(kpi.legacy_image_name, regrepo, kpi.digestfile.path)
 
         template_part += " "
 
@@ -266,7 +250,7 @@ def _kustomize_impl(ctx):
 
     ctx.actions.run(
         outputs = [ctx.outputs.yaml],
-        inputs = ctx.files.manifests + ctx.files.configmaps_srcs + ctx.files.secrets_srcs + ctx.files.configurations + [kustomization_yaml_file] + tmpfiles + ctx.files.patches + ctx.files.deps,
+        inputs = ctx.files.manifests + ctx.files.configmaps_srcs + ctx.files.secrets_srcs + ctx.files.configurations + ctx.files.openapi_path + [kustomization_yaml_file] + tmpfiles + ctx.files.patches + ctx.files.deps,
         executable = script,
         mnemonic = "Kustomize",
         tools = [ctx.executable._kustomize_bin],
@@ -274,11 +258,11 @@ def _kustomize_impl(ctx):
 
     runfiles = ctx.runfiles(files = ctx.files.deps).merge_all(transitive_runfiles)
 
-    transitive_files = [m[DefaultInfo].files for m in ctx.attr.manifests if KustomizeInfo in m]
+    transitive_files = [m[DefaultInfo].files for m in ctx.attr.manifests if GitopsArtifactsInfo in m]
     transitive_files += [obj[DefaultInfo].files for obj in ctx.attr.objects]
 
-    transitive_image_pushes = [m[KustomizeInfo].image_pushes for m in ctx.attr.manifests if KustomizeInfo in m]
-    transitive_image_pushes += [obj[KustomizeInfo].image_pushes for obj in ctx.attr.objects]
+    transitive_image_pushes = [m[GitopsArtifactsInfo].image_pushes for m in ctx.attr.manifests if GitopsArtifactsInfo in m]
+    transitive_image_pushes += [obj[GitopsArtifactsInfo].image_pushes for obj in ctx.attr.objects]
 
     return [
         DefaultInfo(
@@ -288,7 +272,7 @@ def _kustomize_impl(ctx):
             ),
             runfiles = runfiles,
         ),
-        KustomizeInfo(
+        GitopsArtifactsInfo(
             image_pushes = depset(
                 ctx.attr.images,
                 transitive = transitive_image_pushes,
@@ -304,12 +288,12 @@ kustomize = rule(
         "deps_aliases": attr.string_dict(default = {}),
         "disable_name_suffix_hash": attr.bool(default = True),
         "end_tag": attr.string(default = "}}"),
-        "images": attr.label_list(doc = "a list of images used in manifests", providers = (K8sPushInfo,)),
+        "images": attr.label_list(doc = "a list of images used in manifests", providers = (GitopsPushInfo,)),
         "manifests": attr.label_list(allow_files = True),
         "name_prefix": attr.string(),
         "name_suffix": attr.string(),
         "namespace": attr.string(),
-        "objects": attr.label_list(doc = "a list of dependent kustomize objects", providers = (KustomizeInfo,)),
+        "objects": attr.label_list(doc = "a list of dependent kustomize objects", providers = (GitopsArtifactsInfo,)),
         "patches": attr.label_list(allow_files = True),
         "image_name_patches": attr.string_dict(default = {}, doc = "set new names for selected images"),
         "image_tag_patches": attr.string_dict(default = {}, doc = "set new tags for selected images"),
@@ -319,6 +303,7 @@ kustomize = rule(
         "configurations": attr.label_list(allow_files = True),
         "common_labels": attr.string_dict(default = {}),
         "common_annotations": attr.string_dict(default = {}),
+        "openapi_path": attr.label(allow_single_file = True, doc = "openapi schema file for the package. Use this attribute to add support for custom resources"),
         "_build_user_value": attr.label(
             default = Label("//skylib:build_user_value.txt"),
             allow_single_file = True,
@@ -356,17 +341,17 @@ kustomize = rule(
 )
 
 def _push_all_impl(ctx):
-    trans_img_pushes = depset(transitive = [obj[KustomizeInfo].image_pushes for obj in ctx.attr.srcs]).to_list()
+    trans_img_pushes = depset(transitive = [obj[GitopsArtifactsInfo].image_pushes for obj in ctx.attr.srcs]).to_list()
 
     ctx.actions.expand_template(
         template = ctx.file._tpl,
         substitutions = {
             "%{statements}": "\n".join([
-                                 "echo pushing {}/{}".format(exe[K8sPushInfo].registry, exe[K8sPushInfo].repository)
+                                 "echo pushing {}".format(exe[GitopsPushInfo].repository)
                                  for exe in trans_img_pushes
                              ]) + "\n" +
                              "\n".join([
-                                 "async \"${RUNFILES}/%s\"" % _get_runfile_path(ctx, exe.files_to_run.executable)
+                                 "async \"%s\"" % get_runfile_path(ctx, exe.files_to_run.executable)
                                  for exe in trans_img_pushes
                              ]) + "\nwaitpids\n",
         },
@@ -386,7 +371,7 @@ push_all run all pushes referred in images attribute
 k8s_container_push should be used.
     """,
     attrs = {
-        "srcs": attr.label_list(doc = "a list of images used in manifests", providers = (KustomizeInfo,)),
+        "srcs": attr.label_list(doc = "a list of images used in manifests", providers = (GitopsArtifactsInfo,)),
         "_tpl": attr.label(
             default = Label("//skylib/kustomize:run-all.sh.tpl"),
             allow_single_file = True,
@@ -408,13 +393,13 @@ def imagePushStatements(
         kustomize_objs,
         files = []):
     statements = ""
-    trans_img_pushes = depset(transitive = [obj[KustomizeInfo].image_pushes for obj in kustomize_objs]).to_list()
+    trans_img_pushes = depset(transitive = [obj[GitopsArtifactsInfo].image_pushes for obj in kustomize_objs]).to_list()
     statements += "\n".join([
-        "echo  pushing {}/{}".format(exe[K8sPushInfo].registry, exe[K8sPushInfo].repository)
+        "echo  pushing {}".format(exe[GitopsPushInfo].repository)
         for exe in trans_img_pushes
     ]) + "\n"
     statements += "\n".join([
-        "async \"${RUNFILES}/%s\"" % _get_runfile_path(ctx, exe.files_to_run.executable)
+        "async \"%s\"" % get_runfile_path(ctx, exe.files_to_run.executable)
         for exe in trans_img_pushes
     ]) + "\nwaitpids\n"
     files += [obj.files_to_run.executable for obj in trans_img_pushes]
@@ -441,15 +426,15 @@ fi
                            "mkdir -p $TARGET_DIR/{gitops_path}/{namespace}/{cluster}\n" +
                            "echo '# GENERATED BY {rulename} -> {gitopsrulename}' > $TARGET_DIR/{gitops_path}/{namespace}/{cluster}/{file}\n" +
                            "{template_engine} --template={infile} --variable=NAMESPACE={namespace} --stamp_info_file={info_file} >> $TARGET_DIR/{gitops_path}/{namespace}/{cluster}/{file}\n").format(
-                infile = infile.path,
+                infile = get_runfile_path(ctx, infile),
                 rulename = inattr.label,
                 gitopsrulename = ctx.label,
                 namespace = namespace,
                 gitops_path = ctx.attr.gitops_path,
                 cluster = cluster,
                 file = _remove_prefixes(infile.path.split("/")[-1], strip_prefixes),
-                template_engine = "${RUNFILES}/%s" % _get_runfile_path(ctx, ctx.executable._template_engine),
-                info_file = ctx.file._info_file.path,
+                template_engine = get_runfile_path(ctx, ctx.executable._template_engine),
+                info_file = get_runfile_path(ctx, ctx.file._info_file),
             )
 
     ctx.actions.expand_template(
@@ -468,14 +453,15 @@ fi
         rf = rf.merge(dep_rf)
     return [
         DefaultInfo(runfiles = rf),
-        KustomizeInfo(
-            image_pushes = depset(transitive = [obj[KustomizeInfo].image_pushes for obj in ctx.attr.srcs]),
+        GitopsArtifactsInfo(
+            image_pushes = depset(transitive = [obj[GitopsArtifactsInfo].image_pushes for obj in ctx.attr.srcs]),
+            deployment_branch = ctx.attr.deployment_branch,
         ),
     ]
 
 gitops = rule(
     attrs = {
-        "srcs": attr.label_list(providers = (KustomizeInfo,)),
+        "srcs": attr.label_list(providers = (GitopsArtifactsInfo,)),
         "cluster": attr.string(mandatory = True),
         "namespace": attr.string(mandatory = True),
         "deployment_branch": attr.string(),
@@ -503,34 +489,37 @@ gitops = rule(
 def _kubectl_impl(ctx):
     files = [] + ctx.files.srcs
 
+    statements = ""
+    transitive = None
+    transitive_runfiles = []
+
     cluster_arg = ctx.attr.cluster
     cluster_arg = ctx.expand_make_variables("cluster", cluster_arg, {})
     if "{" in ctx.attr.cluster:
         cluster_arg = stamp(ctx, cluster_arg, files, ctx.label.name + ".cluster-name", True)
 
-    user_arg = ctx.attr.user
-    user_arg = ctx.expand_make_variables("user", user_arg, {})
-    if "{" in ctx.attr.user:
-        user_arg = stamp(ctx, user_arg, files, ctx.label.name + ".user-name", True)
+    if ctx.attr.user:
+        user_arg = ctx.attr.user
+        user_arg = ctx.expand_make_variables("user", user_arg, {})
+        if "{" in ctx.attr.user:
+            user_arg = stamp(ctx, user_arg, files, ctx.label.name + ".user-name", True)
+    else:
+        user_arg = """$(kubectl config view -o jsonpath='{.users[?(@.name == '"\\"${CLUSTER}\\")].name}")"""
 
     kubectl_command_arg = ctx.attr.command
     kubectl_command_arg = ctx.expand_make_variables("kubectl_command", kubectl_command_arg, {})
 
-    statements = ""
-    transitive = None
-    transitive_runfiles = []
-
     files += [ctx.executable._template_engine, ctx.file._info_file]
 
     if ctx.attr.push:
-        trans_img_pushes = depset(transitive = [obj[KustomizeInfo].image_pushes for obj in ctx.attr.srcs]).to_list()
+        trans_img_pushes = depset(transitive = [obj[GitopsArtifactsInfo].image_pushes for obj in ctx.attr.srcs]).to_list()
         statements += "\n".join([
-            "# {}\n".format(exe[K8sPushInfo].image_label) +
-            "echo  pushing {}/{}".format(exe[K8sPushInfo].registry, exe[K8sPushInfo].repository)
+            "# {}\n".format(exe[GitopsPushInfo].image_label) +
+            "echo  pushing {}".format(exe[GitopsPushInfo].repository)
             for exe in trans_img_pushes
         ]) + "\n"
         statements += "\n".join([
-            "async \"${RUNFILES}/%s\"" % _get_runfile_path(ctx, exe.files_to_run.executable)
+            "async \"%s\"" % get_runfile_path(ctx, exe.files_to_run.executable)
             for exe in trans_img_pushes
         ]) + "\nwaitpids\n"
         files += [obj.files_to_run.executable for obj in trans_img_pushes]
@@ -540,12 +529,10 @@ def _kubectl_impl(ctx):
     namespace = ctx.attr.namespace
     for inattr in ctx.attr.srcs:
         for infile in inattr.files.to_list():
-            statements += "{template_engine} --template={infile} --variable=NAMESPACE={namespace} --stamp_info_file={info_file} | kubectl --cluster=\"{cluster}\" --user=\"{user}\" {kubectl_command} -f -\n".format(
+            statements += "{template_engine} --template={infile} --variable=NAMESPACE={namespace} --stamp_info_file={info_file} | kubectl --cluster=\"$CLUSTER\" --user=\"$USER\" {kubectl_command} -f -\n".format(
                 infile = infile.short_path,
-                cluster = cluster_arg,
-                user = user_arg,
                 kubectl_command = kubectl_command_arg,
-                template_engine = "${RUNFILES}/%s" % _get_runfile_path(ctx, ctx.executable._template_engine),
+                template_engine = get_runfile_path(ctx, ctx.executable._template_engine),
                 namespace = namespace,
                 info_file = ctx.file._info_file.short_path,
             )
@@ -553,6 +540,8 @@ def _kubectl_impl(ctx):
     ctx.actions.expand_template(
         template = ctx.file._template,
         substitutions = {
+            "%{cluster}": cluster_arg,
+            "%{user}": user_arg,
             "%{statements}": statements,
         },
         output = ctx.outputs.executable,
@@ -567,11 +556,11 @@ def _kubectl_impl(ctx):
 
 kubectl = rule(
     attrs = {
-        "srcs": attr.label_list(providers = (KustomizeInfo,)),
+        "srcs": attr.label_list(providers = (GitopsArtifactsInfo,)),
         "cluster": attr.string(mandatory = True),
         "namespace": attr.string(mandatory = True),
         "command": attr.string(default = "apply"),
-        "user": attr.string(default = "{BUILD_USER}"),
+        "user": attr.string(),
         "push": attr.bool(default = True),
         "_build_user_value": attr.label(
             default = Label("//skylib:build_user_value.txt"),
@@ -588,7 +577,7 @@ kubectl = rule(
             allow_files = True,
         ),
         "_template": attr.label(
-            default = Label("//skylib/kustomize:run-all.sh.tpl"),
+            default = Label("//skylib/kustomize:kubectl.sh.tpl"),
             allow_single_file = True,
         ),
         "_template_engine": attr.label(

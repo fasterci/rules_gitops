@@ -14,9 +14,14 @@ set -euo pipefail
 [ -o xtrace ] && env
 
 function guess_runfiles() {
-    pushd ${BASH_SOURCE[0]}.runfiles > /dev/null 2>&1
-    pwd
-    popd > /dev/null 2>&1
+    if [ -d ${BASH_SOURCE[0]}.runfiles ]; then
+        # Runfiles are adjacent to the current script.
+        echo "$( cd ${BASH_SOURCE[0]}.runfiles && pwd )"
+    else
+        # The current script is within some other script's runfiles.
+        mydir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+        echo $mydir | sed -e 's|\(.*\.runfiles\)/.*|\1|'
+    fi
 }
 
 RUNFILES=${TEST_SRCDIR:-$(guess_runfiles)}
@@ -44,7 +49,7 @@ set +e
 if [ -n "${K8S_MYNAMESPACE:-}" ]
 then
     # do not create random namesspace
-    NAMESPACE=${USER}
+    NAMESPACE=`whoami`
     # do not delete namespace after the test is complete
     DELETE_NAMESPACE_FLAG=""
 else
