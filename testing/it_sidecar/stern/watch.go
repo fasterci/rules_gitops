@@ -51,6 +51,8 @@ func Watch(ctx context.Context, i v1.PodInterface, containerState ContainerState
 
 	for {
 		select {
+		case <-ctx.Done():
+			return nil
 		case e := <-watcher.ResultChan():
 			if e.Object == nil {
 				// watcher channel was closed (because of error)
@@ -103,8 +105,6 @@ func Watch(ctx context.Context, i v1.PodInterface, containerState ContainerState
 					})
 				}
 			}
-		case <-ctx.Done():
-			return nil
 		}
 	}
 
