@@ -41,81 +41,71 @@ func (t *Target) GetID() string {
 // Watch starts listening to Kubernetes events and emits modified
 // containers/pods. The first result is targets added, the second is targets
 // removed
-func Watch(ctx context.Context, i v1.PodInterface, containerState ContainerState, labelSelector labels.Selector) (chan *Target, chan *Target, error) {
+func Watch(ctx context.Context, i v1.PodInterface, containerState ContainerState, labelSelector labels.Selector, onAdded, onRemoved func(*Target)) error {
 	watcher, err := i.Watch(ctx, metav1.ListOptions{Watch: true, LabelSelector: labelSelector.String()})
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to set up watch: %s", err)
+		return fmt.Errorf("failed to set up watch: %s", err)
 	}
 
-	added := make(chan *Target)
-	removed := make(chan *Target)
+	defer watcher.Stop()
 
-	defer func() {
-		watcher.Stop()
-		close(added)
-		close(removed)
-	}()
+	for {
+		select {
+		case e := <-watcher.ResultChan():
+			if e.Object == nil {
+				// watcher channel was closed (because of error)
+				return nil
+			}
 
-	go func() {
-		for {
-			select {
-			case e := <-watcher.ResultChan():
-				if e.Object == nil {
-					// Closed because of error
-					return
-				}
+			var (
+				pod *corev1.Pod
+				ok  bool
+			)
+			if pod, ok = e.Object.(*corev1.Pod); !ok {
+				continue
+			}
 
-				var (
-					pod *corev1.Pod
-					ok  bool
-				)
-				if pod, ok = e.Object.(*corev1.Pod); !ok {
-					continue
-				}
+			log.Printf("pod %s/%s event %s", pod.Namespace, pod.Name, e.Type)
 
-				log.Printf("pod %s/%s event %s", pod.Namespace, pod.Name, e.Type)
+			switch e.Type {
+			case watch.Added, watch.Modified:
+				var statuses []corev1.ContainerStatus
+				statuses = append(statuses, pod.Status.InitContainerStatuses...)
+				statuses = append(statuses, pod.Status.ContainerStatuses...)
 
-				switch e.Type {
-				case watch.Added, watch.Modified:
-					var statuses []corev1.ContainerStatus
-					statuses = append(statuses, pod.Status.InitContainerStatuses...)
-					statuses = append(statuses, pod.Status.ContainerStatuses...)
+				for _, c := range statuses {
+					// if c.RestartCount > 0 {
+					// 	log.Print("container ", c.Name, " has restart count ", c.RestartCount)
+					// 	return
+					// }
 
-					for _, c := range statuses {
-						// if c.RestartCount > 0 {
-						// 	log.Print("container ", c.Name, " has restart count ", c.RestartCount)
-						// 	return
-						// }
+					log.Print("container ", c.Name, " has state ", c.State)
 
-						log.Print("container ", c.Name, " has state ", c.State)
-
-						if containerState.Match(c.State) {
-							added <- &Target{
-								Namespace: pod.Namespace,
-								Pod:       pod.Name,
-								Container: c.Name,
-							}
-						}
-					}
-				case watch.Deleted:
-					var containers []corev1.Container
-					containers = append(containers, pod.Spec.Containers...)
-					containers = append(containers, pod.Spec.InitContainers...)
-
-					for _, c := range containers {
-
-						removed <- &Target{
+					if containerState.Match(c.State) {
+						onAdded(&Target{
 							Namespace: pod.Namespace,
 							Pod:       pod.Name,
 							Container: c.Name,
-						}
+						})
 					}
 				}
-			case <-ctx.Done():
-				return
-			}
-		}
-	}()
+			case watch.Deleted:
+				var containers []corev1.Container
+				containers = append(containers, pod.Spec.Containers...)
+				containers = append(containers, pod.Spec.InitContainers...)
 
-	return added, removed, nil
+				for _, c := range containers {
+
+					onRemoved(&Target{
+						Namespace: pod.Namespace,
+						Pod:       pod.Name,
+						Container: c.Name,
+					})
+				}
+			}
+		case <-ctx.Done():
+			return nil
+		}
+	}
+
 }

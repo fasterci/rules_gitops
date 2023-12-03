@@ -12,7 +12,6 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
-	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -83,6 +82,15 @@ func init() {
 	flag.BoolVar(&allowErrors, "allow_errors", false, "do not treat Failed in events as error. Use only if crashloop is expected")
 }
 
+// contains returns true if slice v contains an item
+func contains(v []string, item string) bool {
+	for _, s := range v {
+		if s == item {
+			return true
+		}
+	}
+	return false
+}
 // listReadyApps converts a list returned from podsInformer.GetStore().List() to a map containing apps with ready status
 // app is determined by app label
 func listReadyApps(list []interface{}) (readypods, notReady []string) {
@@ -110,7 +118,7 @@ func listReadyApps(list []interface{}) (readypods, notReady []string) {
 		}
 	}
 	for _, app := range waitForApps {
-		if !slices.Contains(readyApps, app) {
+		if !contains(readyApps, app) {
 			notReady = append(notReady, app)
 		}
 	}
@@ -202,7 +210,7 @@ func listReadyServices(list []interface{}) (ready, notReady []string) {
 		}
 	}
 	for service, _ := range pfconfig.services {
-		if !slices.Contains(ready, service) {
+		if !contains(ready, service) {
 			notReady = append(notReady, service)
 		}
 	}
