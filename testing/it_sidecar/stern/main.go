@@ -17,7 +17,6 @@ package stern
 import (
 	"context"
 	"fmt"
-	"regexp"
 
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/kubernetes"
@@ -26,7 +25,7 @@ import (
 // Run starts the main run loop
 func Run(ctx context.Context, namespace string, clientset *kubernetes.Clientset) error {
 
-	added, removed, err := Watch(ctx, clientset.CoreV1().Pods(namespace), regexp.MustCompile(".*"), regexp.MustCompile(".*"), RUNNING, labels.Everything())
+	added, removed, err := Watch(ctx, clientset.CoreV1().Pods(namespace), RUNNING, labels.Everything())
 	if err != nil {
 		return fmt.Errorf("failed to set up watch: %v", err)
 	}

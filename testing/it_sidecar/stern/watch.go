@@ -17,13 +17,13 @@ package stern
 import (
 	"context"
 	"fmt"
-	"regexp"
+	"log"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/watch"
-	"k8s.io/client-go/kubernetes/typed/core/v1"
+	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
 )
 
 // Target is a target to watch
@@ -41,7 +41,7 @@ func (t *Target) GetID() string {
 // Watch starts listening to Kubernetes events and emits modified
 // containers/pods. The first result is targets added, the second is targets
 // removed
-func Watch(ctx context.Context, i v1.PodInterface, podFilter *regexp.Regexp, containerFilter *regexp.Regexp, containerState ContainerState, labelSelector labels.Selector) (chan *Target, chan *Target, error) {
+func Watch(ctx context.Context, i v1.PodInterface, containerState ContainerState, labelSelector labels.Selector) (chan *Target, chan *Target, error) {
 	watcher, err := i.Watch(ctx, metav1.ListOptions{Watch: true, LabelSelector: labelSelector.String()})
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to set up watch: %s", err)
@@ -49,6 +49,12 @@ func Watch(ctx context.Context, i v1.PodInterface, podFilter *regexp.Regexp, con
 
 	added := make(chan *Target)
 	removed := make(chan *Target)
+
+	defer func() {
+		watcher.Stop()
+		close(added)
+		close(removed)
+	}()
 
 	go func() {
 		for {
@@ -67,9 +73,7 @@ func Watch(ctx context.Context, i v1.PodInterface, podFilter *regexp.Regexp, con
 					continue
 				}
 
-				if !podFilter.MatchString(pod.Name) {
-					continue
-				}
+				log.Printf("pod %s/%s event %s", pod.Namespace, pod.Name, e.Type)
 
 				switch e.Type {
 				case watch.Added, watch.Modified:
@@ -78,12 +82,12 @@ func Watch(ctx context.Context, i v1.PodInterface, podFilter *regexp.Regexp, con
 					statuses = append(statuses, pod.Status.ContainerStatuses...)
 
 					for _, c := range statuses {
-						if !containerFilter.MatchString(c.Name) {
-							continue
-						}
-						// if containerExcludeFilter != nil && containerExcludeFilter.MatchString(c.Name) {
-						// 	continue
+						// if c.RestartCount > 0 {
+						// 	log.Print("container ", c.Name, " has restart count ", c.RestartCount)
+						// 	return
 						// }
+
+						log.Print("container ", c.Name, " has state ", c.State)
 
 						if containerState.Match(c.State) {
 							added <- &Target{
@@ -99,12 +103,6 @@ func Watch(ctx context.Context, i v1.PodInterface, podFilter *regexp.Regexp, con
 					containers = append(containers, pod.Spec.InitContainers...)
 
 					for _, c := range containers {
-						if !containerFilter.MatchString(c.Name) {
-							continue
-						}
-						// if containerExcludeFilter != nil && containerExcludeFilter.MatchString(c.Name) {
-						// 	continue
-						// }
 
 						removed <- &Target{
 							Namespace: pod.Namespace,
@@ -114,9 +112,6 @@ func Watch(ctx context.Context, i v1.PodInterface, podFilter *regexp.Regexp, con
 					}
 				}
 			case <-ctx.Done():
-				watcher.Stop()
-				close(added)
-				close(removed)
 				return
 			}
 		}

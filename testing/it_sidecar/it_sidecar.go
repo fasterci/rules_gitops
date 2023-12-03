@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -70,25 +71,16 @@ var (
 	timeout         = flag.Duration("timeout", time.Second*30, "execution timeout")
 	deleteNamespace = flag.Bool("delete_namespace", false, "delete namespace as part of the cleanup")
 	pfconfig        = portForwardConf{services: make(map[string][]uint16)}
-	signalChannel   chan os.Signal
 	kubeconfig      string
 	waitForApps     arrayFlags
+	allowErrors     bool
 )
 
 func init() {
 	flag.Var(&pfconfig, "portforward", "set a port forward item in form of servicename:port")
 	flag.StringVar(&kubeconfig, "kubeconfig", os.Getenv("KUBECONFIG"), "path to kubernetes config file")
 	flag.Var(&waitForApps, "waitforapp", "wait for pods with label app=<this parameter>")
-}
-
-// contains returns true if slice v contains an item
-func contains(v []string, item string) bool {
-	for _, s := range v {
-		if s == item {
-			return true
-		}
-	}
-	return false
+	flag.BoolVar(&allowErrors, "allow_errors", false, "do not treat Failed in events as error. Use only if crashloop is expected")
 }
 
 // listReadyApps converts a list returned from podsInformer.GetStore().List() to a map containing apps with ready status
@@ -118,16 +110,45 @@ func listReadyApps(list []interface{}) (readypods, notReady []string) {
 		}
 	}
 	for _, app := range waitForApps {
-		if !contains(readyApps, app) {
+		if !slices.Contains(readyApps, app) {
 			notReady = append(notReady, app)
 		}
 	}
 	return
 }
 
+// listenForEvents listens for events and prints them to stdout. if event reason is "Failed" it will call the failure callback
+func listenForEvents(ctx context.Context, clientset *kubernetes.Clientset, onFailure func(*v1.Event)) {
+
+	kubeInformerFactory := informers.NewFilteredSharedInformerFactory(clientset, time.Second*30, *namespace, nil)
+	eventsInformer := kubeInformerFactory.Core().V1().Events().Informer()
+
+	fn := func(obj interface{}) {
+		event, ok := obj.(*v1.Event)
+		if !ok {
+			log.Print("Event informer received unexpected object")
+			return
+		}
+		log.Printf("EVENT %s %s %s %s", event.Namespace, event.InvolvedObject.Name, event.Reason, event.Message)
+		if event.Reason == "Failed" {
+			onFailure(event)
+		}
+	}
+
+	handler := &cache.ResourceEventHandlerFuncs{
+		AddFunc:    fn,
+		DeleteFunc: fn,
+		UpdateFunc: func(old interface{}, new interface{}) {
+			fn(new)
+		},
+	}
+
+	eventsInformer.AddEventHandler(handler)
+
+	go kubeInformerFactory.Start(ctx.Done())
+}
+
 func waitForPods(ctx context.Context, clientset *kubernetes.Clientset) error {
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
 	events := make(chan interface{})
 	fn := func(obj interface{}) {
 		events <- obj
@@ -181,7 +202,7 @@ func listReadyServices(list []interface{}) (ready, notReady []string) {
 		}
 	}
 	for service, _ := range pfconfig.services {
-		if !contains(ready, service) {
+		if !slices.Contains(ready, service) {
 			notReady = append(notReady, service)
 		}
 	}
@@ -266,14 +287,14 @@ func portForward(ctx context.Context, clientset *kubernetes.Clientset, config *r
 		url := clientset.CoreV1().RESTClient().Post().Resource("pods").Namespace(podnamespace).Name(podname).SubResource("portforward").URL()
 		transport, upgrader, err := spdy.RoundTripperFor(config)
 		if err != nil {
-			return fmt.Errorf("Could not create round tripper: %v", err)
+			return fmt.Errorf("could not create round tripper: %v", err)
 		}
 		dialer := spdy.NewDialer(upgrader, &http.Client{Transport: transport}, "POST", url)
 		ports := []string{fmt.Sprintf(":%d", port)}
 		readyChan := make(chan struct{}, 1)
 		pf, err := portforward.New(dialer, ports, ctx.Done(), readyChan, os.Stderr, os.Stderr)
 		if err != nil {
-			return fmt.Errorf("Could not port forward into pod: %v", err)
+			return fmt.Errorf("could not port forward into pod: %v", err)
 		}
 		go func(port uint16) {
 			err := pf.ForwardPorts()
@@ -311,23 +332,10 @@ func cleanup(clientset *kubernetes.Clientset) {
 func main() {
 	flag.Parse()
 	log.SetOutput(os.Stdout)
-
 	ctx, cancel := context.WithTimeout(context.Background(), *timeout)
-
-	signalChannel = make(chan os.Signal, 1)
-	signal.Notify(signalChannel, os.Interrupt, syscall.SIGTERM)
-	defer func() {
-		signal.Stop(signalChannel)
-		cancel()
-	}()
-	// cancel context if signal is received
-	go func() {
-		select {
-		case <-signalChannel:
-			cancel()
-		case <-ctx.Done():
-		}
-	}()
+	defer cancel()
+	ctx, stopSignal := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
+	defer stopSignal()
 	// cancel context if stdin is closed
 	go func() {
 		reader := bufio.NewReader(os.Stdin)
@@ -355,6 +363,13 @@ func main() {
 	defer cleanup(clientset)
 
 	go stern.Run(ctx, *namespace, clientset)
+
+	listenForEvents(ctx, clientset, func(event *v1.Event) {
+		if !allowErrors {
+			log.Print("Terminate due to failure")
+			cancel()
+		}
+	})
 
 	if len(waitForApps) > 0 {
 		err = waitForPods(ctx, clientset)
