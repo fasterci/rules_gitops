@@ -59,7 +59,7 @@ var (
 	gitopsPath             = flag.String("gitops_path", "cloud", "location to store files in repo.")
 	gitopsTmpDir           = flag.String("gitops_tmpdir", os.TempDir(), "location to check out git tree with /cloud.")
 	target                 = flag.String("target", "//... except //experimental/...", "target to scan. Useful for debugging only")
-	pushParallelism        = flag.Int("push_parallelism", 5, "Number of image pushes to perform concurrently")
+	pushParallelism        = flag.Int("push_parallelism", 1, "Number of image pushes to perform concurrently")
 	prInto                 = flag.String("gitops_pr_into", "master", "use this branch as the source branch and target for deployment PR")
 	prBody                 = flag.String("gitops_pr_body", "", "a body message for deployment PR")
 	prTitle                = flag.String("gitops_pr_title", "", "a title for deployment PR")
@@ -228,8 +228,9 @@ func main() {
 		go func() {
 			defer wg.Done()
 			for target := range targetsCh {
-				bin := bazel.TargetToExecutable(target)
-				exec.Mustex("", bin)
+				//bin := bazel.TargetToExecutable(target)
+				//exec.Mustex("", bin)
+				exec.Mustex("", *bazelCmd, "run", target)
 			}
 		}()
 	}
