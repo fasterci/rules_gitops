@@ -228,9 +228,14 @@ func main() {
 		go func() {
 			defer wg.Done()
 			for target := range targetsCh {
-				//bin := bazel.TargetToExecutable(target)
-				//exec.Mustex("", bin)
-				exec.Mustex("", *bazelCmd, "run", target)
+				bin := bazel.TargetToExecutable(target)
+				fi, err := os.Stat(bin)
+				if err == nil && fi.Mode().IsRegular() {
+					exec.Mustex("", bin)
+				} else {
+					log.Println("target", target, "is not a file, running as a command")
+					exec.Mustex("", *bazelCmd, "run", target)
+				}
 			}
 		}()
 	}
