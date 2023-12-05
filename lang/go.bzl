@@ -5,6 +5,7 @@ load("@rules_oci//oci:defs.bzl", "oci_image")
 def go_image(
         name,
         embed,
+        tars = [],
         goarch = "amd64",
         goos = "linux",
         gotags = ["containers_image_openpgp"],
@@ -30,6 +31,6 @@ def go_image(
         name = name,
         base = base,
         entrypoint = ["/" + name + "_binary"],
-        tars = [":" + name + "_tar"],
+        tars = [":" + name + "_tar"] + tars,
         visibility = visibility,
     )
