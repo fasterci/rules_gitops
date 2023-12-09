@@ -34,7 +34,7 @@ def go_image(
     oci_image(
         name = name,
         base = base,
-        entrypoint = ["/" + package_dir + name + "_binary"],
+        entrypoint = ["/" + package_dir + name + "_binary_/" + name + "_binary"],
         tars = [":" + name + "_tar"] + tars,
         visibility = visibility,
     )
