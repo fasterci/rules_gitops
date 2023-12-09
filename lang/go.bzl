@@ -25,6 +25,7 @@ def go_image(
     pkg_tar(
         name = name + "_tar",
         srcs = [":" + name + "_binary"],
+        include_runfiles = True,
         visibility = visibility,
     )
     oci_image(
