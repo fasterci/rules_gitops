@@ -27,6 +27,7 @@ def go_image(
         srcs = [":" + name + "_binary"],
         include_runfiles = True,
         visibility = visibility,
+        strip_prefix = ".",
     )
     oci_image(
         name = name,
