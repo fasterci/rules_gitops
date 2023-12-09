@@ -10,7 +10,7 @@ def go_image(
         goos = "linux",
         gotags = ["containers_image_openpgp"],
         pure = "on",
-        symlinks = {},
+        package_dir = "",
         base = "@go_image_static",
         visibility = ["//visibility:public"]):
     """Emulate syntax of rules_gitops go_image."""
@@ -28,12 +28,12 @@ def go_image(
         srcs = [":" + name + "_binary"],
         include_runfiles = True,
         visibility = visibility,
-        symlinks = symlinks,
+        package_dir = package_dir,
     )
     oci_image(
         name = name,
         base = base,
-        entrypoint = ["/" + name + "_binary"],
+        entrypoint = ["/" + package_dir + name + "_binary"],
         tars = [":" + name + "_tar"] + tars,
         visibility = visibility,
     )
