@@ -29,6 +29,7 @@ def go_image(
         include_runfiles = True,
         visibility = visibility,
         package_dir = package_dir,
+        strip_prefix = ".",
     )
     oci_image(
         name = name,
