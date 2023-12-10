@@ -23,29 +23,30 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
-	"k8s.io/client-go/rest"
 )
 
 type Tail struct {
 	Namespace     string
 	PodName       string
 	ContainerName string
-	req           *rest.Request
-	closed        chan struct{}
+	ctx           context.Context
+	cancel        context.CancelFunc
 }
 
 // NewTail returns a new tail for a Kubernetes container inside a pod
-func NewTail(namespace, podName, containerName string) *Tail {
+func NewTail(ctx context.Context, namespace, podName, containerName string) *Tail {
+	ctx, cancel := context.WithCancel(ctx)
 	return &Tail{
 		Namespace:     namespace,
 		PodName:       podName,
 		ContainerName: containerName,
-		closed:        make(chan struct{}),
+		ctx:           ctx,
+		cancel:        cancel,
 	}
 }
 
 // Start starts tailing
-func (t *Tail) Start(ctx context.Context, i v1.PodInterface) {
+func (t *Tail) Start(i v1.PodInterface) {
 
 	go func() {
 		fmt.Fprintf(os.Stderr, "+ %s/%s\n", t.PodName, t.ContainerName)
@@ -56,7 +57,7 @@ func (t *Tail) Start(ctx context.Context, i v1.PodInterface) {
 			Container:  t.ContainerName,
 		})
 
-		stream, err := req.Stream(ctx)
+		stream, err := req.Stream(t.ctx)
 		if err != nil {
 			log.Printf("Error opening stream to %s/%s/%s: %s", t.Namespace, t.PodName, t.ContainerName, err)
 			return
@@ -64,36 +65,31 @@ func (t *Tail) Start(ctx context.Context, i v1.PodInterface) {
 		defer stream.Close()
 
 		go func() {
-			<-t.closed
+			<-t.ctx.Done()
 			stream.Close()
 		}()
 
 		reader := bufio.NewReader(stream)
 
 		for {
-			line, err := reader.ReadBytes('\n')
+			line, err := reader.ReadString('\n')
 			if err != nil {
 				return
 			}
 
-			str := string(line)
-			t.Print(str)
+			t.Print(line)
 		}
 	}()
 
-	go func() {
-		<-ctx.Done()
-		close(t.closed)
-	}()
 }
 
 // Close stops tailing
 func (t *Tail) Close() {
 	fmt.Fprintf(os.Stderr, "Log finished %s\n", t.PodName)
-	close(t.closed)
+	t.cancel()
 }
 
-// Print prints a color coded log message with the pod and container names
+// Print prints a log message with the pod and container names
 func (t *Tail) Print(msg string) {
 	fmt.Fprintf(os.Stderr, "[%s/%s]: %s", t.PodName, t.ContainerName, msg)
 }
