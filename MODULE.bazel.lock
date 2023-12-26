@@ -1,6 +1,6 @@
 {
   "lockFileVersion": 3,
-  "moduleFileHash": "885474f6754a89546dcaae0e4f48c9acc7cc8a9bc5d9d85c690089c6dbc89ece",
+  "moduleFileHash": "b2c9dfe2c6aa4fc92a48371f885a1b411e0cd87afc1c873b11b11d76703da853",
   "flags": {
     "cmdRegistries": [
       "https://bcr.bazel.build/"
@@ -100,7 +100,8 @@
             "column": 0
           },
           "imports": {
-            "kustomize_bin": "kustomize_bin"
+            "kustomize_bin": "kustomize_bin",
+            "k8s_test": "k8s_test"
           },
           "devImports": [],
           "tags": [
@@ -114,6 +115,20 @@
                 "file": "@@//:MODULE.bazel",
                 "line": 35,
                 "column": 10
+              }
+            },
+            {
+              "tagName": "@rules_gitops//skylib:k8s.bzl%kubeconfig",
+              "attributeValues": {
+                "cluster": "mycluster",
+                "use_host_config": true,
+                "name": "k8s_test"
+              },
+              "devDependency": false,
+              "location": {
+                "file": "@@//:MODULE.bazel",
+                "line": 38,
+                "column": 11
               }
             }
           ],
@@ -1258,7 +1273,7 @@
   "moduleExtensions": {
     "//:MODULE.bazel%_repo_rules": {
       "general": {
-        "bzlTransitiveDigest": "xatksuRon754FTJsjpA+CHhH2suZ3ERy/q7s8CC3MdE=",
+        "bzlTransitiveDigest": "AkNpirlxCUyl+ASuCYgny5TQn2yr8MjH5cRBzUO8y2A=",
         "accumulatedFileDigests": {},
         "envVariables": {},
         "generatedRepoSpecs": {
@@ -1267,6 +1282,15 @@
             "ruleClassName": "download_binary",
             "attributes": {
               "name": "_main~_repo_rules~kustomize_bin"
+            }
+          },
+          "k8s_test": {
+            "bzlFile": "@@//skylib:k8s.bzl",
+            "ruleClassName": "kubeconfig",
+            "attributes": {
+              "cluster": "mycluster",
+              "use_host_config": true,
+              "name": "_main~_repo_rules~k8s_test"
             }
           }
         }

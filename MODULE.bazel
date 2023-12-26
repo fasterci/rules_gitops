@@ -34,6 +34,13 @@ use_repo(
 repo_rule = use_repo_rule("@rules_gitops//skylib/kustomize:kustomize.bzl", "download_binary")
 repo_rule(name = "kustomize_bin")
 
+kubeconfig = use_repo_rule("@rules_gitops//skylib:k8s.bzl", "kubeconfig")
+kubeconfig(
+    name = "k8s_test",
+    cluster = "mycluster",
+    use_host_config = True,
+)
+
 # toolchain = use_extension(
 #     "@rules_gitops//gitops:extensions.bzl",
 #     "kustomize",
