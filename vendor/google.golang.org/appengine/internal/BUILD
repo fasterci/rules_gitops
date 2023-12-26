@@ -15,7 +15,7 @@ go_library(
         "net.go",
         "transaction.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/google.golang.org/appengine/internal",
+    importmap = "github.com/fasterci/rules_gitops/vendor/google.golang.org/appengine/internal",
     importpath = "google.golang.org/appengine/internal",
     visibility = ["//vendor/google.golang.org/appengine:__subpackages__"],
     deps = [

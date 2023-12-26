@@ -16,7 +16,7 @@ go_library(
         "wire.go",
         "wrappers.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/github.com/golang/protobuf/proto",
+    importmap = "github.com/fasterci/rules_gitops/vendor/github.com/golang/protobuf/proto",
     importpath = "github.com/golang/protobuf/proto",
     visibility = ["//visibility:public"],
     deps = [

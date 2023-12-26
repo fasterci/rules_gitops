@@ -11,7 +11,7 @@ go_library(
         "selfsubjectrulesreview.go",
         "subjectaccessreview.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/client-go/kubernetes/typed/authorization/v1",
+    importmap = "github.com/fasterci/rules_gitops/vendor/k8s.io/client-go/kubernetes/typed/authorization/v1",
     importpath = "k8s.io/client-go/kubernetes/typed/authorization/v1",
     visibility = ["//visibility:public"],
     deps = [

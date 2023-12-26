@@ -8,7 +8,7 @@ go_library(
         "tail.go",
         "watch.go",
     ],
-    importpath = "github.com/adobe/rules_gitops/testing/it_sidecar/stern",
+    importpath = "github.com/fasterci/rules_gitops/testing/it_sidecar/stern",
     visibility = ["//visibility:public"],
     deps = [
         "//vendor/k8s.io/api/core/v1:go_default_library",

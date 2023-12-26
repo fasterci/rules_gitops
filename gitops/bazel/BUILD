@@ -15,7 +15,7 @@ licenses(["notice"])  # Apache 2.0
 go_library(
     name = "go_default_library",
     srcs = ["bazeltargets.go"],
-    importpath = "github.com/adobe/rules_gitops/gitops/bazel",
+    importpath = "github.com/fasterci/rules_gitops/gitops/bazel",
     visibility = ["//visibility:public"],
 )
 

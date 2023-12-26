@@ -13,13 +13,13 @@
 # gazelle:proto disable_global
 
 load("@bazel_gazelle//:def.bzl", "gazelle")
-load("@com_github_bazelbuild_buildtools//buildifier:def.bzl", "buildifier", "buildifier_test")
+# load("@com_github_bazelbuild_buildtools//buildifier:def.bzl", "buildifier", "buildifier_test")
 
 licenses(["notice"])  # Apache 2.0
 
 exports_files(["WORKSPACE"])
 
-# gazelle:prefix github.com/adobe/rules_gitops
+# gazelle:prefix github.com/fasterci/rules_gitops
 gazelle(
     name = "gazelle",
     build_tags = [
@@ -33,31 +33,31 @@ gazelle(
     ],
 )
 
-buildifier(
-    name = "buildifier",
-    lint_mode = "warn",
-    lint_warnings = [
-        "-module-docstring",
-        "-function-docstring",
-        "-function-docstring-header",
-        "-function-docstring-args",
-        "-function-docstring-return",
-    ],
-)
+# buildifier(
+#     name = "buildifier",
+#     lint_mode = "warn",
+#     lint_warnings = [
+#         "-module-docstring",
+#         "-function-docstring",
+#         "-function-docstring-header",
+#         "-function-docstring-args",
+#         "-function-docstring-return",
+#     ],
+# )
 
-buildifier(
-    name = "buildifier-fix",
-    lint_mode = "fix",
-)
+# buildifier(
+#     name = "buildifier-fix",
+#     lint_mode = "fix",
+# )
 
-buildifier_test(
-    name = "buildifier_check",
-    lint_mode = "warn",
-    lint_warnings = [
-        "-module-docstring",
-        "-function-docstring",
-        "-function-docstring-header",
-        "-function-docstring-args",
-        "-function-docstring-return",
-    ],
-)
+# buildifier_test(
+#     name = "buildifier_check",
+#     lint_mode = "warn",
+#     lint_warnings = [
+#         "-module-docstring",
+#         "-function-docstring",
+#         "-function-docstring-header",
+#         "-function-docstring-args",
+#         "-function-docstring-return",
+#     ],
+# )

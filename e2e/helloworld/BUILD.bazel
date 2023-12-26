@@ -16,7 +16,7 @@ load("@rules_gitops//gitops:defs.bzl", "k8s_deploy", "k8s_test_setup")
 go_library(
     name = "go_default_library",
     srcs = ["helloworld.go"],
-    importpath = "github.com/adobe/rules_gitops/examples/helloworld",
+    importpath = "github.com/fasterci/rules_gitops/examples/helloworld",
     visibility = ["//visibility:private"],
 )
 
@@ -101,4 +101,3 @@ go_test(
     rundir = ".",
     deps = ["@rules_gitops//testing/it_sidecar/client:go_default_library"],
 )
-

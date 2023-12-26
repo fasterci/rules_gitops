@@ -108,7 +108,6 @@ def push_oci(
         image_digest_tag = False,  # buildifier: disable=unused-variable either remove parameter or implement
         tag = None,
         remote_tags = None,  # file with tags to push
-        digestfile = None,
         visibility = None):
     if tag:
         tags_label = "_{}_write_tags".format(name)
@@ -129,6 +128,5 @@ def push_oci(
         image = image,
         repository = repository,
         remote_tags = remote_tags,
-        digestfile = digestfile,
         visibility = visibility,
     )

@@ -6,7 +6,7 @@ go_library(
         "lease.go",
         "leasespec.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/client-go/applyconfigurations/coordination/v1",
+    importmap = "github.com/fasterci/rules_gitops/vendor/k8s.io/client-go/applyconfigurations/coordination/v1",
     importpath = "k8s.io/client-go/applyconfigurations/coordination/v1",
     visibility = ["//visibility:public"],
     deps = [

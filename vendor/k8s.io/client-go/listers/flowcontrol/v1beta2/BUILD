@@ -7,7 +7,7 @@ go_library(
         "flowschema.go",
         "prioritylevelconfiguration.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/client-go/listers/flowcontrol/v1beta2",
+    importmap = "github.com/fasterci/rules_gitops/vendor/k8s.io/client-go/listers/flowcontrol/v1beta2",
     importpath = "k8s.io/client-go/listers/flowcontrol/v1beta2",
     visibility = ["//visibility:public"],
     deps = [

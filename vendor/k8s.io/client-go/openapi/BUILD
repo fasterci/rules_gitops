@@ -6,7 +6,7 @@ go_library(
         "client.go",
         "groupversion.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/client-go/openapi",
+    importmap = "github.com/fasterci/rules_gitops/vendor/k8s.io/client-go/openapi",
     importpath = "k8s.io/client-go/openapi",
     visibility = ["//visibility:public"],
     deps = [

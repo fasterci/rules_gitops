@@ -15,7 +15,7 @@ go_library(
         "with_retry.go",
         "zz_generated.deepcopy.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/client-go/rest",
+    importmap = "github.com/fasterci/rules_gitops/vendor/k8s.io/client-go/rest",
     importpath = "k8s.io/client-go/rest",
     visibility = ["//visibility:public"],
     deps = [

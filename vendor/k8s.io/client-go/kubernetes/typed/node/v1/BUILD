@@ -8,7 +8,7 @@ go_library(
         "node_client.go",
         "runtimeclass.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/client-go/kubernetes/typed/node/v1",
+    importmap = "github.com/fasterci/rules_gitops/vendor/k8s.io/client-go/kubernetes/typed/node/v1",
     importpath = "k8s.io/client-go/kubernetes/typed/node/v1",
     visibility = ["//visibility:public"],
     deps = [

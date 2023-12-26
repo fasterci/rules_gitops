@@ -23,7 +23,7 @@ go_library(
         "zsyscall_plan9_arm.go",
         "zsysnum_plan9.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/golang.org/x/sys/plan9",
+    importmap = "github.com/fasterci/rules_gitops/vendor/golang.org/x/sys/plan9",
     importpath = "golang.org/x/sys/plan9",
     visibility = ["//visibility:public"],
 )

@@ -8,7 +8,7 @@ go_library(
         "node.go",
         "parser.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/client-go/util/jsonpath",
+    importmap = "github.com/fasterci/rules_gitops/vendor/k8s.io/client-go/util/jsonpath",
     importpath = "k8s.io/client-go/util/jsonpath",
     visibility = ["//visibility:public"],
     deps = ["//vendor/k8s.io/client-go/third_party/forked/golang/template:go_default_library"],

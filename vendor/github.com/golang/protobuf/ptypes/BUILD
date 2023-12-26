@@ -8,7 +8,7 @@ go_library(
         "duration.go",
         "timestamp.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/github.com/golang/protobuf/ptypes",
+    importmap = "github.com/fasterci/rules_gitops/vendor/github.com/golang/protobuf/ptypes",
     importpath = "github.com/golang/protobuf/ptypes",
     visibility = ["//visibility:public"],
     deps = [

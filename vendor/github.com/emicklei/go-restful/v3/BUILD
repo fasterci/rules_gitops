@@ -36,7 +36,7 @@ go_library(
         "web_service.go",
         "web_service_container.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/github.com/emicklei/go-restful/v3",
+    importmap = "github.com/fasterci/rules_gitops/vendor/github.com/emicklei/go-restful/v3",
     importpath = "github.com/emicklei/go-restful/v3",
     visibility = ["//visibility:public"],
     deps = ["//vendor/github.com/emicklei/go-restful/v3/log:go_default_library"],

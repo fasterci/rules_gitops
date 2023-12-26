@@ -11,7 +11,7 @@ go_library(
         "scalespec.go",
         "scalestatus.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/client-go/applyconfigurations/autoscaling/v1",
+    importmap = "github.com/fasterci/rules_gitops/vendor/k8s.io/client-go/applyconfigurations/autoscaling/v1",
     importpath = "k8s.io/client-go/applyconfigurations/autoscaling/v1",
     visibility = ["//visibility:public"],
     deps = [

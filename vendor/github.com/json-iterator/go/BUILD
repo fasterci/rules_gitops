@@ -46,7 +46,7 @@ go_library(
         "stream_int.go",
         "stream_str.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/github.com/json-iterator/go",
+    importmap = "github.com/fasterci/rules_gitops/vendor/github.com/json-iterator/go",
     importpath = "github.com/json-iterator/go",
     visibility = ["//visibility:public"],
     deps = [

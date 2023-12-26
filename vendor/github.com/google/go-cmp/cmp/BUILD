@@ -15,7 +15,7 @@ go_library(
         "report_text.go",
         "report_value.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/github.com/google/go-cmp/cmp",
+    importmap = "github.com/fasterci/rules_gitops/vendor/github.com/google/go-cmp/cmp",
     importpath = "github.com/google/go-cmp/cmp",
     visibility = ["//visibility:public"],
     deps = [

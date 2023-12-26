@@ -1,0 +1,10 @@
+load("@rules_gitops//skylib/kustomize:kustomize.bzl", "kustomize_setup")
+kustomize_setup(name = "kustomize_bin")
+
+load("//skylib:k8s.bzl", "kubeconfig")
+
+kubeconfig(
+    name = "k8s_test",
+    cluster = "mycluster",
+    use_host_config = True,
+)

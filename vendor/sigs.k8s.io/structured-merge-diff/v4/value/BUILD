@@ -20,7 +20,7 @@ go_library(
         "valuereflect.go",
         "valueunstructured.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/sigs.k8s.io/structured-merge-diff/v4/value",
+    importmap = "github.com/fasterci/rules_gitops/vendor/sigs.k8s.io/structured-merge-diff/v4/value",
     importpath = "sigs.k8s.io/structured-merge-diff/v4/value",
     visibility = ["//visibility:public"],
     deps = [

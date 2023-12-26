@@ -12,7 +12,7 @@ go_library(
         "value_union.go",
         "value_unsafe.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/google.golang.org/protobuf/reflect/protoreflect",
+    importmap = "github.com/fasterci/rules_gitops/vendor/google.golang.org/protobuf/reflect/protoreflect",
     importpath = "google.golang.org/protobuf/reflect/protoreflect",
     visibility = ["//visibility:public"],
     deps = [

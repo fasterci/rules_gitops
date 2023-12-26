@@ -36,12 +36,12 @@ sh_binary(
     filename, sha256 = _binaries[platform]
     ctx.download_and_extract(filename, "bin/", sha256 = sha256)
 
-_download_binary = repository_rule(
+download_binary = repository_rule(
     _download_binary_impl,
 )
 
 def kustomize_setup(name):
-    _download_binary(name = name)
+    download_binary(name = name)
 
 def _stamp_file(ctx, infile, output):
     stamps = [ctx.file._info_file]

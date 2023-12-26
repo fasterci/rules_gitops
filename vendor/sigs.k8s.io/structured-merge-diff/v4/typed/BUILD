@@ -14,7 +14,7 @@ go_library(
         "union.go",
         "validate.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/sigs.k8s.io/structured-merge-diff/v4/typed",
+    importmap = "github.com/fasterci/rules_gitops/vendor/sigs.k8s.io/structured-merge-diff/v4/typed",
     importpath = "sigs.k8s.io/structured-merge-diff/v4/typed",
     visibility = ["//visibility:public"],
     deps = [

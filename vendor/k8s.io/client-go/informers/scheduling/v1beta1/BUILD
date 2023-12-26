@@ -6,7 +6,7 @@ go_library(
         "interface.go",
         "priorityclass.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/client-go/informers/scheduling/v1beta1",
+    importmap = "github.com/fasterci/rules_gitops/vendor/k8s.io/client-go/informers/scheduling/v1beta1",
     importpath = "k8s.io/client-go/informers/scheduling/v1beta1",
     visibility = ["//visibility:public"],
     deps = [

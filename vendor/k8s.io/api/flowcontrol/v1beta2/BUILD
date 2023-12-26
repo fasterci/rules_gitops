@@ -11,7 +11,7 @@ go_library(
         "zz_generated.deepcopy.go",
         "zz_generated.prerelease-lifecycle.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/api/flowcontrol/v1beta2",
+    importmap = "github.com/fasterci/rules_gitops/vendor/k8s.io/api/flowcontrol/v1beta2",
     importpath = "k8s.io/api/flowcontrol/v1beta2",
     visibility = ["//visibility:public"],
     deps = [

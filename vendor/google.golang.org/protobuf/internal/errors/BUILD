@@ -7,7 +7,7 @@ go_library(
         "is_go112.go",
         "is_go113.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/google.golang.org/protobuf/internal/errors",
+    importmap = "github.com/fasterci/rules_gitops/vendor/google.golang.org/protobuf/internal/errors",
     importpath = "google.golang.org/protobuf/internal/errors",
     visibility = ["//vendor/google.golang.org/protobuf:__subpackages__"],
     deps = ["//vendor/google.golang.org/protobuf/internal/detrand:go_default_library"],

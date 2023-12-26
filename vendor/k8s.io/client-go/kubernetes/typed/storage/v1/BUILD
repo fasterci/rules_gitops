@@ -12,7 +12,7 @@ go_library(
         "storageclass.go",
         "volumeattachment.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/client-go/kubernetes/typed/storage/v1",
+    importmap = "github.com/fasterci/rules_gitops/vendor/k8s.io/client-go/kubernetes/typed/storage/v1",
     importpath = "k8s.io/client-go/kubernetes/typed/storage/v1",
     visibility = ["//visibility:public"],
     deps = [

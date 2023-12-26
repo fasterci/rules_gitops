@@ -7,7 +7,7 @@ go_library(
         "doc.go",
         "encode.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/google.golang.org/protobuf/encoding/prototext",
+    importmap = "github.com/fasterci/rules_gitops/vendor/google.golang.org/protobuf/encoding/prototext",
     importpath = "google.golang.org/protobuf/encoding/prototext",
     visibility = ["//visibility:public"],
     deps = [

@@ -6,7 +6,7 @@ go_library(
         "doc.go",
         "errors.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/apimachinery/pkg/api/errors",
+    importmap = "github.com/fasterci/rules_gitops/vendor/k8s.io/apimachinery/pkg/api/errors",
     importpath = "k8s.io/apimachinery/pkg/api/errors",
     visibility = ["//visibility:public"],
     deps = [
