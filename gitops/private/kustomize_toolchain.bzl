@@ -86,7 +86,6 @@ def _kustomize_toolchain_impl(ctx):
         template_variables = template_variables,
         default = default_info,
     )
-    print("template_variables", proto.encode_text(template_variables))
 
     return [default_info, kustomize_info, toolchain_info, template_variables]
 
@@ -117,7 +116,6 @@ def _kustomize_toolchains_repo_impl(rctx):
 # Forward all the providers
 def _resolved_toolchain_impl(ctx):
     toolchain_info = ctx.toolchains["@rules_gitops//gitops:kustomize_toolchain_type"]
-    print("Resolved kustomize toolchain_info: ", toolchain_info)
     return [
         toolchain_info,
         toolchain_info.default,
@@ -231,8 +229,6 @@ kustomize_host_alias_repo = repository_rule(
 
 def _current_kustomize_toolchain_impl(ctx):
     toolchain_info = ctx.toolchains[str(Label("@rules_gitops//gitops:kustomize_toolchain_type"))]
-
-    print("Resolved2 kustomize toolchain_info: ", toolchain_info)
 
     return [
         toolchain_info,
