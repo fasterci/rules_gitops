@@ -459,12 +459,13 @@ k8s_test_namespace = rule(
 )
 
 def _k8s_test_setup_impl(ctx):
+    kustomize_bin = ctx.toolchains["@rules_gitops//gitops:kustomize_toolchain_type"].kustomizeinfo.bin
     files = []  # runfiles list
     transitive = []
     commands = []  # the list of commands to execute
 
     # add files referenced by rule attributes to runfiles
-    files = [ctx.executable._stamper, ctx.file.kubectl, ctx.file.kubeconfig, ctx.executable._kustomize, ctx.executable._it_sidecar, ctx.executable._it_manifest_filter]
+    files = [ctx.executable._stamper, ctx.file.kubectl, ctx.file.kubeconfig, kustomize_bin.path, ctx.executable._it_sidecar, ctx.executable._it_manifest_filter]
     files += ctx.files._set_namespace
     files += ctx.files.cluster
 
@@ -540,11 +541,6 @@ k8s_test_setup = rule(
             cfg = "exec",
             executable = True,
         ),
-        "_kustomize": attr.label(
-            default = Label("@kustomize_bin//:kustomize"),
-            cfg = "exec",
-            executable = True,
-        ),
         "_namespace_template": attr.label(
             default = Label("//skylib:k8s_test_namespace.sh.tpl"),
             allow_single_file = True,
@@ -571,6 +567,7 @@ k8s_test_setup = rule(
             cfg = "exec",
         ),
     },
+    toolchains = ["@rules_gitops//gitops:kustomize_toolchain_type"],
     executable = True,
     implementation = _k8s_test_setup_impl,
 )

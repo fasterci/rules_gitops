@@ -31,8 +31,17 @@ use_repo(
     "org_golang_x_oauth2",
 )
 
-repo_rule = use_repo_rule("@rules_gitops//skylib/kustomize:kustomize.bzl", "download_binary")
-repo_rule(name = "kustomize_bin")
+toolchains = use_extension(
+    "@rules_gitops//gitops:extensions.bzl",
+    "toolchains",
+)
+
+toolchains.kustomize()
+use_repo(toolchains, "kustomize_toolchains", "kustomize_bin")
+register_toolchains("@kustomize_toolchains//:all")
+
+# repo_rule = use_repo_rule("@rules_gitops//skylib/kustomize:kustomize.bzl", "download_binary")
+# repo_rule(name = "kustomize_bin")
 
 kubeconfig = use_repo_rule("@rules_gitops//skylib:k8s.bzl", "kubeconfig")
 kubeconfig(

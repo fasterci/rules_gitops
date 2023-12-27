@@ -21,6 +21,8 @@ sh_binary(
     data = [
         "@kustomize_bin//:kustomize",
     ],
+    # toolchains = ["@kustomize_toolchains//:resolved_toolchain"],
+    # toolchains = ["//gitops/private:resolved_toolchain"],
     visibility = ["//visibility:public"],
     deps = ["@bazel_tools//tools/bash/runfiles"],
 )

@@ -1,6 +1,6 @@
 {
   "lockFileVersion": 3,
-  "moduleFileHash": "b2c9dfe2c6aa4fc92a48371f885a1b411e0cd87afc1c873b11b11d76703da853",
+  "moduleFileHash": "ea41a4216195b5168d9e3ce4b62bfb61b0a7b44ef2b5cd7c349b5471a9c74572",
   "flags": {
     "cmdRegistries": [
       "https://bcr.bazel.build/"
@@ -22,7 +22,9 @@
       "key": "<root>",
       "repoName": "rules_gitops",
       "executionPlatformsToRegister": [],
-      "toolchainsToRegister": [],
+      "toolchainsToRegister": [
+        "@kustomize_toolchains//:all"
+      ],
       "extensionUsages": [
         {
           "extensionBzlFile": "@io_bazel_rules_go//go:extensions.bzl",
@@ -91,6 +93,35 @@
           "hasNonDevUseExtension": true
         },
         {
+          "extensionBzlFile": "@rules_gitops//gitops:extensions.bzl",
+          "extensionName": "toolchains",
+          "usingModule": "<root>",
+          "location": {
+            "file": "@@//:MODULE.bazel",
+            "line": 34,
+            "column": 27
+          },
+          "imports": {
+            "kustomize_toolchains": "kustomize_toolchains",
+            "kustomize_bin": "kustomize_bin"
+          },
+          "devImports": [],
+          "tags": [
+            {
+              "tagName": "kustomize",
+              "attributeValues": {},
+              "devDependency": false,
+              "location": {
+                "file": "@@//:MODULE.bazel",
+                "line": 39,
+                "column": 21
+              }
+            }
+          ],
+          "hasDevUseExtension": false,
+          "hasNonDevUseExtension": true
+        },
+        {
           "extensionBzlFile": "//:MODULE.bazel",
           "extensionName": "_repo_rules",
           "usingModule": "<root>",
@@ -100,23 +131,10 @@
             "column": 0
           },
           "imports": {
-            "kustomize_bin": "kustomize_bin",
             "k8s_test": "k8s_test"
           },
           "devImports": [],
           "tags": [
-            {
-              "tagName": "@rules_gitops//skylib/kustomize:kustomize.bzl%download_binary",
-              "attributeValues": {
-                "name": "kustomize_bin"
-              },
-              "devDependency": false,
-              "location": {
-                "file": "@@//:MODULE.bazel",
-                "line": 35,
-                "column": 10
-              }
-            },
             {
               "tagName": "@rules_gitops//skylib:k8s.bzl%kubeconfig",
               "attributeValues": {
@@ -127,7 +145,7 @@
               "devDependency": false,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 38,
+                "line": 47,
                 "column": 11
               }
             }
@@ -1273,17 +1291,10 @@
   "moduleExtensions": {
     "//:MODULE.bazel%_repo_rules": {
       "general": {
-        "bzlTransitiveDigest": "AkNpirlxCUyl+ASuCYgny5TQn2yr8MjH5cRBzUO8y2A=",
+        "bzlTransitiveDigest": "fGewot5ezigZn86wWvNBRTPzq1v6GbzrE0t775FLiWM=",
         "accumulatedFileDigests": {},
         "envVariables": {},
         "generatedRepoSpecs": {
-          "kustomize_bin": {
-            "bzlFile": "@@//skylib/kustomize:kustomize.bzl",
-            "ruleClassName": "download_binary",
-            "attributes": {
-              "name": "_main~_repo_rules~kustomize_bin"
-            }
-          },
           "k8s_test": {
             "bzlFile": "@@//skylib:k8s.bzl",
             "ruleClassName": "kubeconfig",
@@ -1291,6 +1302,82 @@
               "cluster": "mycluster",
               "use_host_config": true,
               "name": "_main~_repo_rules~k8s_test"
+            }
+          }
+        }
+      }
+    },
+    "//gitops:extensions.bzl%toolchains": {
+      "general": {
+        "bzlTransitiveDigest": "Ocsii9Uda/WX3LU9FbTDOSg/xciLpL6tsbpayHBNhvY=",
+        "accumulatedFileDigests": {},
+        "envVariables": {},
+        "generatedRepoSpecs": {
+          "kustomize_linux_arm64": {
+            "bzlFile": "@@//gitops/private:kustomize_toolchain.bzl",
+            "ruleClassName": "kustomize_platform_repo",
+            "attributes": {
+              "name": "_main~toolchains~kustomize_linux_arm64",
+              "platform": "linux_arm64",
+              "version": "4.5.3"
+            }
+          },
+          "kustomize_windows_amd64": {
+            "bzlFile": "@@//gitops/private:kustomize_toolchain.bzl",
+            "ruleClassName": "kustomize_platform_repo",
+            "attributes": {
+              "name": "_main~toolchains~kustomize_windows_amd64",
+              "platform": "windows_amd64",
+              "version": "4.5.3"
+            }
+          },
+          "kustomize_toolchains": {
+            "bzlFile": "@@//gitops/private:kustomize_toolchain.bzl",
+            "ruleClassName": "kustomize_toolchains_repo",
+            "attributes": {
+              "name": "_main~toolchains~kustomize_toolchains",
+              "user_repository_name": "kustomize"
+            }
+          },
+          "kustomize_darwin_arm64": {
+            "bzlFile": "@@//gitops/private:kustomize_toolchain.bzl",
+            "ruleClassName": "kustomize_platform_repo",
+            "attributes": {
+              "name": "_main~toolchains~kustomize_darwin_arm64",
+              "platform": "darwin_arm64",
+              "version": "4.5.3"
+            }
+          },
+          "kustomize": {
+            "bzlFile": "@@//gitops/private:kustomize_toolchain.bzl",
+            "ruleClassName": "kustomize_host_alias_repo",
+            "attributes": {
+              "name": "_main~toolchains~kustomize"
+            }
+          },
+          "kustomize_bin": {
+            "bzlFile": "@@//skylib/kustomize:kustomize.bzl",
+            "ruleClassName": "download_kustomize",
+            "attributes": {
+              "name": "_main~toolchains~kustomize_bin"
+            }
+          },
+          "kustomize_linux_amd64": {
+            "bzlFile": "@@//gitops/private:kustomize_toolchain.bzl",
+            "ruleClassName": "kustomize_platform_repo",
+            "attributes": {
+              "name": "_main~toolchains~kustomize_linux_amd64",
+              "platform": "linux_amd64",
+              "version": "4.5.3"
+            }
+          },
+          "kustomize_darwin_amd64": {
+            "bzlFile": "@@//gitops/private:kustomize_toolchain.bzl",
+            "ruleClassName": "kustomize_platform_repo",
+            "attributes": {
+              "name": "_main~toolchains~kustomize_darwin_amd64",
+              "platform": "darwin_amd64",
+              "version": "4.5.3"
             }
           }
         }
