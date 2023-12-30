@@ -465,7 +465,7 @@ def _k8s_test_setup_impl(ctx):
     commands = []  # the list of commands to execute
 
     # add files referenced by rule attributes to runfiles
-    files = [ctx.executable._stamper, ctx.file.kubectl, ctx.file.kubeconfig, kustomize_bin.path, ctx.executable._it_sidecar, ctx.executable._it_manifest_filter]
+    files = [ctx.executable._stamper, ctx.file.kubectl, ctx.file.kubeconfig, kustomize_bin, ctx.executable._it_sidecar, ctx.executable._it_manifest_filter]
     files += ctx.files._set_namespace
     files += ctx.files.cluster
 
