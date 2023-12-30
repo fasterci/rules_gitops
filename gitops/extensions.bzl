@@ -3,14 +3,14 @@
 TODO: implement a proper toolchain resolution mechanism in bzlmod
 """
 
+load("//gitops/private:extension_utils.bzl", "extension_utils")
+load("//gitops/private:host_repo.bzl", "host_repo")
 load(
     ":repositories.bzl",
     "DEFAULT_KUSTOMIZE_REPOSITORY",
     "DEFAULT_KUSTOMIZE_VERSION",
     "register_kustomize_toolchains",
 )
-load("//gitops/private:extension_utils.bzl", "extension_utils")
-load("//gitops/private:host_repo.bzl", "host_repo")
 
 def _host_extension_impl(mctx):
     create_host_repo = False

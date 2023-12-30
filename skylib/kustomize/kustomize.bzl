@@ -8,8 +8,8 @@
 # OF ANY KIND, either express or implied. See the License for the specific language
 # governing permissions and limitations under the License.
 
-load("//skylib:runfile.bzl", "get_runfile_path")
 load("//gitops:provider.bzl", "GitopsArtifactsInfo", "GitopsPushInfo")
+load("//skylib:runfile.bzl", "get_runfile_path")
 load("//skylib:stamp.bzl", "stamp")
 
 _binaries = {

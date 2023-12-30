@@ -12,13 +12,13 @@
 GtiOps rules repositories initialization
 """
 
-load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
 load("@aspect_bazel_lib//lib:repositories.bzl", "aspect_bazel_lib_dependencies", "register_jq_toolchains")
-load("@rules_pkg//:deps.bzl", "rules_pkg_dependencies")
 load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies")
+load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
+load("@rules_gitops//skylib/kustomize:kustomize.bzl", "download_kustomize", "kustomize_setup")
 load("@rules_oci//oci:dependencies.bzl", "rules_oci_dependencies")
 load("@rules_oci//oci:repositories.bzl", "LATEST_CRANE_VERSION", "oci_register_toolchains")
-load("@rules_gitops//skylib/kustomize:kustomize.bzl", "download_kustomize", "kustomize_setup")
+load("@rules_pkg//:deps.bzl", "rules_pkg_dependencies")
 load("//gitops/private:kustomize_toolchain.bzl", "KUSTOMIZE_PLATFORMS", "kustomize_host_alias_repo", "kustomize_platform_repo", "kustomize_toolchains_repo", _DEFAULT_KUSTOMIZE_VERSION = "DEFAULT_KUSTOMIZE_VERSION")
 
 DEFAULT_KUSTOMIZE_VERSION = _DEFAULT_KUSTOMIZE_VERSION

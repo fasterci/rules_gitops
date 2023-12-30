@@ -1,5 +1,5 @@
-load("@rules_gitops//gitops:defs.bzl", "external_image", "k8s_deploy")
 load("@aspect_bazel_lib//lib:write_source_files.bzl", "write_source_files")
+load("@rules_gitops//gitops:defs.bzl", "external_image", "k8s_deploy")
 
 external_image(
     name = "image",

@@ -8,8 +8,9 @@
 # OF ANY KIND, either express or implied. See the License for the specific language
 # governing permissions and limitations under the License.
 
-load("//skylib:runfile.bzl", "get_runfile_path")
 load("//gitops:provider.bzl", "GitopsArtifactsInfo")
+load("//push_oci:push_oci.bzl", "push_oci")
+load("//skylib:runfile.bzl", "get_runfile_path")
 load(
     "//skylib/kustomize:kustomize.bzl",
     "imagePushStatements",
@@ -17,7 +18,6 @@ load(
     "kustomize",
     kustomize_gitops = "gitops",
 )
-load("//push_oci:push_oci.bzl", "push_oci")
 
 def _show_impl(ctx):
     script_content = "#!/usr/bin/env bash\nset -e\n"
