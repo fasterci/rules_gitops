@@ -27,6 +27,7 @@ if [ "$1" == "" ]; then
 fi
 set -euo pipefail
 dir=$(mktemp -d)
+trap "rm -rf $dir" EXIT # Delete on exit
 cat >${dir}/in.yaml
 cat >${dir}/kustomization.yaml <<EOF
 namespace: $1
@@ -34,4 +35,4 @@ resources:
 - in.yaml
 EOF
 KUSTOMIZE_BIN="$(rlocation kustomize_bin/kustomize)"
-exec $KUSTOMIZE_BIN build ${dir}
+$KUSTOMIZE_BIN build ${dir}

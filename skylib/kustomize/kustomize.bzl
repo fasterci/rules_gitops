@@ -71,6 +71,15 @@ set -euo pipefail
 {kustomize} build --load-restrictor LoadRestrictionsNone --reorder legacy {kustomize_dir} {template_part} {resolver_part} >{out}
 """
 
+def _no_at_str(label):
+    """Strips any leading '@'s for labels in the main repo."""
+    s = str(label)
+    if s.startswith("@@//"):
+        return s[2:]
+    if s.startswith("@//"):
+        return s[1:]
+    return s
+
 def _kustomize_impl(ctx):
     kustomize_bin = ctx.toolchains["@rules_gitops//gitops:kustomize_toolchain_type"].kustomizeinfo.bin
     kustomization_yaml_file = ctx.actions.declare_file(ctx.attr.name + "/kustomization.yaml")
@@ -231,13 +240,8 @@ def _kustomize_impl(ctx):
                 template_part += " --variable={}={}@$(cat {})".format(label_str, regrepo, kpi.digestfile.path)
 
                 # Image digest
-                template_part += " --variable={}=$(cat {} | cut -d ':' -f 2)".format(str(kpi.image_label) + ".digest", kpi.digestfile.path)
-                template_part += " --variable={}=$(cat {} | cut -c 8-17)".format(str(kpi.image_label) + ".short-digest", kpi.digestfile.path)
-                if str(kpi.image_label).startswith("@//"):
-                    # Bazel 6 add a @ prefix to the image label
-                    label = str(kpi.image_label)[1:]
-                    template_part += " --variable={}=$(cat {} | cut -d ':' -f 2)".format(str(label) + ".digest", kpi.digestfile.path)
-                    template_part += " --variable={}=$(cat {} | cut -c 8-17)".format(str(label) + ".short-digest", kpi.digestfile.path)
+                template_part += " --variable={}=$(cat {} | cut -d ':' -f 2)".format(label_str + ".digest", kpi.digestfile.path)
+                template_part += " --variable={}=$(cat {} | cut -c 8-17)".format(label_str + ".short-digest", kpi.digestfile.path)
 
         template_part += " "
 
