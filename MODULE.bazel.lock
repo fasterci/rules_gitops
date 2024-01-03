@@ -1343,7 +1343,7 @@
   "moduleExtensions": {
     "//:MODULE.bazel%_repo_rules": {
       "general": {
-        "bzlTransitiveDigest": "EeEOifKkQEIJ22D/3Uba+xcSbIo1VMapn+EpXYd+qNk=",
+        "bzlTransitiveDigest": "lar5hCTK/9h/n9dfNF7E6tSOj/mPNIFuq+x/pD2La68=",
         "accumulatedFileDigests": {},
         "envVariables": {},
         "generatedRepoSpecs": {
@@ -1361,7 +1361,7 @@
     },
     "//gitops:extensions.bzl%toolchains": {
       "general": {
-        "bzlTransitiveDigest": "CdXvoroilSBoaRrLXyJU5xHkrDymmJqtL0Lr+PK//sc=",
+        "bzlTransitiveDigest": "HTxbI2K8FUKf9kjtTUfgS5RoHKlKtP/UzsDFFKXwvTg=",
         "accumulatedFileDigests": {},
         "envVariables": {},
         "generatedRepoSpecs": {
