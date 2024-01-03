@@ -1,6 +1,6 @@
 {
   "lockFileVersion": 3,
-  "moduleFileHash": "9597925d148059ac0a9c97cd5e7983e90c13f7c8aac00f7173ef2df646c3c61b",
+  "moduleFileHash": "055e4607f59ef5703ad4f0f62ff4af76c819eaabd6b9362bcc9e512d7fae2a39",
   "flags": {
     "cmdRegistries": [
       "https://bcr.bazel.build/"
@@ -14,7 +14,7 @@
   },
   "localOverrideHashes": {
     "bazel_tools": "922ea6752dc9105de5af957f7a99a6933c0a6a712d23df6aad16a9c399f7e787",
-    "rules_gitops": "91c6bb22fae7ad2ab4202c61f53343f0205f05193cb850b2d80fb101f1333f1f"
+    "rules_gitops": "6d989dcde6082295de2bd48b9f52c378ef42154cfc02a79dad71566dbad5a18b"
   },
   "moduleDepGraph": {
     "<root>": {
@@ -81,7 +81,7 @@
               "devDependency": false,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 21,
+                "line": 20,
                 "column": 11
               }
             }
@@ -1876,7 +1876,7 @@
     },
     "@@rules_gitops~override//gitops:extensions.bzl%toolchains": {
       "general": {
-        "bzlTransitiveDigest": "HTxbI2K8FUKf9kjtTUfgS5RoHKlKtP/UzsDFFKXwvTg=",
+        "bzlTransitiveDigest": "xVYDFJSPwwuYcNJaVpvIB8k0oAZhIaE8EKExRht/AZY=",
         "accumulatedFileDigests": {},
         "envVariables": {},
         "generatedRepoSpecs": {

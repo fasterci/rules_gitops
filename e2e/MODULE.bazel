@@ -5,7 +5,6 @@ oci.pull(
     name = "go_image_static",
     digest = "sha256:ebd8cc37d22551dce0957ba8e58f03b22a8448bbf844c8c9ded4feef883b36bc",
     image = "gcr.io/distroless/static",
-    # platforms = ["linux/amd64"],
 )
 
 # For each oci.pull call, repeat the "name" here to expose them as dependencies.

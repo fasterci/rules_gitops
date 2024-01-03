@@ -31,11 +31,11 @@ workflows:
           build_targets:
             - //...
           build_flags:
-            - --enable_bzlmod
+            - --config=bzlmod
           test_targets:
             - //...
           test_flags:
-            - --enable_bzlmod --test_size_filters=-large,-enormous
+            - --config=bzlmod --test_size_filters=-large,-enormous
 
   - <<: *build_workflow
     name: Faster CI / build (6.1.0)

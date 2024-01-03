@@ -39,9 +39,6 @@ use_repo(toolchains, "kustomize_bin", "kustomize_toolchains")
 
 register_toolchains("@kustomize_toolchains//:all")
 
-# repo_rule = use_repo_rule("@rules_gitops//skylib/kustomize:kustomize.bzl", "download_binary")
-# repo_rule(name = "kustomize_bin")
-
 kubeconfig = use_repo_rule("@rules_gitops//skylib:k8s.bzl", "kubeconfig")
 
 kubeconfig(
@@ -49,12 +46,5 @@ kubeconfig(
     cluster = "mycluster",
     use_host_config = True,
 )
-
-# toolchain = use_extension(
-#     "@rules_gitops//gitops:extensions.bzl",
-#     "kustomize",
-# )
-
-# toolchain.kustomize()
 
 bazel_dep(name = "buildifier_prebuilt", version = "6.4.0", dev_dependency = True)
