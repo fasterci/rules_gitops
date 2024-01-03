@@ -14,7 +14,7 @@
   },
   "localOverrideHashes": {
     "bazel_tools": "922ea6752dc9105de5af957f7a99a6933c0a6a712d23df6aad16a9c399f7e787",
-    "rules_gitops": "6d989dcde6082295de2bd48b9f52c378ef42154cfc02a79dad71566dbad5a18b"
+    "rules_gitops": "20bb1e498fe8d4f232e8758e392a949c014b03b2c2c1eb486c2cef50343ab0cc"
   },
   "moduleDepGraph": {
     "<root>": {
@@ -401,7 +401,7 @@
               "devDependency": false,
               "location": {
                 "file": "@@rules_gitops~override//:MODULE.bazel",
-                "line": 47,
+                "line": 44,
                 "column": 11
               }
             }
