@@ -35,6 +35,7 @@ def rules_gitops_repositories():
     register_jq_toolchains()
     rules_pkg_dependencies()
     kustomize_setup(name = "kustomize_bin")
+    register_kustomize_toolchains(register = True)
 
     rules_oci_dependencies()
     oci_register_toolchains(
