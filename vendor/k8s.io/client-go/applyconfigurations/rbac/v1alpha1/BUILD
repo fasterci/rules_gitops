@@ -12,7 +12,7 @@ go_library(
         "roleref.go",
         "subject.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/client-go/applyconfigurations/rbac/v1alpha1",
+    importmap = "github.com/fasterci/rules_gitops/vendor/k8s.io/client-go/applyconfigurations/rbac/v1alpha1",
     importpath = "k8s.io/client-go/applyconfigurations/rbac/v1alpha1",
     visibility = ["//visibility:public"],
     deps = [

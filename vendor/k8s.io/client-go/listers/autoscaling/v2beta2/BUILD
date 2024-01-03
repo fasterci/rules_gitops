@@ -6,7 +6,7 @@ go_library(
         "expansion_generated.go",
         "horizontalpodautoscaler.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/client-go/listers/autoscaling/v2beta2",
+    importmap = "github.com/fasterci/rules_gitops/vendor/k8s.io/client-go/listers/autoscaling/v2beta2",
     importpath = "k8s.io/client-go/listers/autoscaling/v2beta2",
     visibility = ["//visibility:public"],
     deps = [

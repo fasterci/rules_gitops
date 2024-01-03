@@ -6,7 +6,7 @@ go_library(
         "extension.pb.go",
         "extensions.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/github.com/google/gnostic/extensions",
+    importmap = "github.com/fasterci/rules_gitops/vendor/github.com/google/gnostic/extensions",
     importpath = "github.com/google/gnostic/extensions",
     visibility = ["//visibility:public"],
     deps = [

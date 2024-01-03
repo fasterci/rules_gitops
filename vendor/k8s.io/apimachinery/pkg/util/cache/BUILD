@@ -6,7 +6,7 @@ go_library(
         "expiring.go",
         "lruexpirecache.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/apimachinery/pkg/util/cache",
+    importmap = "github.com/fasterci/rules_gitops/vendor/k8s.io/apimachinery/pkg/util/cache",
     importpath = "k8s.io/apimachinery/pkg/util/cache",
     visibility = ["//visibility:public"],
     deps = ["//vendor/k8s.io/utils/clock:go_default_library"],

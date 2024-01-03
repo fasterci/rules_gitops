@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "go_default_library",
     srcs = ["install.go"],
-    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/client-go/pkg/apis/clientauthentication/install",
+    importmap = "github.com/fasterci/rules_gitops/vendor/k8s.io/client-go/pkg/apis/clientauthentication/install",
     importpath = "k8s.io/client-go/pkg/apis/clientauthentication/install",
     visibility = ["//visibility:public"],
     deps = [

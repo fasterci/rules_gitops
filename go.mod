@@ -1,4 +1,4 @@
-module github.com/adobe/rules_gitops
+module github.com/fasterci/rules_gitops
 
 go 1.19
 

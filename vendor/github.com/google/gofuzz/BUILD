@@ -6,7 +6,7 @@ go_library(
         "doc.go",
         "fuzz.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/github.com/google/gofuzz",
+    importmap = "github.com/fasterci/rules_gitops/vendor/github.com/google/gofuzz",
     importpath = "github.com/google/gofuzz",
     visibility = ["//visibility:public"],
     deps = ["//vendor/github.com/google/gofuzz/bytesource:go_default_library"],

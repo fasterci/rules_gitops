@@ -6,7 +6,7 @@ go_library(
         "order.go",
         "range.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/google.golang.org/protobuf/internal/order",
+    importmap = "github.com/fasterci/rules_gitops/vendor/google.golang.org/protobuf/internal/order",
     importpath = "google.golang.org/protobuf/internal/order",
     visibility = ["//vendor/google.golang.org/protobuf:__subpackages__"],
     deps = ["//vendor/google.golang.org/protobuf/reflect/protoreflect:go_default_library"],

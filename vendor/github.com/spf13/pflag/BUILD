@@ -40,7 +40,7 @@ go_library(
         "uint8.go",
         "uint_slice.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/github.com/spf13/pflag",
+    importmap = "github.com/fasterci/rules_gitops/vendor/github.com/spf13/pflag",
     importpath = "github.com/spf13/pflag",
     visibility = ["//visibility:public"],
 )

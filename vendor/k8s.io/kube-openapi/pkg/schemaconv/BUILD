@@ -7,7 +7,7 @@ go_library(
         "proto_models.go",
         "smd.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/kube-openapi/pkg/schemaconv",
+    importmap = "github.com/fasterci/rules_gitops/vendor/k8s.io/kube-openapi/pkg/schemaconv",
     importpath = "k8s.io/kube-openapi/pkg/schemaconv",
     visibility = ["//visibility:public"],
     deps = [

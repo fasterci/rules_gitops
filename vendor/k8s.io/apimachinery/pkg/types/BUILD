@@ -9,7 +9,7 @@ go_library(
         "patch.go",
         "uid.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/apimachinery/pkg/types",
+    importmap = "github.com/fasterci/rules_gitops/vendor/k8s.io/apimachinery/pkg/types",
     importpath = "k8s.io/apimachinery/pkg/types",
     visibility = ["//visibility:public"],
 )

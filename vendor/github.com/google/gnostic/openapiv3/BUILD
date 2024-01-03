@@ -8,7 +8,7 @@ go_library(
         "annotations.pb.go",
         "document.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/github.com/google/gnostic/openapiv3",
+    importmap = "github.com/fasterci/rules_gitops/vendor/github.com/google/gnostic/openapiv3",
     importpath = "github.com/google/gnostic/openapiv3",
     visibility = ["//visibility:public"],
     deps = [

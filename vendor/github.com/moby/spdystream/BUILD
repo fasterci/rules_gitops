@@ -9,7 +9,7 @@ go_library(
         "stream.go",
         "utils.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/github.com/moby/spdystream",
+    importmap = "github.com/fasterci/rules_gitops/vendor/github.com/moby/spdystream",
     importpath = "github.com/moby/spdystream",
     visibility = ["//visibility:public"],
     deps = ["//vendor/github.com/moby/spdystream/spdy:go_default_library"],

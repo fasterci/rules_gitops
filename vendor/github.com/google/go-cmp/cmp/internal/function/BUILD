@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "go_default_library",
     srcs = ["func.go"],
-    importmap = "github.com/adobe/rules_gitops/vendor/github.com/google/go-cmp/cmp/internal/function",
+    importmap = "github.com/fasterci/rules_gitops/vendor/github.com/google/go-cmp/cmp/internal/function",
     importpath = "github.com/google/go-cmp/cmp/internal/function",
     visibility = ["//vendor/github.com/google/go-cmp/cmp:__subpackages__"],
 )

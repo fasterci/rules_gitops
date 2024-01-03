@@ -13,7 +13,7 @@ go_library(
         "klog_file_windows.go",
         "klogr.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/klog/v2",
+    importmap = "github.com/fasterci/rules_gitops/vendor/k8s.io/klog/v2",
     importpath = "k8s.io/klog/v2",
     visibility = ["//visibility:public"],
     deps = [

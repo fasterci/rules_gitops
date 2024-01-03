@@ -11,7 +11,7 @@ go_library(
         "token_source.go",
         "transport.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/client-go/transport",
+    importmap = "github.com/fasterci/rules_gitops/vendor/k8s.io/client-go/transport",
     importpath = "k8s.io/client-go/transport",
     visibility = ["//visibility:public"],
     deps = [

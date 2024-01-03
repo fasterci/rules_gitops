@@ -14,7 +14,7 @@ go_library(
         "overrides.go",
         "validation.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/client-go/tools/clientcmd",
+    importmap = "github.com/fasterci/rules_gitops/vendor/k8s.io/client-go/tools/clientcmd",
     importpath = "k8s.io/client-go/tools/clientcmd",
     visibility = ["//visibility:public"],
     deps = [

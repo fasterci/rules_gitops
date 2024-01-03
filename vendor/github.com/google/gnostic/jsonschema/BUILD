@@ -10,7 +10,7 @@ go_library(
         "reader.go",
         "writer.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/github.com/google/gnostic/jsonschema",
+    importmap = "github.com/fasterci/rules_gitops/vendor/github.com/google/gnostic/jsonschema",
     importpath = "github.com/google/gnostic/jsonschema",
     visibility = ["//visibility:public"],
     deps = ["//vendor/gopkg.in/yaml.v3:go_default_library"],

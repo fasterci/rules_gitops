@@ -22,7 +22,7 @@ go_library(
         "token.go",
         "value.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/kube-openapi/pkg/internal/third_party/go-json-experiment/json",
+    importmap = "github.com/fasterci/rules_gitops/vendor/k8s.io/kube-openapi/pkg/internal/third_party/go-json-experiment/json",
     importpath = "k8s.io/kube-openapi/pkg/internal/third_party/go-json-experiment/json",
     visibility = ["//vendor/k8s.io/kube-openapi/pkg:__subpackages__"],
 )

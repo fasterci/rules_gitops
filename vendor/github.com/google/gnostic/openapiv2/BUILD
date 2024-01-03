@@ -7,7 +7,7 @@ go_library(
         "OpenAPIv2.pb.go",
         "document.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/github.com/google/gnostic/openapiv2",
+    importmap = "github.com/fasterci/rules_gitops/vendor/github.com/google/gnostic/openapiv2",
     importpath = "github.com/google/gnostic/openapiv2",
     visibility = ["//visibility:public"],
     deps = [

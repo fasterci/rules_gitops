@@ -2,12 +2,12 @@
 Implementation of the `k8s_push` rule based on rules_oci
 """
 
-load("//gitops:provider.bzl", "GitopsPushInfo")
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
 
 # TODO: remove this once rules_oci is updated
 # buildifier: disable=bzl-visibility
 load("@rules_oci//oci/private:push.bzl", "oci_push_lib")
-load("@bazel_skylib//rules:write_file.bzl", "write_file")
+load("//gitops:provider.bzl", "GitopsPushInfo")
 load("//skylib:runfile.bzl", "get_runfile_path")
 
 def _impl(ctx):
@@ -108,7 +108,6 @@ def push_oci(
         image_digest_tag = False,  # buildifier: disable=unused-variable either remove parameter or implement
         tag = None,
         remote_tags = None,  # file with tags to push
-        digestfile = None,
         visibility = None):
     if tag:
         tags_label = "_{}_write_tags".format(name)
@@ -129,6 +128,5 @@ def push_oci(
         image = image,
         repository = repository,
         remote_tags = remote_tags,
-        digestfile = digestfile,
         visibility = visibility,
     )

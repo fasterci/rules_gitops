@@ -1,9 +1,7 @@
 workflows:
 
   - &build_workflow
-    name: Faster CI / build (6.1.0)
-    env:
-      USE_BAZEL_VERSION: "6.1.0"
+    name: Faster CI / build (default bazel ver)
     on:
       push:
         branches:
@@ -27,6 +25,23 @@ workflows:
             - //...
           test_flags:
             - --test_size_filters=-large,-enormous
+      - name: Build & test e2e with bzlmod
+        working-directory: e2e
+        bazel:
+          build_targets:
+            - //...
+          build_flags:
+            - --config=bzlmod
+          test_targets:
+            - //...
+          test_flags:
+            - --config=bzlmod
+            - --test_size_filters=-large,-enormous
+
+  - <<: *build_workflow
+    name: Faster CI / build (6.1.0)
+    env:
+      USE_BAZEL_VERSION: "6.1.0"
 
   - <<: *build_workflow
     name: Faster CI / build (6.3.2)

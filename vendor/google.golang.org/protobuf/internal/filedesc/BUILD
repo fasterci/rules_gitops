@@ -11,7 +11,7 @@ go_library(
         "desc_list_gen.go",
         "placeholder.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/google.golang.org/protobuf/internal/filedesc",
+    importmap = "github.com/fasterci/rules_gitops/vendor/google.golang.org/protobuf/internal/filedesc",
     importpath = "google.golang.org/protobuf/internal/filedesc",
     visibility = ["//vendor/google.golang.org/protobuf:__subpackages__"],
     deps = [

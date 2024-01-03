@@ -6,7 +6,7 @@ go_library(
         "extract.go",
         "gvkparser.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/apimachinery/pkg/util/managedfields",
+    importmap = "github.com/fasterci/rules_gitops/vendor/k8s.io/apimachinery/pkg/util/managedfields",
     importpath = "k8s.io/apimachinery/pkg/util/managedfields",
     visibility = ["//visibility:public"],
     deps = [

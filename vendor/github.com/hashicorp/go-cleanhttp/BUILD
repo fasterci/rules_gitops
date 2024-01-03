@@ -7,7 +7,7 @@ go_library(
         "doc.go",
         "handlers.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/github.com/hashicorp/go-cleanhttp",
+    importmap = "github.com/fasterci/rules_gitops/vendor/github.com/hashicorp/go-cleanhttp",
     importpath = "github.com/hashicorp/go-cleanhttp",
     visibility = ["//visibility:public"],
 )

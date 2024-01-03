@@ -8,7 +8,7 @@ go_library(
         "poddisruptionbudget.go",
         "poddisruptionbudget_expansion.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/client-go/listers/policy/v1",
+    importmap = "github.com/fasterci/rules_gitops/vendor/k8s.io/client-go/listers/policy/v1",
     importpath = "k8s.io/client-go/listers/policy/v1",
     visibility = ["//visibility:public"],
     deps = [

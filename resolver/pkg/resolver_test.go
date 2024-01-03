@@ -19,7 +19,7 @@ import (
 	"strings"
 	"testing"
 
-	resolver "github.com/adobe/rules_gitops/resolver/pkg"
+	resolver "github.com/fasterci/rules_gitops/resolver/pkg"
 )
 
 func TestNoError(t *testing.T) {

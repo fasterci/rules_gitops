@@ -22,14 +22,14 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/adobe/rules_gitops/gitops/analysis"
-	"github.com/adobe/rules_gitops/gitops/bazel"
-	"github.com/adobe/rules_gitops/gitops/commitmsg"
-	"github.com/adobe/rules_gitops/gitops/exec"
-	"github.com/adobe/rules_gitops/gitops/git"
-	"github.com/adobe/rules_gitops/gitops/git/bitbucket"
-	"github.com/adobe/rules_gitops/gitops/git/github"
-	"github.com/adobe/rules_gitops/gitops/git/gitlab"
+	"github.com/fasterci/rules_gitops/gitops/analysis"
+	"github.com/fasterci/rules_gitops/gitops/bazel"
+	"github.com/fasterci/rules_gitops/gitops/commitmsg"
+	"github.com/fasterci/rules_gitops/gitops/exec"
+	"github.com/fasterci/rules_gitops/gitops/git"
+	"github.com/fasterci/rules_gitops/gitops/git/bitbucket"
+	"github.com/fasterci/rules_gitops/gitops/git/github"
+	"github.com/fasterci/rules_gitops/gitops/git/gitlab"
 
 	proto "github.com/golang/protobuf/proto"
 )

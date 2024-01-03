@@ -11,7 +11,7 @@ go_library(
         "well_known_labels.go",
         "zz_generated.deepcopy.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/api/discovery/v1",
+    importmap = "github.com/fasterci/rules_gitops/vendor/k8s.io/api/discovery/v1",
     importpath = "k8s.io/api/discovery/v1",
     visibility = ["//visibility:public"],
     deps = [

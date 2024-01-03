@@ -6,7 +6,7 @@ go_library(
         "discard.go",
         "logr.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/github.com/go-logr/logr",
+    importmap = "github.com/fasterci/rules_gitops/vendor/github.com/go-logr/logr",
     importpath = "github.com/go-logr/logr",
     visibility = ["//visibility:public"],
 )

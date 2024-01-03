@@ -27,7 +27,7 @@ go_library(
         "writesched_priority.go",
         "writesched_random.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/golang.org/x/net/http2",
+    importmap = "github.com/fasterci/rules_gitops/vendor/golang.org/x/net/http2",
     importpath = "golang.org/x/net/http2",
     visibility = ["//visibility:public"],
     deps = [

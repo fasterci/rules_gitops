@@ -6,7 +6,7 @@ go_library(
         "codec_factory.go",
         "negotiated_codec.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/apimachinery/pkg/runtime/serializer",
+    importmap = "github.com/fasterci/rules_gitops/vendor/k8s.io/apimachinery/pkg/runtime/serializer",
     importpath = "k8s.io/apimachinery/pkg/runtime/serializer",
     visibility = ["//visibility:public"],
     deps = [

@@ -6,7 +6,7 @@ go_library(
         "convert.go",
         "doc.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/apimachinery/pkg/conversion/queryparams",
+    importmap = "github.com/fasterci/rules_gitops/vendor/k8s.io/apimachinery/pkg/conversion/queryparams",
     importpath = "k8s.io/apimachinery/pkg/conversion/queryparams",
     visibility = ["//visibility:public"],
 )

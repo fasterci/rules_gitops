@@ -6,7 +6,7 @@ go_library(
         "flags.go",
         "proto_legacy_disable.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/google.golang.org/protobuf/internal/flags",
+    importmap = "github.com/fasterci/rules_gitops/vendor/google.golang.org/protobuf/internal/flags",
     importpath = "google.golang.org/protobuf/internal/flags",
     visibility = ["//vendor/google.golang.org/protobuf:__subpackages__"],
 )

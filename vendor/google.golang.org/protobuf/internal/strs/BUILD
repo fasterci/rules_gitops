@@ -6,7 +6,7 @@ go_library(
         "strings.go",
         "strings_unsafe.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/google.golang.org/protobuf/internal/strs",
+    importmap = "github.com/fasterci/rules_gitops/vendor/google.golang.org/protobuf/internal/strs",
     importpath = "google.golang.org/protobuf/internal/strs",
     visibility = ["//vendor/google.golang.org/protobuf:__subpackages__"],
     deps = [

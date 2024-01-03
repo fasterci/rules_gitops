@@ -6,7 +6,7 @@ go_library(
         "exec.go",
         "metrics.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/client-go/plugin/pkg/client/auth/exec",
+    importmap = "github.com/fasterci/rules_gitops/vendor/k8s.io/client-go/plugin/pkg/client/auth/exec",
     importpath = "k8s.io/client-go/plugin/pkg/client/auth/exec",
     visibility = ["//visibility:public"],
     deps = [

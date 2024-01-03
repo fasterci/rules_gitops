@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "go_default_library",
     srcs = ["priorityclass.go"],
-    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/client-go/applyconfigurations/scheduling/v1alpha1",
+    importmap = "github.com/fasterci/rules_gitops/vendor/k8s.io/client-go/applyconfigurations/scheduling/v1alpha1",
     importpath = "k8s.io/client-go/applyconfigurations/scheduling/v1alpha1",
     visibility = ["//visibility:public"],
     deps = [

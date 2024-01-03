@@ -17,7 +17,7 @@ go_library(
         "yamlh.go",
         "yamlprivateh.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/gopkg.in/yaml.v3",
+    importmap = "github.com/fasterci/rules_gitops/vendor/gopkg.in/yaml.v3",
     importpath = "gopkg.in/yaml.v3",
     visibility = ["//visibility:public"],
 )

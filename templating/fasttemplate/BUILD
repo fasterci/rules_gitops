@@ -13,7 +13,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "go_default_library",
     srcs = ["template.go"],
-    importpath = "github.com/adobe/rules_gitops/templating/fasttemplate",
+    importpath = "github.com/fasterci/rules_gitops/templating/fasttemplate",
     visibility = ["//visibility:public"],
 )
 

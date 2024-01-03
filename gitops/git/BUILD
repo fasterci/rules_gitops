@@ -18,7 +18,7 @@ go_library(
         "git.go",
         "server.go",
     ],
-    importpath = "github.com/adobe/rules_gitops/gitops/git",
+    importpath = "github.com/fasterci/rules_gitops/gitops/git",
     visibility = ["//visibility:public"],
     deps = ["//gitops/exec:go_default_library"],
 )

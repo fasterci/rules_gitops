@@ -7,7 +7,7 @@ go_library(
         "yaml.go",
         "yaml_go110.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/sigs.k8s.io/yaml",
+    importmap = "github.com/fasterci/rules_gitops/vendor/sigs.k8s.io/yaml",
     importpath = "sigs.k8s.io/yaml",
     visibility = ["//visibility:public"],
     deps = ["//vendor/gopkg.in/yaml.v2:go_default_library"],

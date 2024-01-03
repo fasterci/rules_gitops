@@ -10,7 +10,7 @@ go_library(
         "doc.go",
         "encode.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/google.golang.org/protobuf/internal/encoding/text",
+    importmap = "github.com/fasterci/rules_gitops/vendor/google.golang.org/protobuf/internal/encoding/text",
     importpath = "google.golang.org/protobuf/internal/encoding/text",
     visibility = ["//vendor/google.golang.org/protobuf:__subpackages__"],
     deps = [

@@ -8,7 +8,7 @@ go_library(
         "token.go",
         "transport.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/golang.org/x/oauth2/internal",
+    importmap = "github.com/fasterci/rules_gitops/vendor/golang.org/x/oauth2/internal",
     importpath = "golang.org/x/oauth2/internal",
     visibility = ["//vendor/golang.org/x/oauth2:__subpackages__"],
 )

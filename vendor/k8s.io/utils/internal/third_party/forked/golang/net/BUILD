@@ -6,7 +6,7 @@ go_library(
         "ip.go",
         "parse.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/utils/internal/third_party/forked/golang/net",
+    importmap = "github.com/fasterci/rules_gitops/vendor/k8s.io/utils/internal/third_party/forked/golang/net",
     importpath = "k8s.io/utils/internal/third_party/forked/golang/net",
     visibility = ["//vendor/k8s.io/utils:__subpackages__"],
 )

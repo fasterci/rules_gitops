@@ -8,7 +8,7 @@ go_library(
         "read.go",
         "write.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/golang.org/x/crypto/openpgp",
+    importmap = "github.com/fasterci/rules_gitops/vendor/golang.org/x/crypto/openpgp",
     importpath = "golang.org/x/crypto/openpgp",
     visibility = ["//visibility:public"],
     deps = [

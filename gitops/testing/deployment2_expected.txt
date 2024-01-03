@@ -13,5 +13,5 @@ spec:
         app: myapp
     spec:
       containers:
-      - image: gcr.io/repo/imagethere@sha256:1fa852d8eaf0f0a491713fb8c62c13ab8d25e2d6b32f024e49513f12a2e57b7a
+      - image: gcr.io/repo/imagethere@sha256:68be0920d9830e3c25bdf4cc7e796ef1f025733b26e8bf37844586a309b4bb1d
         name: myapp

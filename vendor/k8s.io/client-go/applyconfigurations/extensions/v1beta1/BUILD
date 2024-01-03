@@ -55,7 +55,7 @@ go_library(
         "selinuxstrategyoptions.go",
         "supplementalgroupsstrategyoptions.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/client-go/applyconfigurations/extensions/v1beta1",
+    importmap = "github.com/fasterci/rules_gitops/vendor/k8s.io/client-go/applyconfigurations/extensions/v1beta1",
     importpath = "k8s.io/client-go/applyconfigurations/extensions/v1beta1",
     visibility = ["//visibility:public"],
     deps = [

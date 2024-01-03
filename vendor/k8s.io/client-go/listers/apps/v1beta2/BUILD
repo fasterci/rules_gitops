@@ -13,7 +13,7 @@ go_library(
         "statefulset.go",
         "statefulset_expansion.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/client-go/listers/apps/v1beta2",
+    importmap = "github.com/fasterci/rules_gitops/vendor/k8s.io/client-go/listers/apps/v1beta2",
     importpath = "k8s.io/client-go/listers/apps/v1beta2",
     visibility = ["//visibility:public"],
     deps = [

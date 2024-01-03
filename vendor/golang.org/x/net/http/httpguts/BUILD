@@ -6,7 +6,7 @@ go_library(
         "guts.go",
         "httplex.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/golang.org/x/net/http/httpguts",
+    importmap = "github.com/fasterci/rules_gitops/vendor/golang.org/x/net/http/httpguts",
     importpath = "golang.org/x/net/http/httpguts",
     visibility = ["//visibility:public"],
     deps = ["//vendor/golang.org/x/net/idna:go_default_library"],

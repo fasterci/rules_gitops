@@ -8,6 +8,14 @@
 # OF ANY KIND, either express or implied. See the License for the specific language
 # governing permissions and limitations under the License.
 
-licenses(["notice"])  # Apache 2.0
+load("//gitops/private:kustomize_toolchain.bzl", "current_kustomize_toolchain")
 
 package(default_visibility = ["//visibility:public"])
+
+toolchain_type(
+    name = "kustomize_toolchain_type",
+)
+
+current_kustomize_toolchain(
+    name = "current_kustomize_toolchain",
+)

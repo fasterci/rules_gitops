@@ -6,7 +6,7 @@ go_library(
         "doc.go",
         "json.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/sigs.k8s.io/json",
+    importmap = "github.com/fasterci/rules_gitops/vendor/sigs.k8s.io/json",
     importpath = "sigs.k8s.io/json",
     visibility = ["//visibility:public"],
     deps = ["//vendor/sigs.k8s.io/json/internal/golang/encoding/json:go_default_library"],

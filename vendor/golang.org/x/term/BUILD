@@ -12,7 +12,7 @@ go_library(
         "term_windows.go",
         "terminal.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/golang.org/x/term",
+    importmap = "github.com/fasterci/rules_gitops/vendor/golang.org/x/term",
     importpath = "golang.org/x/term",
     visibility = ["//visibility:public"],
     deps = select({

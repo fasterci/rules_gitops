@@ -38,7 +38,7 @@ go_library(
         "wrappers.go",
         "wrappers_gogo.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/github.com/gogo/protobuf/proto",
+    importmap = "github.com/fasterci/rules_gitops/vendor/github.com/gogo/protobuf/proto",
     importpath = "github.com/gogo/protobuf/proto",
     visibility = ["//visibility:public"],
 )

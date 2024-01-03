@@ -7,7 +7,7 @@ go_library(
         "doc.go",
         "import.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/client-go/kubernetes",
+    importmap = "github.com/fasterci/rules_gitops/vendor/k8s.io/client-go/kubernetes",
     importpath = "k8s.io/client-go/kubernetes",
     visibility = ["//visibility:public"],
     deps = [

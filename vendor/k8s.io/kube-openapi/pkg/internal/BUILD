@@ -6,7 +6,7 @@ go_library(
         "flags.go",
         "serialization.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/kube-openapi/pkg/internal",
+    importmap = "github.com/fasterci/rules_gitops/vendor/k8s.io/kube-openapi/pkg/internal",
     importpath = "k8s.io/kube-openapi/pkg/internal",
     visibility = ["//vendor/k8s.io/kube-openapi/pkg:__subpackages__"],
     deps = ["//vendor/github.com/go-openapi/jsonreference:go_default_library"],

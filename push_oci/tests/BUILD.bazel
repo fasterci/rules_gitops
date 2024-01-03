@@ -1,5 +1,5 @@
-load("@rules_pkg//:pkg.bzl", "pkg_tar")
 load("@rules_oci//oci:defs.bzl", "oci_image")
+load("@rules_pkg//:pkg.bzl", "pkg_tar")
 load("//push_oci:push_oci.bzl", "push_oci")
 
 pkg_tar(

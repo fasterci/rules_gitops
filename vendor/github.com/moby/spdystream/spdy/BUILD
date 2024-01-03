@@ -8,7 +8,7 @@ go_library(
         "types.go",
         "write.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/github.com/moby/spdystream/spdy",
+    importmap = "github.com/fasterci/rules_gitops/vendor/github.com/moby/spdystream/spdy",
     importpath = "github.com/moby/spdystream/spdy",
     visibility = ["//visibility:public"],
 )

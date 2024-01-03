@@ -9,7 +9,7 @@ go_library(
         "desc_validate.go",
         "proto.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/google.golang.org/protobuf/reflect/protodesc",
+    importmap = "github.com/fasterci/rules_gitops/vendor/google.golang.org/protobuf/reflect/protodesc",
     importpath = "google.golang.org/protobuf/reflect/protodesc",
     visibility = ["//visibility:public"],
     deps = [

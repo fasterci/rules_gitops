@@ -7,7 +7,7 @@ go_library(
         "roundtripper.go",
         "upgrade.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/apimachinery/pkg/util/httpstream/spdy",
+    importmap = "github.com/fasterci/rules_gitops/vendor/k8s.io/apimachinery/pkg/util/httpstream/spdy",
     importpath = "k8s.io/apimachinery/pkg/util/httpstream/spdy",
     visibility = ["//visibility:public"],
     deps = [

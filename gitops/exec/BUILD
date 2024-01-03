@@ -15,6 +15,6 @@ licenses(["notice"])  # Apache 2.0
 go_library(
     name = "go_default_library",
     srcs = ["exec.go"],
-    importpath = "github.com/adobe/rules_gitops/gitops/exec",
+    importpath = "github.com/fasterci/rules_gitops/gitops/exec",
     visibility = ["//visibility:public"],
 )

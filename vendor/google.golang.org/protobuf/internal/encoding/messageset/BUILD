@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "go_default_library",
     srcs = ["messageset.go"],
-    importmap = "github.com/adobe/rules_gitops/vendor/google.golang.org/protobuf/internal/encoding/messageset",
+    importmap = "github.com/fasterci/rules_gitops/vendor/google.golang.org/protobuf/internal/encoding/messageset",
     importpath = "google.golang.org/protobuf/internal/encoding/messageset",
     visibility = ["//vendor/google.golang.org/protobuf:__subpackages__"],
     deps = [

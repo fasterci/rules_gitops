@@ -9,7 +9,7 @@ go_library(
         "parse.go",
         "port.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/utils/net",
+    importmap = "github.com/fasterci/rules_gitops/vendor/k8s.io/utils/net",
     importpath = "k8s.io/utils/net",
     visibility = ["//visibility:public"],
     deps = ["//vendor/k8s.io/utils/internal/third_party/forked/golang/net:go_default_library"],

@@ -105,7 +105,7 @@ go_library(
         "users_projects.go",
         "without_appengine.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/github.com/google/go-github/v32/github",
+    importmap = "github.com/fasterci/rules_gitops/vendor/github.com/google/go-github/v32/github",
     importpath = "github.com/google/go-github/v32/github",
     visibility = ["//visibility:public"],
     deps = [

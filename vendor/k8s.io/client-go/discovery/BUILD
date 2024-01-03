@@ -8,7 +8,7 @@ go_library(
         "doc.go",
         "helper.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/client-go/discovery",
+    importmap = "github.com/fasterci/rules_gitops/vendor/k8s.io/client-go/discovery",
     importpath = "k8s.io/client-go/discovery",
     visibility = ["//visibility:public"],
     deps = [

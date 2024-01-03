@@ -15,7 +15,7 @@ licenses(["notice"])  # Apache 2.0
 go_library(
     name = "go_default_library",
     srcs = ["bitbucket.go"],
-    importpath = "github.com/adobe/rules_gitops/gitops/git/bitbucket",
+    importpath = "github.com/fasterci/rules_gitops/gitops/git/bitbucket",
     visibility = ["//visibility:public"],
 )
 

@@ -9,7 +9,7 @@ go_library(
         "types.go",
         "zz_generated.deepcopy.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/client-go/tools/clientcmd/api",
+    importmap = "github.com/fasterci/rules_gitops/vendor/k8s.io/client-go/tools/clientcmd/api",
     importpath = "k8s.io/client-go/tools/clientcmd/api",
     visibility = ["//visibility:public"],
     deps = [

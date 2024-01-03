@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "go_default_library",
     srcs = ["convert.go"],
-    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/kube-openapi/pkg/openapiconv",
+    importmap = "github.com/fasterci/rules_gitops/vendor/k8s.io/kube-openapi/pkg/openapiconv",
     importpath = "k8s.io/kube-openapi/pkg/openapiconv",
     visibility = ["//visibility:public"],
     deps = [

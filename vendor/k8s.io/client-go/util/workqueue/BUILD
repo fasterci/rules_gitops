@@ -11,7 +11,7 @@ go_library(
         "queue.go",
         "rate_limiting_queue.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/client-go/util/workqueue",
+    importmap = "github.com/fasterci/rules_gitops/vendor/k8s.io/client-go/util/workqueue",
     importpath = "k8s.io/client-go/util/workqueue",
     visibility = ["//visibility:public"],
     deps = [

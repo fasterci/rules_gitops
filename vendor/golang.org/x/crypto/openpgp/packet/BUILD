@@ -22,7 +22,7 @@ go_library(
         "userattribute.go",
         "userid.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/golang.org/x/crypto/openpgp/packet",
+    importmap = "github.com/fasterci/rules_gitops/vendor/golang.org/x/crypto/openpgp/packet",
     importpath = "golang.org/x/crypto/openpgp/packet",
     visibility = ["//visibility:public"],
     deps = [

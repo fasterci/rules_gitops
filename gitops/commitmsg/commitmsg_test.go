@@ -16,7 +16,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/adobe/rules_gitops/gitops/commitmsg"
+	"github.com/fasterci/rules_gitops/gitops/commitmsg"
 )
 
 func TestRoundtrip(t *testing.T) {

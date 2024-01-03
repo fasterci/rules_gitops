@@ -13,7 +13,7 @@ go_library(
         "serialize-pe.go",
         "set.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/sigs.k8s.io/structured-merge-diff/v4/fieldpath",
+    importmap = "github.com/fasterci/rules_gitops/vendor/sigs.k8s.io/structured-merge-diff/v4/fieldpath",
     importpath = "sigs.k8s.io/structured-merge-diff/v4/fieldpath",
     visibility = ["//visibility:public"],
     deps = [

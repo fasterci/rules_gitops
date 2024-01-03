@@ -19,7 +19,7 @@ import (
 	oe "os/exec"
 	"path/filepath"
 
-	"github.com/adobe/rules_gitops/gitops/exec"
+	"github.com/fasterci/rules_gitops/gitops/exec"
 )
 
 var (
