@@ -4,28 +4,28 @@ load(":repo_utils.bzl", "repo_utils")
 
 KUSTOMIZE_PLATFORMS = {
     "darwin_amd64": struct(
-        release_platform = "macos-amd64",
+        release_platform = "darwin_amd64",
         compatible_with = [
             "@platforms//os:macos",
             "@platforms//cpu:x86_64",
         ],
     ),
     "darwin_arm64": struct(
-        release_platform = "macos-arm64",
+        release_platform = "darwin_arm64",
         compatible_with = [
             "@platforms//os:macos",
             "@platforms//cpu:aarch64",
         ],
     ),
     "linux_amd64": struct(
-        release_platform = "linux-amd64",
+        release_platform = "linux_amd64",
         compatible_with = [
             "@platforms//os:linux",
             "@platforms//cpu:x86_64",
         ],
     ),
     "linux_arm64": struct(
-        release_platform = "linux-arm64",
+        release_platform = "linux_arm64",
         compatible_with = [
             "@platforms//os:linux",
             "@platforms//cpu:aarch64",
@@ -48,10 +48,10 @@ DEFAULT_KUSTOMIZE_VERSION = "4.5.3"
 # shasum -b -a 384 [downloaded file] | awk '{ print $1 }' | xxd -r -p | base64
 KUSTOMIZE_VERSIONS = {
     "4.5.3": {
-        "linux-amd64": "e4dc2f795235b03a2e6b12c3863c44abe81338c5c0054b29baf27dcc734ae693",
-        "linux-arm64": "97cf7d53214388b1ff2177a56404445f02d8afacb9421339c878c5ac2c8bc2c8",
-        "darwin-amd64": "b0a6b0568273d466abd7cd535c556e44aa9ff5f54c07e86ed9f3016b416de992",
-        "darwin-arm64": "2fb58138c319d404e1604ae6665356e211b2ea45f17f174df1322de0100a55c4",
+        "linux_amd64": "e4dc2f795235b03a2e6b12c3863c44abe81338c5c0054b29baf27dcc734ae693",
+        "linux_arm64": "97cf7d53214388b1ff2177a56404445f02d8afacb9421339c878c5ac2c8bc2c8",
+        "darwin_amd64": "b0a6b0568273d466abd7cd535c556e44aa9ff5f54c07e86ed9f3016b416de992",
+        "darwin_arm64": "2fb58138c319d404e1604ae6665356e211b2ea45f17f174df1322de0100a55c4",
         "windows_amd64": "ad5ac5ed8d244309e4a41cfd61e87918096e159514e4867c9449409b67a6709f",
     },
 }
