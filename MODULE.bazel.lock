@@ -1361,7 +1361,7 @@
     },
     "//gitops:extensions.bzl%toolchains": {
       "general": {
-        "bzlTransitiveDigest": "xVYDFJSPwwuYcNJaVpvIB8k0oAZhIaE8EKExRht/AZY=",
+        "bzlTransitiveDigest": "ktj/fJsQtXvJWCCswF0jJEGje4gl7Pw6/qbTrptyGUE=",
         "accumulatedFileDigests": {},
         "envVariables": {},
         "generatedRepoSpecs": {
