@@ -13,7 +13,7 @@
 # gazelle:proto disable_global
 
 load("@bazel_gazelle//:def.bzl", "gazelle")
-load("@com_github_bazelbuild_buildtools//buildifier:def.bzl", "buildifier", "buildifier_test")
+load("@buildifier_prebuilt//:rules.bzl", "buildifier")
 
 licenses(["notice"])  # Apache 2.0
 
@@ -48,16 +48,4 @@ buildifier(
 buildifier(
     name = "buildifier-fix",
     lint_mode = "fix",
-)
-
-buildifier_test(
-    name = "buildifier_check",
-    lint_mode = "warn",
-    lint_warnings = [
-        "-module-docstring",
-        "-function-docstring",
-        "-function-docstring-header",
-        "-function-docstring-args",
-        "-function-docstring-return",
-    ],
 )
