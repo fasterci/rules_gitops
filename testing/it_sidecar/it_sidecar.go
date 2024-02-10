@@ -134,7 +134,7 @@ func listenForEvents(ctx context.Context, clientset *kubernetes.Clientset, onFai
 	fn := func(obj interface{}) {
 		event, ok := obj.(*v1.Event)
 		if !ok {
-			log.Print("Event informer received unexpected object")
+			log.Println("Event informer received unexpected object")
 			return
 		}
 		log.Printf("EVENT %s %s %s %s", event.Namespace, event.InvolvedObject.Name, event.Reason, event.Message)
