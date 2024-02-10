@@ -137,7 +137,7 @@ func listenForEvents(ctx context.Context, clientset *kubernetes.Clientset, onFai
 			log.Println("Event informer received unexpected object")
 			return
 		}
-		log.Printf("EVENT %s %s %s %s", event.Namespace, event.InvolvedObject.Name, event.Reason, event.Message)
+		log.Printf("EVENT %s %s %s %s\n", event.Namespace, event.InvolvedObject.Name, event.Reason, event.Message)
 		if event.Reason == "Failed" {
 			onFailure(event)
 		}
