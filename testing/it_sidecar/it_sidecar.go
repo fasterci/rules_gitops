@@ -374,7 +374,7 @@ func main() {
 
 	listenForEvents(ctx, clientset, func(event *v1.Event) {
 		if !allowErrors {
-			log.Print("Terminate due to failure")
+			log.Println("Terminate due to failure")
 			cancel()
 		}
 	})
