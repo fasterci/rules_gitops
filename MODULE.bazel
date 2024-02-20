@@ -3,12 +3,12 @@ module(
     version = "0.50.0",
 )
 
-bazel_dep(name = "aspect_bazel_lib", version = "1.39.0")
+bazel_dep(name = "aspect_bazel_lib", version = "2.4.1")
 bazel_dep(name = "bazel_skylib", version = "1.5.0")
 bazel_dep(name = "platforms", version = "0.0.7")
-bazel_dep(name = "rules_oci", version = "1.5.1")
-bazel_dep(name = "rules_pkg", version = "0.7.0")
-bazel_dep(name = "rules_go", version = "0.44.0", repo_name = "io_bazel_rules_go")
+bazel_dep(name = "rules_oci", version = "1.7.0")
+bazel_dep(name = "rules_pkg", version = "0.9.1")
+bazel_dep(name = "rules_go", version = "0.46.0", repo_name = "io_bazel_rules_go")
 
 go_sdk = use_extension("@io_bazel_rules_go//go:extensions.bzl", "go_sdk")
 go_sdk.download(version = "1.21.5")
@@ -39,12 +39,13 @@ use_repo(toolchains, "kustomize_bin", "kustomize_toolchains")
 
 register_toolchains("@kustomize_toolchains//:all")
 
-kubeconfig = use_repo_rule("@rules_gitops//skylib:k8s.bzl", "kubeconfig")
+# Uncomment this part when bazel 6 is deprecated. Supported in bazel 7
+# kubeconfig = use_repo_rule("@rules_gitops//skylib:k8s.bzl", "kubeconfig")
 
-kubeconfig(
-    name = "k8s_test",
-    cluster = "mycluster",
-    use_host_config = True,
-)
+# kubeconfig(
+#     name = "k8s_test",
+#     cluster = "mycluster",
+#     use_host_config = True,
+# )
 
 bazel_dep(name = "buildifier_prebuilt", version = "6.4.0", dev_dependency = True)
