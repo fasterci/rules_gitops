@@ -519,12 +519,14 @@ k8s_test_setup = rule(
         "kubeconfig": attr.label(
             #default = Label("@k8s_test//:kubeconfig"),
             allow_single_file = True,
+            mandatory = True,
         ),
         "kubectl": attr.label(
             #default = Label("@k8s_test//:kubectl"),
             cfg = "exec",
             executable = True,
             allow_single_file = True,
+            mandatory = True,
         ),
         "objects": attr.label_list(
             cfg = "target",
@@ -535,6 +537,7 @@ k8s_test_setup = rule(
         "cluster": attr.label(
             #default = Label("@k8s_test//:cluster"),
             allow_single_file = True,
+            mandatory = True,
         ),
         "_it_sidecar": attr.label(
             default = Label("//testing/it_sidecar:it_sidecar"),
