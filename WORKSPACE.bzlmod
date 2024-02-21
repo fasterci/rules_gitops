@@ -1,4 +1,5 @@
 # Check MODULE.bazel for configuration
+workspace(name = "rules_gitops")
 
 load("@rules_gitops//skylib:k8s.bzl", "kubeconfig")
 
