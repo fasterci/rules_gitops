@@ -12,7 +12,7 @@
 GtiOps rules repositories initialization
 """
 
-load("@aspect_bazel_lib//lib:repositories.bzl", "aspect_bazel_lib_dependencies", "register_jq_toolchains")
+load("@aspect_bazel_lib//lib:repositories.bzl", "aspect_bazel_lib_dependencies", "aspect_bazel_lib_register_toolchains")
 load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies")
 load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
 load("@rules_gitops//skylib/kustomize:kustomize.bzl", "download_kustomize", "kustomize_setup")
@@ -32,7 +32,7 @@ def rules_gitops_repositories():
     bazel_skylib_workspace()
     gazelle_dependencies()
     aspect_bazel_lib_dependencies()
-    register_jq_toolchains()
+    aspect_bazel_lib_register_toolchains()
     rules_pkg_dependencies()
     kustomize_setup(name = "kustomize_bin")
     register_kustomize_toolchains(register = True)
