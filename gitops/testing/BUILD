@@ -111,7 +111,9 @@ k8s_deploy(
 
 k8s_test_setup(
     name = "legacy_renamed_alias_it.setup",
-    # kubeconfig = "@k8s_test//:kubeconfig",
+    cluster = "@k8s_test//:cluster",
+    kubeconfig = "@k8s_test//:kubeconfig",
+    kubectl = "@k8s_test//:kubectl",
     objects = [
         ":legacy_renamed_alias",
     ],
