@@ -83,7 +83,9 @@ REGISTRY = "us-central1-docker.pkg.dev/rules-gitops-demo/it"
 
 k8s_test_setup(
     name = "hello_server_it.setup",
+    cluster = "@k8s_test//:cluster",
     kubeconfig = "@k8s_test//:kubeconfig",
+    kubectl = "@k8s_test//:kubectl",
     objects = [
         ":mynamespace",
     ],

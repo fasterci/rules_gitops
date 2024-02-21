@@ -517,11 +517,11 @@ def _k8s_test_setup_impl(ctx):
 k8s_test_setup = rule(
     attrs = {
         "kubeconfig": attr.label(
-            default = Label("@k8s_test//:kubeconfig"),
+            #default = Label("@k8s_test//:kubeconfig"),
             allow_single_file = True,
         ),
         "kubectl": attr.label(
-            default = Label("@k8s_test//:kubectl"),
+            #default = Label("@k8s_test//:kubectl"),
             cfg = "exec",
             executable = True,
             allow_single_file = True,
@@ -533,7 +533,7 @@ k8s_test_setup = rule(
         "setup_timeout": attr.string(default = "10m"),
         "wait_for_apps": attr.string_list(),
         "cluster": attr.label(
-            default = Label("@k8s_test//:cluster"),
+            #default = Label("@k8s_test//:cluster"),
             allow_single_file = True,
         ),
         "_it_sidecar": attr.label(
