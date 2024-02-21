@@ -35,5 +35,5 @@ spec:
         app: myapp
     spec:
       containers:
-      - image: gcr.io/bs-dev/test_image@sha256:1fa852d8eaf0f0a491713fb8c62c13ab8d25e2d6b32f024e49513f12a2e57b7a
+      - image: //skylib/kustomize/tests:image
         name: myapp

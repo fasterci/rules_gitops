@@ -343,7 +343,7 @@ kustomize = rule(
 )
 
 def _push_all_impl(ctx):
-    trans_img_pushes = depset(transitive = [obj[GitopsArtifactsInfo].image_pushes for obj in ctx.attr.srcs]).to_list()
+    trans_img_pushes = depset(transitive = [obj[GitopsArtifactsInfo].image_pushes for obj in ctx.attr.srcs if obj.files_to_run.executable]).to_list()
 
     ctx.actions.expand_template(
         template = ctx.file._tpl,
@@ -514,7 +514,7 @@ def _kubectl_impl(ctx):
     files += [ctx.executable._template_engine, ctx.file._info_file]
 
     if ctx.attr.push:
-        trans_img_pushes = depset(transitive = [obj[GitopsArtifactsInfo].image_pushes for obj in ctx.attr.srcs]).to_list()
+        trans_img_pushes = depset(transitive = [obj[GitopsArtifactsInfo].image_pushes for obj in ctx.attr.srcs if obj.files_to_run.executable]).to_list()
         statements += "\n".join([
             "# {}\n".format(exe[GitopsPushInfo].image_label) +
             "echo  pushing {}".format(exe[GitopsPushInfo].repository)
