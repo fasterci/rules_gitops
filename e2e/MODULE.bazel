@@ -15,10 +15,12 @@ local_path_override(
     module_name = "rules_gitops",
     path = "../",
 )
-kubeconfig = use_repo_rule("@rules_gitops//skylib:k8s.bzl", "kubeconfig")
 
-kubeconfig(
-    name = "k8s_test",
-    cluster = "gke_rules-gitops-demo_us-central1_cluster-demo",
-    use_host_config = True,
-)
+# Only available in bazel 7
+# kubeconfig = use_repo_rule("@rules_gitops//skylib:k8s.bzl", "kubeconfig")
+
+# kubeconfig(
+#     name = "k8s_test",
+#     cluster = "gke_rules-gitops-demo_us-central1_cluster-demo",
+#     use_host_config = True,
+# )
