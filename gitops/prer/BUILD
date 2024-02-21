@@ -15,7 +15,7 @@ licenses(["notice"])  # Apache 2.0
 go_library(
     name = "go_default_library",
     srcs = ["create_gitops_prs.go"],
-    importpath = "github.com/adobe/rules_gitops/gitops/prer",
+    importpath = "github.com/fasterci/rules_gitops/gitops/prer",
     visibility = ["//visibility:private"],
     deps = [
         "//gitops/analysis:go_default_library",

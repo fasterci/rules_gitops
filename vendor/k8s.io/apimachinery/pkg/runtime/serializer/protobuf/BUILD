@@ -6,7 +6,7 @@ go_library(
         "doc.go",
         "protobuf.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/apimachinery/pkg/runtime/serializer/protobuf",
+    importmap = "github.com/fasterci/rules_gitops/vendor/k8s.io/apimachinery/pkg/runtime/serializer/protobuf",
     importpath = "k8s.io/apimachinery/pkg/runtime/serializer/protobuf",
     visibility = ["//visibility:public"],
     deps = [

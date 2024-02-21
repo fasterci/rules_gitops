@@ -7,7 +7,7 @@ go_library(
         "doc.go",
         "version.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/client-go/pkg/version",
+    importmap = "github.com/fasterci/rules_gitops/vendor/k8s.io/client-go/pkg/version",
     importpath = "k8s.io/client-go/pkg/version",
     visibility = ["//visibility:public"],
     deps = ["//vendor/k8s.io/apimachinery/pkg/version:go_default_library"],

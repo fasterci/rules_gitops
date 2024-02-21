@@ -23,7 +23,7 @@ go_library(
         "swagger.go",
         "tag.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/kube-openapi/pkg/validation/spec",
+    importmap = "github.com/fasterci/rules_gitops/vendor/k8s.io/kube-openapi/pkg/validation/spec",
     importpath = "k8s.io/kube-openapi/pkg/validation/spec",
     visibility = ["//visibility:public"],
     deps = [

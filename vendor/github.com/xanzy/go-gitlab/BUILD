@@ -122,7 +122,7 @@ go_library(
         "version.go",
         "wikis.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/github.com/xanzy/go-gitlab",
+    importmap = "github.com/fasterci/rules_gitops/vendor/github.com/xanzy/go-gitlab",
     importpath = "github.com/xanzy/go-gitlab",
     visibility = ["//visibility:public"],
     deps = [

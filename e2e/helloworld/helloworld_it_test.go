@@ -18,7 +18,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/adobe/rules_gitops/testing/it_sidecar/client"
+	"github.com/fasterci/rules_gitops/testing/it_sidecar/client"
 )
 
 var setup client.K8STestSetup

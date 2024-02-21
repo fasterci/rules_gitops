@@ -6,7 +6,7 @@ go_library(
         "doc.go",
         "portforward.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/client-go/tools/portforward",
+    importmap = "github.com/fasterci/rules_gitops/vendor/k8s.io/client-go/tools/portforward",
     importpath = "k8s.io/client-go/tools/portforward",
     visibility = ["//visibility:public"],
     deps = [

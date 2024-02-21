@@ -8,8 +8,8 @@
 # OF ANY KIND, either express or implied. See the License for the specific language
 # governing permissions and limitations under the License.
 
-load("//skylib:runfile.bzl", "get_runfile_path")
 load("//gitops:provider.bzl", "GitopsArtifactsInfo", "GitopsPushInfo")
+load("//skylib:runfile.bzl", "get_runfile_path")
 load("//skylib:stamp.bzl", "stamp")
 
 _binaries = {
@@ -17,7 +17,7 @@ _binaries = {
     "linux_amd64": ("https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv4.5.3/kustomize_v4.5.3_linux_amd64.tar.gz", "e4dc2f795235b03a2e6b12c3863c44abe81338c5c0054b29baf27dcc734ae693"),
 }
 
-def _download_binary_impl(ctx):
+def _download_kustomize_impl(ctx):
     if ctx.os.name == "linux":
         platform = "linux_amd64"
     elif ctx.os.name == "mac os x":
@@ -36,12 +36,12 @@ sh_binary(
     filename, sha256 = _binaries[platform]
     ctx.download_and_extract(filename, "bin/", sha256 = sha256)
 
-_download_binary = repository_rule(
-    _download_binary_impl,
+download_kustomize = repository_rule(
+    _download_kustomize_impl,
 )
 
 def kustomize_setup(name):
-    _download_binary(name = name)
+    download_kustomize(name = name)
 
 def _stamp_file(ctx, infile, output):
     stamps = [ctx.file._info_file]
@@ -71,7 +71,17 @@ set -euo pipefail
 {kustomize} build --load-restrictor LoadRestrictionsNone --reorder legacy {kustomize_dir} {template_part} {resolver_part} >{out}
 """
 
+def _no_at_str(label):
+    """Strips any leading '@'s for labels in the main repo."""
+    s = str(label)
+    if s.startswith("@@//"):
+        return s[2:]
+    if s.startswith("@//"):
+        return s[1:]
+    return s
+
 def _kustomize_impl(ctx):
+    kustomize_bin = ctx.toolchains["@rules_gitops//gitops:kustomize_toolchain_type"].kustomizeinfo.bin
     kustomization_yaml_file = ctx.actions.declare_file(ctx.attr.name + "/kustomization.yaml")
     root = kustomization_yaml_file.dirname
 
@@ -230,19 +240,14 @@ def _kustomize_impl(ctx):
                 template_part += " --variable={}={}@$(cat {})".format(label_str, regrepo, kpi.digestfile.path)
 
                 # Image digest
-                template_part += " --variable={}=$(cat {} | cut -d ':' -f 2)".format(str(kpi.image_label) + ".digest", kpi.digestfile.path)
-                template_part += " --variable={}=$(cat {} | cut -c 8-17)".format(str(kpi.image_label) + ".short-digest", kpi.digestfile.path)
-                if str(kpi.image_label).startswith("@//"):
-                    # Bazel 6 add a @ prefix to the image label
-                    label = str(kpi.image_label)[1:]
-                    template_part += " --variable={}=$(cat {} | cut -d ':' -f 2)".format(str(label) + ".digest", kpi.digestfile.path)
-                    template_part += " --variable={}=$(cat {} | cut -c 8-17)".format(str(label) + ".short-digest", kpi.digestfile.path)
+                template_part += " --variable={}=$(cat {} | cut -d ':' -f 2)".format(label_str + ".digest", kpi.digestfile.path)
+                template_part += " --variable={}=$(cat {} | cut -c 8-17)".format(label_str + ".short-digest", kpi.digestfile.path)
 
         template_part += " "
 
     script = ctx.actions.declare_file("%s-kustomize" % ctx.label.name)
     script_content = _script_template.format(
-        kustomize = ctx.executable._kustomize_bin.path,
+        kustomize = kustomize_bin.path,
         kustomize_dir = root,
         resolver_part = resolver_part,
         template_part = template_part,
@@ -255,7 +260,7 @@ def _kustomize_impl(ctx):
         inputs = ctx.files.manifests + ctx.files.configmaps_srcs + ctx.files.secrets_srcs + ctx.files.configurations + ctx.files.openapi_path + [kustomization_yaml_file] + tmpfiles + ctx.files.patches + ctx.files.deps,
         executable = script,
         mnemonic = "Kustomize",
-        tools = [ctx.executable._kustomize_bin],
+        tools = [kustomize_bin],
     )
 
     runfiles = ctx.runfiles(files = ctx.files.deps).merge_all(transitive_runfiles)
@@ -314,12 +319,6 @@ kustomize = rule(
             default = Label("//skylib:more_stable_status.txt"),
             allow_single_file = True,
         ),
-        "_kustomize_bin": attr.label(
-            default = Label("@kustomize_bin//:kustomize"),
-            cfg = "exec",
-            executable = True,
-            allow_files = True,
-        ),
         "_resolver": attr.label(
             default = Label("//resolver:resolver"),
             cfg = "exec",
@@ -337,13 +336,14 @@ kustomize = rule(
             cfg = "exec",
         ),
     },
+    toolchains = ["@rules_gitops//gitops:kustomize_toolchain_type"],
     outputs = {
         "yaml": "%{name}.yaml",
     },
 )
 
 def _push_all_impl(ctx):
-    trans_img_pushes = depset(transitive = [obj[GitopsArtifactsInfo].image_pushes for obj in ctx.attr.srcs]).to_list()
+    trans_img_pushes = depset(transitive = [obj[GitopsArtifactsInfo].image_pushes for obj in ctx.attr.srcs if obj.files_to_run.executable]).to_list()
 
     ctx.actions.expand_template(
         template = ctx.file._tpl,
@@ -514,7 +514,7 @@ def _kubectl_impl(ctx):
     files += [ctx.executable._template_engine, ctx.file._info_file]
 
     if ctx.attr.push:
-        trans_img_pushes = depset(transitive = [obj[GitopsArtifactsInfo].image_pushes for obj in ctx.attr.srcs]).to_list()
+        trans_img_pushes = depset(transitive = [obj[GitopsArtifactsInfo].image_pushes for obj in ctx.attr.srcs if obj.files_to_run.executable]).to_list()
         statements += "\n".join([
             "# {}\n".format(exe[GitopsPushInfo].image_label) +
             "echo  pushing {}".format(exe[GitopsPushInfo].repository)

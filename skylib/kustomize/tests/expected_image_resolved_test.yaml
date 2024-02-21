@@ -6,8 +6,8 @@ roleRef:
   kind: ClusterRole
   name: cluster-admin
 subjects:
-  - kind: Group
-    name: crb-subject
+- kind: Group
+  name: crb-subject
 ---
 apiVersion: v1
 kind: Service
@@ -15,9 +15,9 @@ metadata:
   name: myapp
 spec:
   ports:
-    - name: web
-      port: 80
-      targetPort: 8080
+  - name: web
+    port: 80
+    targetPort: 8080
   selector:
     app: myapp
 ---

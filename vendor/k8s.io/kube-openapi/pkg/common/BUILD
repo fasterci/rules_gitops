@@ -7,7 +7,7 @@ go_library(
         "doc.go",
         "interfaces.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/kube-openapi/pkg/common",
+    importmap = "github.com/fasterci/rules_gitops/vendor/k8s.io/kube-openapi/pkg/common",
     importpath = "k8s.io/kube-openapi/pkg/common",
     visibility = ["//visibility:public"],
     deps = [

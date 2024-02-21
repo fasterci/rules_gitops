@@ -12,7 +12,7 @@ governing permissions and limitations under the License.
 package test_callback
 
 import (
-	"github.com/adobe/rules_gitops/testing/it_sidecar/client"
+	"github.com/fasterci/rules_gitops/testing/it_sidecar/client"
 	"testing"
 )
 

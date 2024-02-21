@@ -27,7 +27,7 @@ go_library(
         "resourcemetricsource.go",
         "resourcemetricstatus.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/client-go/applyconfigurations/autoscaling/v2beta2",
+    importmap = "github.com/fasterci/rules_gitops/vendor/k8s.io/client-go/applyconfigurations/autoscaling/v2beta2",
     importpath = "k8s.io/client-go/applyconfigurations/autoscaling/v2beta2",
     visibility = ["//visibility:public"],
     deps = [

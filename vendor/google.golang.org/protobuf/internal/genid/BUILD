@@ -19,7 +19,7 @@ go_library(
         "wrappers.go",
         "wrappers_gen.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/google.golang.org/protobuf/internal/genid",
+    importmap = "github.com/fasterci/rules_gitops/vendor/google.golang.org/protobuf/internal/genid",
     importpath = "google.golang.org/protobuf/internal/genid",
     visibility = ["//vendor/google.golang.org/protobuf:__subpackages__"],
     deps = ["//vendor/google.golang.org/protobuf/reflect/protoreflect:go_default_library"],

@@ -9,7 +9,7 @@ go_library(
         "port_split.go",
         "util.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/apimachinery/pkg/util/net",
+    importmap = "github.com/fasterci/rules_gitops/vendor/k8s.io/apimachinery/pkg/util/net",
     importpath = "k8s.io/apimachinery/pkg/util/net",
     visibility = ["//visibility:public"],
     deps = [

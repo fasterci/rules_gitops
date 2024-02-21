@@ -6,7 +6,7 @@ go_library(
         "factory.go",
         "generic.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/client-go/informers",
+    importmap = "github.com/fasterci/rules_gitops/vendor/k8s.io/client-go/informers",
     importpath = "k8s.io/client-go/informers",
     visibility = ["//visibility:public"],
     deps = [

@@ -10,7 +10,7 @@ go_library(
         "endpointslice.go",
         "forzone.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/client-go/applyconfigurations/discovery/v1beta1",
+    importmap = "github.com/fasterci/rules_gitops/vendor/k8s.io/client-go/applyconfigurations/discovery/v1beta1",
     importpath = "k8s.io/client-go/applyconfigurations/discovery/v1beta1",
     visibility = ["//visibility:public"],
     deps = [

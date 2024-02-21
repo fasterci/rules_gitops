@@ -10,7 +10,7 @@ go_library(
         "main.go",
         "reader.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/github.com/google/gnostic/compiler",
+    importmap = "github.com/fasterci/rules_gitops/vendor/github.com/google/gnostic/compiler",
     importpath = "github.com/google/gnostic/compiler",
     visibility = ["//visibility:public"],
     deps = [

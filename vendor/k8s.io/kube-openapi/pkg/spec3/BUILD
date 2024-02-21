@@ -18,7 +18,7 @@ go_library(
         "server.go",
         "spec.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/kube-openapi/pkg/spec3",
+    importmap = "github.com/fasterci/rules_gitops/vendor/k8s.io/kube-openapi/pkg/spec3",
     importpath = "k8s.io/kube-openapi/pkg/spec3",
     visibility = ["//visibility:public"],
     deps = [

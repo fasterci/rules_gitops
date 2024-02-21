@@ -8,8 +8,9 @@
 # OF ANY KIND, either express or implied. See the License for the specific language
 # governing permissions and limitations under the License.
 
-load("//skylib:runfile.bzl", "get_runfile_path")
 load("//gitops:provider.bzl", "GitopsArtifactsInfo")
+load("//push_oci:push_oci.bzl", "push_oci")
+load("//skylib:runfile.bzl", "get_runfile_path")
 load(
     "//skylib/kustomize:kustomize.bzl",
     "imagePushStatements",
@@ -17,7 +18,6 @@ load(
     "kustomize",
     kustomize_gitops = "gitops",
 )
-load("//push_oci:push_oci.bzl", "push_oci")
 
 def _show_impl(ctx):
     script_content = "#!/usr/bin/env bash\nset -e\n"
@@ -459,12 +459,13 @@ k8s_test_namespace = rule(
 )
 
 def _k8s_test_setup_impl(ctx):
+    kustomize_bin = ctx.toolchains["@rules_gitops//gitops:kustomize_toolchain_type"].kustomizeinfo.bin
     files = []  # runfiles list
     transitive = []
     commands = []  # the list of commands to execute
 
     # add files referenced by rule attributes to runfiles
-    files = [ctx.executable._stamper, ctx.file.kubectl, ctx.file.kubeconfig, ctx.executable._kustomize, ctx.executable._it_sidecar, ctx.executable._it_manifest_filter]
+    files = [ctx.executable._stamper, ctx.file.kubectl, ctx.file.kubeconfig, kustomize_bin, ctx.executable._it_sidecar, ctx.executable._it_manifest_filter]
     files += ctx.files._set_namespace
     files += ctx.files.cluster
 
@@ -516,14 +517,16 @@ def _k8s_test_setup_impl(ctx):
 k8s_test_setup = rule(
     attrs = {
         "kubeconfig": attr.label(
-            default = Label("@k8s_test//:kubeconfig"),
+            #default = Label("@k8s_test//:kubeconfig"),
             allow_single_file = True,
+            mandatory = True,
         ),
         "kubectl": attr.label(
-            default = Label("@k8s_test//:kubectl"),
+            #default = Label("@k8s_test//:kubectl"),
             cfg = "exec",
             executable = True,
             allow_single_file = True,
+            mandatory = True,
         ),
         "objects": attr.label_list(
             cfg = "target",
@@ -532,16 +535,12 @@ k8s_test_setup = rule(
         "setup_timeout": attr.string(default = "10m"),
         "wait_for_apps": attr.string_list(),
         "cluster": attr.label(
-            default = Label("@k8s_test//:cluster"),
+            #default = Label("@k8s_test//:cluster"),
             allow_single_file = True,
+            mandatory = True,
         ),
         "_it_sidecar": attr.label(
             default = Label("//testing/it_sidecar:it_sidecar"),
-            cfg = "exec",
-            executable = True,
-        ),
-        "_kustomize": attr.label(
-            default = Label("@kustomize_bin//:kustomize"),
             cfg = "exec",
             executable = True,
         ),
@@ -571,6 +570,7 @@ k8s_test_setup = rule(
             cfg = "exec",
         ),
     },
+    toolchains = ["@rules_gitops//gitops:kustomize_toolchain_type"],
     executable = True,
     implementation = _k8s_test_setup_impl,
 )

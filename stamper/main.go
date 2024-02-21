@@ -18,7 +18,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/adobe/rules_gitops/templating/fasttemplate"
+	"github.com/fasterci/rules_gitops/templating/fasttemplate"
 )
 
 type arrayFlags []string

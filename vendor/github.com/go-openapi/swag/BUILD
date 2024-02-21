@@ -20,7 +20,7 @@ go_library(
         "util.go",
         "yaml.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/github.com/go-openapi/swag",
+    importmap = "github.com/fasterci/rules_gitops/vendor/github.com/go-openapi/swag",
     importpath = "github.com/go-openapi/swag",
     visibility = ["//visibility:public"],
     deps = [

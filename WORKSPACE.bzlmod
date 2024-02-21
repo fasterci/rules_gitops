@@ -1,0 +1,10 @@
+# Check MODULE.bazel for configuration
+workspace(name = "rules_gitops")
+
+load("@rules_gitops//skylib:k8s.bzl", "kubeconfig")
+
+kubeconfig(
+    name = "k8s_test",
+    cluster = "mycluster",
+    use_host_config = True,
+)

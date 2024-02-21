@@ -8,7 +8,7 @@ go_library(
         "equals.go",
         "schemaschema.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/sigs.k8s.io/structured-merge-diff/v4/schema",
+    importmap = "github.com/fasterci/rules_gitops/vendor/sigs.k8s.io/structured-merge-diff/v4/schema",
     importpath = "sigs.k8s.io/structured-merge-diff/v4/schema",
     visibility = ["//visibility:public"],
 )

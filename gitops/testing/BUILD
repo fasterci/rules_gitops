@@ -8,9 +8,9 @@
 # OF ANY KIND, either express or implied. See the License for the specific language
 # governing permissions and limitations under the License.
 
-load("@bazel_skylib//rules:diff_test.bzl", "diff_test")
 load("//gitops:defs.bzl", "external_image", "k8s_deploy", "k8s_test_setup")
 load("//push_oci:push_oci.bzl", "push_oci")
+load("@aspect_bazel_lib//lib:write_source_files.bzl", "write_source_files")
 
 licenses(["notice"])  # Apache 2.0
 
@@ -30,12 +30,6 @@ k8s_deploy(
     visibility = ["//visibility:public"],
 )
 
-diff_test(
-    name = "legacy_alias_test",
-    file1 = ":legacy_alias",
-    file2 = "deployment_expected.txt",
-)
-
 k8s_deploy(
     name = "legacy_label",
     cluster = "testcluster",
@@ -52,12 +46,6 @@ k8s_deploy(
     visibility = ["//visibility:public"],
 )
 
-diff_test(
-    name = "legacy_label_test",
-    file1 = ":legacy_label",
-    file2 = "deployment_expected.txt",
-)
-
 k8s_deploy(
     name = "label",
     cluster = "testcluster",
@@ -72,12 +60,6 @@ k8s_deploy(
     namespace = "ci",
     release_branch_prefix = "gitops_test_release_branch",
     visibility = ["//visibility:public"],
-)
-
-diff_test(
-    name = "label_test",
-    file1 = ":label",
-    file2 = "deployment_expected.txt",
 )
 
 # using image from external repo
@@ -101,12 +83,6 @@ k8s_deploy(
     namespace = "ci",
     release_branch_prefix = "gitops_test_release_branch",
     visibility = ["//visibility:public"],
-)
-
-diff_test(
-    name = "external_image_label_test",
-    file1 = ":external_image_label",
-    file2 = "deployment1_expected.txt",
 )
 
 push_oci(
@@ -133,16 +109,22 @@ k8s_deploy(
     visibility = ["//visibility:public"],
 )
 
-diff_test(
-    name = "legacy_renamed_alias_test",
-    file1 = ":legacy_renamed_alias",
-    file2 = "deployment2_expected.txt",
-)
-
 k8s_test_setup(
     name = "legacy_renamed_alias_it.setup",
-    # kubeconfig = "@k8s_test//:kubeconfig",
+    cluster = "@k8s_test//:cluster",
+    kubeconfig = "@k8s_test//:kubeconfig",
+    kubectl = "@k8s_test//:kubectl",
     objects = [
         ":legacy_renamed_alias",
     ],
+)
+
+write_source_files(
+    name = "write_all",
+    files = {
+        "legacy_alias_expected.yaml": ":legacy_alias",
+        "legacy_label_expected.yaml": ":legacy_label",
+        "external_image_label_expected.yaml": ":external_image_label",
+        "legacy_renamed_alias_expected.yaml": ":legacy_renamed_alias",
+    },
 )

@@ -9,14 +9,14 @@
 # OF ANY KIND, either express or implied. See the License for the specific language
 # governing permissions and limitations under the License.
 
-load("@rules_gitops//lang:go.bzl", "go_image")
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
 load("@rules_gitops//gitops:defs.bzl", "k8s_deploy", "k8s_test_setup")
+load("@rules_gitops//lang:go.bzl", "go_image")
 
 go_library(
     name = "go_default_library",
     srcs = ["helloworld.go"],
-    importpath = "github.com/adobe/rules_gitops/examples/helloworld",
+    importpath = "github.com/fasterci/rules_gitops/examples/helloworld",
     visibility = ["//visibility:private"],
 )
 
@@ -83,7 +83,9 @@ REGISTRY = "us-central1-docker.pkg.dev/rules-gitops-demo/it"
 
 k8s_test_setup(
     name = "hello_server_it.setup",
+    cluster = "@k8s_test//:cluster",
     kubeconfig = "@k8s_test//:kubeconfig",
+    kubectl = "@k8s_test//:kubectl",
     objects = [
         ":mynamespace",
     ],
@@ -101,4 +103,3 @@ go_test(
     rundir = ".",
     deps = ["@rules_gitops//testing/it_sidecar/client:go_default_library"],
 )
-

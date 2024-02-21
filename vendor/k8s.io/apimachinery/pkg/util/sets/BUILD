@@ -13,7 +13,7 @@ go_library(
         "set.go",
         "string.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/apimachinery/pkg/util/sets",
+    importmap = "github.com/fasterci/rules_gitops/vendor/k8s.io/apimachinery/pkg/util/sets",
     importpath = "k8s.io/apimachinery/pkg/util/sets",
     visibility = ["//visibility:public"],
 )

@@ -6,7 +6,7 @@ go_library(
         "clustercidr.go",
         "expansion_generated.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/client-go/listers/networking/v1alpha1",
+    importmap = "github.com/fasterci/rules_gitops/vendor/k8s.io/client-go/listers/networking/v1alpha1",
     importpath = "k8s.io/client-go/listers/networking/v1alpha1",
     visibility = ["//visibility:public"],
     deps = [

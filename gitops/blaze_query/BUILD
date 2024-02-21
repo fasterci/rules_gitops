@@ -15,7 +15,7 @@ licenses(["notice"])  # Apache 2.0
 go_library(
     name = "go_default_library",
     srcs = ["build.pb.go"],
-    importpath = "github.com/adobe/rules_gitops/gitops/blaze_query",
+    importpath = "github.com/fasterci/rules_gitops/gitops/blaze_query",
     visibility = ["//visibility:public"],
     deps = ["//vendor/github.com/golang/protobuf/proto:go_default_library"],
 )

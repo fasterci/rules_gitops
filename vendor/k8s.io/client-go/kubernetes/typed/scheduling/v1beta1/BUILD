@@ -8,7 +8,7 @@ go_library(
         "priorityclass.go",
         "scheduling_client.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/client-go/kubernetes/typed/scheduling/v1beta1",
+    importmap = "github.com/fasterci/rules_gitops/vendor/k8s.io/client-go/kubernetes/typed/scheduling/v1beta1",
     importpath = "k8s.io/client-go/kubernetes/typed/scheduling/v1beta1",
     visibility = ["//visibility:public"],
     deps = [

@@ -12,7 +12,7 @@ go_library(
         "format.go",
         "spew.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/github.com/davecgh/go-spew/spew",
+    importmap = "github.com/fasterci/rules_gitops/vendor/github.com/davecgh/go-spew/spew",
     importpath = "github.com/davecgh/go-spew/spew",
     visibility = ["//visibility:public"],
 )

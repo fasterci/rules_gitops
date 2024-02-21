@@ -1,1 +1,4 @@
 build --action_env HOME --test_env HOME
+common:bzlmod --enable_bzlmod
+build --nolegacy_external_runfiles
+build --@io_bazel_rules_go//go/config:pure

@@ -6,7 +6,7 @@ go_library(
         "rate.go",
         "sometimes.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/golang.org/x/time/rate",
+    importmap = "github.com/fasterci/rules_gitops/vendor/golang.org/x/time/rate",
     importpath = "golang.org/x/time/rate",
     visibility = ["//visibility:public"],
 )

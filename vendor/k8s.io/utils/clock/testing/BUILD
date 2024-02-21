@@ -6,7 +6,7 @@ go_library(
         "fake_clock.go",
         "simple_interval_clock.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/utils/clock/testing",
+    importmap = "github.com/fasterci/rules_gitops/vendor/k8s.io/utils/clock/testing",
     importpath = "k8s.io/utils/clock/testing",
     visibility = ["//visibility:public"],
     deps = ["//vendor/k8s.io/utils/clock:go_default_library"],

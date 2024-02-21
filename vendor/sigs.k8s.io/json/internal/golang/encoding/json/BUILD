@@ -13,7 +13,7 @@ go_library(
         "tables.go",
         "tags.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/sigs.k8s.io/json/internal/golang/encoding/json",
+    importmap = "github.com/fasterci/rules_gitops/vendor/sigs.k8s.io/json/internal/golang/encoding/json",
     importpath = "sigs.k8s.io/json/internal/golang/encoding/json",
     visibility = ["//vendor/sigs.k8s.io/json:__subpackages__"],
 )

@@ -15,7 +15,7 @@ licenses(["notice"])  # Apache 2.0
 go_library(
     name = "go_default_library",
     srcs = ["main.go"],
-    importpath = "github.com/adobe/rules_gitops/templating",
+    importpath = "github.com/fasterci/rules_gitops/templating",
     visibility = ["//visibility:private"],
     deps = ["//templating/fasttemplate:go_default_library"],
 )

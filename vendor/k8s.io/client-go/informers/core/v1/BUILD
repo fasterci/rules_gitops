@@ -21,7 +21,7 @@ go_library(
         "service.go",
         "serviceaccount.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/k8s.io/client-go/informers/core/v1",
+    importmap = "github.com/fasterci/rules_gitops/vendor/k8s.io/client-go/informers/core/v1",
     importpath = "k8s.io/client-go/informers/core/v1",
     visibility = ["//visibility:public"],
     deps = [

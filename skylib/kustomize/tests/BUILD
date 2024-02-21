@@ -8,12 +8,12 @@
 # OF ANY KIND, either express or implied. See the License for the specific language
 # governing permissions and limitations under the License.
 
-load("@bazel_tools//tools/build_rules:test_rules.bzl", "file_test", "rule_test")
-load("@rules_pkg//:pkg.bzl", "pkg_tar")
+load("@bazel_tools//tools/build_rules:test_rules.bzl", "file_test")
 load("@rules_oci//oci:defs.bzl", "oci_image")
-load("//skylib/kustomize:kustomize.bzl", "gitops", "kubectl", "kustomize", "push_all")
+load("@rules_pkg//:pkg.bzl", "pkg_tar")
 load("//push_oci:push_oci.bzl", "push_oci_rule")
-load("//skylib:test_rules.bzl", "file_compare_test")
+load("//skylib/kustomize:kustomize.bzl", "gitops", "kubectl", "kustomize", "push_all")
+load("@aspect_bazel_lib//lib:write_source_files.bzl", "write_source_files")
 
 # to generate new test data if needed:
 # bazel run //skylib/kustomize:set_namespace newnamespace-1 <test.yaml >test_expected.yaml
@@ -31,7 +31,6 @@ sh_test(
 # Verify that rule is combining files without processing
 kustomize(
     name = "raw_test",
-    testonly = True,
     manifests = [
         "deployment.yaml",
         "service.yaml",
@@ -40,22 +39,8 @@ kustomize(
     namespace = "",
 )
 
-rule_test(
-    name = "raw_generates_yaml",
-    generates = ["raw_test.yaml"],
-    rule = "raw_test",
-)
-
-file_compare_test(
-    name = "raw_file",
-    expected = "expected_raw_test.yaml",
-    file = ":raw_test",
-    ignore_all_space = True,
-)
-
 kustomize(
     name = "namespace_test",
-    testonly = True,
     manifests = [
         "deployment.yaml",
         "service.yaml",
@@ -73,7 +58,6 @@ file_test(
 
 filegroup(
     name = "alltestfiles",
-    testonly = True,
     srcs = [
         "crb.yaml",
         "deployment.yaml",
@@ -83,18 +67,10 @@ filegroup(
 
 kustomize(
     name = "raw2_test",
-    testonly = True,
     manifests = [
         ":alltestfiles",
     ],
     namespace = "",
-)
-
-file_compare_test(
-    name = "raw2_file",
-    expected = "expected_raw_test.yaml",
-    file = ":raw2_test",
-    ignore_all_space = True,
 )
 
 pkg_tar(
@@ -119,7 +95,6 @@ push_oci_rule(
 
 kustomize(
     name = "image_test",
-    testonly = True,
     images = [
         ":image_push",
     ],
@@ -131,39 +106,16 @@ kustomize(
     namespace = "",
 )
 
-file_compare_test(
-    name = "image_resolved_file",
-    expected = ":expected_image_resolved_test.yaml",
-    file = ":image_test",
-    ignore_all_space = True,
-)
-
 kustomize(
     name = "configmap_test",
-    testonly = True,
     configmaps_srcs = glob(["configmaps/**/*"]),
     namespace = "",
 )
 
-file_compare_test(
-    name = "configmap_test_file",
-    expected = "expected_configmap_test.yaml",
-    file = ":configmap_test",
-    ignore_all_space = True,
-)
-
 kustomize(
     name = "secret_test",
-    testonly = True,
     namespace = "",
     secrets_srcs = glob(["secrets/**/*"]),
-)
-
-file_compare_test(
-    name = "secret_test_file",
-    expected = "expected_secret_test.yaml",
-    file = ":secret_test",
-    ignore_all_space = True,
 )
 
 kustomize(
@@ -213,25 +165,12 @@ kustomize(
     namespace = "",
 )
 
-file_compare_test(
-    name = "name_prefix_test",
-    expected = "expected_name_prefix.yaml",
-    file = ":name_prefix",
-)
-
 #-------------------
 kustomize(
     name = "name_suffix",
     manifests = ["test.yaml"],
     name_suffix = "-suffix",
     namespace = "",
-)
-
-file_compare_test(
-    name = "name_suffix_test",
-    expected = "expected_name_suffix.yaml",
-    file = ":name_suffix",
-    ignore_all_space = True,
 )
 
 #-------------------
@@ -246,13 +185,6 @@ kustomize(
     patches = ["overlay/deployment.yaml"],
 )
 
-file_compare_test(
-    name = "patch_test",
-    expected = ":expected_patch.yaml",
-    file = ":patch",
-    ignore_all_space = True,
-)
-
 #-------------------
 # prefix and suffix for deployments: legacy compatibility
 kustomize(
@@ -262,25 +194,11 @@ kustomize(
     namespace = "",
 )
 
-file_compare_test(
-    name = "deployment_prefix_compat_test",
-    expected = "expected_deployment_prefix_compat.yaml",
-    file = ":deployment_prefix_compat",
-    ignore_all_space = True,
-)
-
 kustomize(
     name = "deployment_suffix_compat",
     manifests = ["deployment_with_labels.yaml"],
     name_suffix = "-suffix",
     namespace = "",
-)
-
-file_compare_test(
-    name = "deployment_suffix_compat_test",
-    expected = "expected_deployment_suffix_compat.yaml",
-    file = ":deployment_suffix_compat",
-    ignore_all_space = True,
 )
 
 #-------------------
@@ -293,26 +211,12 @@ kustomize(
     namespace = "",
 )
 
-file_compare_test(
-    name = "deployment_prefix_test",
-    expected = "expected_deployment_prefix.yaml",
-    file = ":deployment_prefix",
-    ignore_all_space = True,
-)
-
 kustomize(
     name = "deployment_suffix",
     configurations = ["//skylib/kustomize:namesuffix_deployment_labels_config.yaml"],
     manifests = ["deployment_with_labels.yaml"],
     name_suffix = "-suffix",
     namespace = "",
-)
-
-file_compare_test(
-    name = "deployment_suffix_test",
-    expected = "expected_deployment_suffix.yaml",
-    file = ":deployment_suffix",
-    ignore_all_space = True,
 )
 
 #-------------------
@@ -326,13 +230,6 @@ kustomize(
         "service.yaml",
     ],
     namespace = "",
-)
-
-file_compare_test(
-    name = "common_labels_test",
-    expected = "expected_common_labels.yaml",
-    file = ":common_labels",
-    ignore_all_space = True,
 )
 
 #-------------------
@@ -352,9 +249,22 @@ kustomize(
     ],
 )
 
-file_compare_test(
-    name = "patch_images_test",
-    expected = "expected_job.yaml",
-    file = ":patch_images",
-    ignore_all_space = True,
+write_source_files(
+    name = "write_all",
+    files = {
+        "expected_raw_test.yaml": ":raw_test",
+        "expected_raw2_test.yaml": ":raw2_test",
+        "expected_image_resolved_test.yaml": ":image_test",
+        "expected_configmap_test.yaml": ":configmap_test",
+        "expected_secret_test.yaml": ":secret_test",
+        "expected_patch_test.yaml": ":patch",
+        "expected_name_prefix.yaml": ":name_prefix",
+        "expected_name_suffix.yaml": ":name_suffix",
+        "expected_deployment_prefix_compat.yaml": ":deployment_prefix_compat",
+        "expected_deployment_suffix_compat.yaml": ":deployment_suffix_compat",
+        "expected_deployment_prefix.yaml": ":deployment_prefix",
+        "expected_deployment_suffix.yaml": ":deployment_suffix",
+        "expected_common_labels.yaml": ":common_labels",
+        "expected_job.yaml": ":patch_images",
+    },
 )

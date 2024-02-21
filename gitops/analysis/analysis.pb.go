@@ -5,7 +5,7 @@ package analysis
 
 import (
 	fmt "fmt"
-	blaze_query "github.com/adobe/rules_gitops/gitops/blaze_query"
+	blaze_query "github.com/fasterci/rules_gitops/gitops/blaze_query"
 	proto "github.com/golang/protobuf/proto"
 	math "math"
 )

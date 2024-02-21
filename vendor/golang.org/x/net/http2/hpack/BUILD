@@ -9,7 +9,7 @@ go_library(
         "static_table.go",
         "tables.go",
     ],
-    importmap = "github.com/adobe/rules_gitops/vendor/golang.org/x/net/http2/hpack",
+    importmap = "github.com/fasterci/rules_gitops/vendor/golang.org/x/net/http2/hpack",
     importpath = "golang.org/x/net/http2/hpack",
     visibility = ["//visibility:public"],
 )
