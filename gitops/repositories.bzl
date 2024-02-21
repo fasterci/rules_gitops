@@ -31,7 +31,7 @@ def rules_gitops_repositories():
 
     bazel_skylib_workspace()
     gazelle_dependencies()
-    aspect_bazel_lib_dependencies(override_local_config_platform = True)
+    aspect_bazel_lib_dependencies()
     register_jq_toolchains()
     rules_pkg_dependencies()
     kustomize_setup(name = "kustomize_bin")
