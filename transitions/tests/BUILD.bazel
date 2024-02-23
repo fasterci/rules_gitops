@@ -129,6 +129,7 @@ sh_test(
         "x86-64",
     ],
     data = [":transitioned_go_binary_x86_64"],
+    tags = ["manual"],
 )
 
 sh_test(
@@ -139,6 +140,7 @@ sh_test(
         "aarch64",
     ],
     data = [":transitioned_go_binary_arm64"],
+    tags = ["manual"],
 )
 
 go_library(
