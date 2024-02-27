@@ -397,7 +397,7 @@ def imagePushStatements(
     statements = ""
     trans_img_pushes = depset(transitive = [obj[GitopsArtifactsInfo].image_pushes for obj in kustomize_objs]).to_list()
     statements += "\n".join([
-        "echo  pushing {}".format(exe[GitopsPushInfo].repository)
+        "echo  pushing {}".format(exe[GitopsPushInfo].repository if GitopsPushInfo in exe else "")
         for exe in trans_img_pushes
     ]) + "\n"
     statements += "\n".join([
@@ -517,7 +517,7 @@ def _kubectl_impl(ctx):
         trans_img_pushes = depset(transitive = [obj[GitopsArtifactsInfo].image_pushes for obj in ctx.attr.srcs if obj.files_to_run.executable]).to_list()
         statements += "\n".join([
             "# {}\n".format(exe[GitopsPushInfo].image_label) +
-            "echo  pushing {}".format(exe[GitopsPushInfo].repository)
+            "echo  pushing {}".format(exe[GitopsPushInfo].repository if GitopsPushInfo in exe else "")
             for exe in trans_img_pushes
         ]) + "\n"
         statements += "\n".join([
