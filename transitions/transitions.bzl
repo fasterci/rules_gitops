@@ -3,7 +3,6 @@
 load("@bazel_skylib//lib:paths.bzl", "paths")
 
 def _transition_platform_impl(settings, attr):
-    print("settings: ", settings, "attr:", attr)
     if not attr.transition_enabled:
         return None
     if not settings["@rules_gitops//transitions:enable"]:
