@@ -396,8 +396,9 @@ def imagePushStatements(
         files = []):
     statements = ""
     trans_img_pushes = depset(transitive = [obj[GitopsArtifactsInfo].image_pushes for obj in kustomize_objs]).to_list()
+    trans_img_pushes = [push for push in trans_img_pushes if push.files_to_run.executable]
     statements += "\n".join([
-        "echo  pushing {}".format(exe[GitopsPushInfo].repository)
+        "echo  pushing {}".format(exe[GitopsPushInfo].repository if GitopsPushInfo in exe else "")
         for exe in trans_img_pushes
     ]) + "\n"
     statements += "\n".join([
@@ -514,10 +515,12 @@ def _kubectl_impl(ctx):
     files += [ctx.executable._template_engine, ctx.file._info_file]
 
     if ctx.attr.push:
-        trans_img_pushes = depset(transitive = [obj[GitopsArtifactsInfo].image_pushes for obj in ctx.attr.srcs if obj.files_to_run.executable]).to_list()
+        pushes = [obj[GitopsArtifactsInfo].image_pushes for obj in ctx.attr.srcs]
+        trans_img_pushes = depset(transitive = pushes).to_list()
+        trans_img_pushes = [push for push in trans_img_pushes if push.files_to_run.executable]
         statements += "\n".join([
             "# {}\n".format(exe[GitopsPushInfo].image_label) +
-            "echo  pushing {}".format(exe[GitopsPushInfo].repository)
+            "echo  pushing {}".format(exe[GitopsPushInfo].repository if GitopsPushInfo in exe else "")
             for exe in trans_img_pushes
         ]) + "\n"
         statements += "\n".join([
