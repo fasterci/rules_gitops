@@ -46,7 +46,13 @@ echo "Cluster: ${CLUSTER}" >&2
 echo "User: ${USER}" >&2
 
 set +e
-if [ -n "${K8S_MYNAMESPACE:-}" ]
+if [ -n "${K8S_TEST_NAMESPACE:-}" ]
+then
+    # use provided namespace
+    NAMESPACE=${K8S_TEST_NAMESPACE}
+    # do not delete namespace after the test is complete
+    DELETE_NAMESPACE_FLAG=""
+elif [ -n "${K8S_MYNAMESPACE:-}" ]
 then
     # do not create random namesspace
     NAMESPACE=`whoami`
