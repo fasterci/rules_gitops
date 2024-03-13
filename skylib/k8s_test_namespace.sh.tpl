@@ -55,7 +55,7 @@ then
 elif [ -n "${K8S_MYNAMESPACE:-}" ]
 then
     # do not create random namesspace
-    NAMESPACE=`whoami`
+    NAMESPACE=$(whoami)
     # do not delete namespace after the test is complete
     DELETE_NAMESPACE_FLAG=""
 else
