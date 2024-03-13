@@ -590,10 +590,17 @@ kubeconfig(
 
 An executable that performs Kubernetes test setup:
 
-- creates temporary namespace
+- creates temporary namespace.
 - creates kubectl configuration with the default context set to the created namespace
 - deploys all dependent ***objects***
 - forwards service ports
+
+There are two ways to override the name of the namespace created by the `k8s_test_setup` rule:
+
+- specify a `K8S_TEST_NAMESPACE` environment variable. The value of the environment variable will be used as the namespace name.
+- specify a `K8S_MYNAMESPACE` environment variable. The presence of the variable would trigger the `k8s_test_setup` rule to use a namespace with the `whoami` name, typically reusing the `mynamespace` environment.
+
+In both cases, the namespace will not be deleted after the test is finished. This is useful for debugging purposes.
 
 | Parameter                  | Default        | Description
 | -------------------------- | -------------- | -----------
