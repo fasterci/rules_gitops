@@ -371,7 +371,7 @@ func main() {
 	clientset = kubernetes.NewForConfigOrDie(config)
 	defer cleanup(clientset)
 
-	go stern.Run(ctx, *namespace, clientset)
+	go stern.Run(ctx, *namespace, clientset, allowErrors)
 
 	listenForEvents(ctx, clientset, func(event *v1.Event) {
 		if !allowErrors {
