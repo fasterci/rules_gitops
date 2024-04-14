@@ -91,6 +91,7 @@ func contains(v []string, item string) bool {
 	}
 	return false
 }
+
 // listReadyApps converts a list returned from podsInformer.GetStore().List() to a map containing apps with ready status
 // app is determined by app label
 func listReadyApps(list []interface{}) (readypods, notReady []string) {
@@ -138,7 +139,7 @@ func listenForEvents(ctx context.Context, clientset *kubernetes.Clientset, onFai
 			return
 		}
 		log.Printf("EVENT %s %s %s %s\n", event.Namespace, event.InvolvedObject.Name, event.Reason, event.Message)
-		if event.Reason == "Failed" {
+		if event.Reason == "Failed" || event.Reason == "BackOff" {
 			onFailure(event)
 		}
 	}
