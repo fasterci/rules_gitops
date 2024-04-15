@@ -23,11 +23,11 @@ import (
 )
 
 // Run starts the main run loop
-func Run(ctx context.Context, namespace string, clientset *kubernetes.Clientset) error {
+func Run(ctx context.Context, namespace string, clientset *kubernetes.Clientset, allowErrors bool) error {
 
 	tails := make(map[string]*Tail)
 
-	err := Watch(ctx, clientset.CoreV1().Pods(namespace), RUNNING, labels.Everything(), func(p *Target) {
+	err := Watch(ctx, clientset.CoreV1().Pods(namespace), RUNNING, labels.Everything(), allowErrors, func(p *Target) {
 		id := p.GetID()
 		if tails[id] != nil {
 			return
@@ -45,7 +45,7 @@ func Run(ctx context.Context, namespace string, clientset *kubernetes.Clientset)
 		delete(tails, id)
 	})
 	if err != nil {
-		return fmt.Errorf("failed to set up watch: %v", err)
+		return fmt.Errorf("watch error: %v", err)
 	}
 
 	return nil

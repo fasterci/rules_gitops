@@ -91,6 +91,7 @@ func contains(v []string, item string) bool {
 	}
 	return false
 }
+
 // listReadyApps converts a list returned from podsInformer.GetStore().List() to a map containing apps with ready status
 // app is determined by app label
 func listReadyApps(list []interface{}) (readypods, notReady []string) {
@@ -138,7 +139,7 @@ func listenForEvents(ctx context.Context, clientset *kubernetes.Clientset, onFai
 			return
 		}
 		log.Printf("EVENT %s %s %s %s\n", event.Namespace, event.InvolvedObject.Name, event.Reason, event.Message)
-		if event.Reason == "Failed" {
+		if event.Reason == "Failed" || event.Reason == "BackOff" {
 			onFailure(event)
 		}
 	}
@@ -370,7 +371,13 @@ func main() {
 	clientset = kubernetes.NewForConfigOrDie(config)
 	defer cleanup(clientset)
 
-	go stern.Run(ctx, *namespace, clientset)
+	go func() {
+		err := stern.Run(ctx, *namespace, clientset, allowErrors)
+		if err != nil {
+			log.Print(err)
+		}
+		cancel()
+	}()
 
 	listenForEvents(ctx, clientset, func(event *v1.Event) {
 		if !allowErrors {
