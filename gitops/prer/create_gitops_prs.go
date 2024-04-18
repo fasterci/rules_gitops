@@ -15,7 +15,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	oe "os/exec"
@@ -30,6 +29,7 @@ import (
 	"github.com/fasterci/rules_gitops/gitops/git/bitbucket"
 	"github.com/fasterci/rules_gitops/gitops/git/github"
 	"github.com/fasterci/rules_gitops/gitops/git/gitlab"
+	"golang.org/x/sync/errgroup"
 
 	proto "github.com/golang/protobuf/proto"
 )
@@ -56,8 +56,9 @@ var (
 	workspace              = flag.String("workspace", "", "path to workspace root")
 	repo                   = flag.String("git_repo", "", "git repo location")
 	gitMirror              = flag.String("git_mirror", "", "git mirror location, like /mnt/mirror/bitbucket.tubemogul.info/tm/repo.git for jenkins")
-	gitopsPath             = flag.String("gitops_path", "cloud", "location to store files in repo.")
+	gitopsPath             = flag.String("gitops_path", "cloud", "location to store files in repo")
 	gitopsTmpDir           = flag.String("gitops_tmpdir", os.TempDir(), "location to check out git tree with /cloud.")
+	gitopsdir              string
 	target                 = flag.String("target", "//... except //experimental/...", "target to scan. Useful for debugging only")
 	pushParallelism        = flag.Int("push_parallelism", 1, "Number of image pushes to perform concurrently")
 	prInto                 = flag.String("gitops_pr_into", "master", "use this branch as the source branch and target for deployment PR")
@@ -65,18 +66,24 @@ var (
 	prTitle                = flag.String("gitops_pr_title", "", "a title for deployment PR")
 	branchName             = flag.String("branch_name", "unknown", "Branch name to use in commit message")
 	gitCommit              = flag.String("git_commit", "unknown", "Git commit to use in commit message")
+	deployBranchPrefix     = flag.String("deploy_branch_prefix", "deploy/", "prefix to add to all deployment branch names")
 	deploymentBranchSuffix = flag.String("deployment_branch_suffix", "", "suffix to add to all deployment branch names")
 	gitHost                = flag.String("git_server", "bitbucket", "the git server api to use. 'bitbucket', 'github' or 'gitlab'")
 	gitopsKind             SliceFlags
 	gitopsRuleName         SliceFlags
 	gitopsRuleAttr         SliceFlags
 	dryRun                 = flag.Bool("dry_run", false, "Do not create PRs, just print what would be done")
+	resolvedPushes         SliceFlags
+	resolvedBinaries       SliceFlags
 )
 
 func init() {
 	flag.Var(&gitopsKind, "gitops_dependencies_kind", "dependency kind(s) to run during gitops phase. Can be specified multiple times. Default is 'k8s_container_push'")
 	flag.Var(&gitopsRuleName, "gitops_dependencies_name", "dependency name(s) to run during gitops phase. Can be specified multiple times. Default is empty")
 	flag.Var(&gitopsRuleAttr, "gitops_dependencies_attr", "dependency attribute(s) to run during gitops phase. Use attribute=value format. Can be specified multiple times. Default is empty")
+	flag.Var(&resolvedPushes, "resolved_push", "list of resolved push binaries to run. Can be specified multiple times. format is cmd/binary/to/run/command. Default is empty")
+	flag.Var(&resolvedBinaries, "resolved_binary", "list of resolved gitops binaries to run. Can be specified multiple times. format is releasetrain:cmd/binary/to/run/command. Default is empty")
+	flag.StringVar(&gitopsdir, "gitopsdir", "", "do not use temporary directory for gitops, use this directory instead")
 }
 
 func bazelQuery(query string) *analysis.CqueryResult {
@@ -123,21 +130,32 @@ func main() {
 		log.Fatalf("unknown vcs host: %s", *gitHost)
 	}
 
-	q := fmt.Sprintf("attr(deployment_branch, \".+\", attr(release_branch_prefix, \"%s\", kind(gitops, %s)))", *releaseBranch, *target)
-	qr := bazelQuery(q)
 	releaseTrains := make(map[string][]string)
-	for _, t := range qr.Results {
-		var releaseTrain string
-		for _, a := range t.Target.GetRule().GetAttribute() {
-			if a.GetName() == "deployment_branch" {
-				releaseTrain = a.GetStringValue()
+	if len(resolvedBinaries) > 0 {
+		for _, rb := range resolvedBinaries {
+			releaseTrain, bin, found := strings.Cut(rb, ":")
+			if !found {
+				log.Fatalf("resolved_binaries: invalid resolved_binary format: %s", rb)
 			}
+			releaseTrains[releaseTrain] = append(releaseTrains[releaseTrain], bin)
 		}
-		releaseTrains[releaseTrain] = append(releaseTrains[releaseTrain], t.Target.Rule.GetName())
-	}
-	if (len(releaseTrains)) == 0 {
-		log.Println("No matching targets found")
-		return
+	} else {
+
+		q := fmt.Sprintf("attr(deployment_branch, \".+\", attr(release_branch_prefix, \"%s\", kind(gitops, %s)))", *releaseBranch, *target)
+		qr := bazelQuery(q)
+		for _, t := range qr.Results {
+			var releaseTrain string
+			for _, a := range t.Target.GetRule().GetAttribute() {
+				if a.GetName() == "deployment_branch" {
+					releaseTrain = a.GetStringValue()
+				}
+			}
+			releaseTrains[releaseTrain] = append(releaseTrains[releaseTrain], t.Target.Rule.GetName())
+		}
+		if (len(releaseTrains)) == 0 {
+			log.Println("No matching targets found")
+			return
+		}
 	}
 
 	for train, targets := range releaseTrains {
@@ -147,12 +165,15 @@ func main() {
 		}
 	}
 
-	gitopsdir, err := ioutil.TempDir(*gitopsTmpDir, "gitops")
-	if err != nil {
-		log.Fatalf("Unable to create tempdir in %s: %v", *gitopsTmpDir, err)
+	if gitopsdir == "" {
+		var err error
+		gitopsdir, err = os.MkdirTemp(*gitopsTmpDir, "gitops")
+		if err != nil {
+			log.Fatalf("Unable to create tempdir in %s: %v", *gitopsTmpDir, err)
+		}
+		defer os.RemoveAll(gitopsdir)
 	}
-	defer os.RemoveAll(gitopsdir)
-	workdir, err := git.Clone(*repo, gitopsdir, *gitMirror, *prInto, *gitopsPath)
+	workdir, err := git.CloneOrCheckout(*repo, gitopsdir, *gitMirror, *prInto, *gitopsPath)
 	if err != nil {
 		log.Fatalf("Unable to clone repo: %v", err)
 	}
@@ -162,7 +183,7 @@ func main() {
 
 	for train, targets := range releaseTrains {
 		log.Println("train", train)
-		branch := fmt.Sprintf("deploy/%s%s", train, *deploymentBranchSuffix)
+		branch := fmt.Sprintf("%s%s%s", *deployBranchPrefix, train, *deploymentBranchSuffix)
 		newBranch := workdir.SwitchToBranch(branch, *prInto)
 		if !newBranch {
 			// Find if we need to recreate the branch because target was deleted
@@ -197,53 +218,66 @@ func main() {
 	}
 
 	// Push images
-
-	// Create space separated set('//a' '//b' ... '//z') of targets.
-	// Target names need to be quoted to protect from + and other special characters
-	depsList := "set('" + strings.Join(updatedGitopsTargets, "' '") + "')"
-	var qv []string
-	for _, kind := range gitopsKind {
-		q := fmt.Sprintf("kind(%s, deps(%s))", kind, depsList)
-		qv = append(qv, q)
-	}
-	for _, name := range gitopsRuleName {
-		q := fmt.Sprintf("filter(%s, deps(%s))", name, depsList)
-		qv = append(qv, q)
-	}
-	for _, attr := range gitopsRuleAttr {
-		name, value, found := strings.Cut(attr, "=")
-		if !found {
-			value = ".*"
+	if len(resolvedPushes) > 0 {
+		var eg errgroup.Group
+		eg.SetLimit(*pushParallelism)
+		for _, rp := range resolvedPushes {
+			cmd := rp
+			eg.Go(func() error {
+				exec.Mustex("", cmd)
+				return nil
+			})
 		}
-		q := fmt.Sprintf("attr(%s, %s, deps(%s))", name, value, depsList)
-		qv = append(qv, q)
-	}
+		eg.Wait()
+	} else {
 
-	query := strings.Join(qv, " union ")
-	qr = bazelQuery(query)
-	targetsCh := make(chan string)
-	var wg sync.WaitGroup
-	wg.Add(*pushParallelism)
-	for i := 0; i < *pushParallelism; i++ {
-		go func() {
-			defer wg.Done()
-			for target := range targetsCh {
-				bin := bazel.TargetToExecutable(target)
-				fi, err := os.Stat(bin)
-				if err == nil && fi.Mode().IsRegular() {
-					exec.Mustex("", bin)
-				} else {
-					log.Println("target", target, "is not a file, running as a command")
-					exec.Mustex("", *bazelCmd, "run", target)
-				}
+		// Create space separated set('//a' '//b' ... '//z') of targets.
+		// Target names need to be quoted to protect from + and other special characters
+		depsList := "set('" + strings.Join(updatedGitopsTargets, "' '") + "')"
+		var qv []string
+		for _, kind := range gitopsKind {
+			q := fmt.Sprintf("kind(%s, deps(%s))", kind, depsList)
+			qv = append(qv, q)
+		}
+		for _, name := range gitopsRuleName {
+			q := fmt.Sprintf("filter(%s, deps(%s))", name, depsList)
+			qv = append(qv, q)
+		}
+		for _, attr := range gitopsRuleAttr {
+			name, value, found := strings.Cut(attr, "=")
+			if !found {
+				value = ".*"
 			}
-		}()
+			q := fmt.Sprintf("attr(%s, %s, deps(%s))", name, value, depsList)
+			qv = append(qv, q)
+		}
+
+		query := strings.Join(qv, " union ")
+		qr := bazelQuery(query)
+		targetsCh := make(chan string)
+		var wg sync.WaitGroup
+		wg.Add(*pushParallelism)
+		for i := 0; i < *pushParallelism; i++ {
+			go func() {
+				defer wg.Done()
+				for target := range targetsCh {
+					bin := bazel.TargetToExecutable(target)
+					fi, err := os.Stat(bin)
+					if err == nil && fi.Mode().IsRegular() {
+						exec.Mustex("", bin)
+					} else {
+						log.Println("target", target, "is not a file, running as a command")
+						exec.Mustex("", *bazelCmd, "run", target)
+					}
+				}
+			}()
+		}
+		for _, t := range qr.Results {
+			targetsCh <- t.Target.Rule.GetName()
+		}
+		close(targetsCh)
+		wg.Wait()
 	}
-	for _, t := range qr.Results {
-		targetsCh <- t.Target.Rule.GetName()
-	}
-	close(targetsCh)
-	wg.Wait()
 
 	if *dryRun {
 		log.Println("dry-run: updated gitops branches: ", updatedGitopsBranches)
