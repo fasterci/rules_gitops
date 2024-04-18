@@ -173,7 +173,7 @@ func main() {
 		}
 		defer os.RemoveAll(gitopsdir)
 	}
-	workdir, err := git.CloneOrCheckout(*repo, gitopsdir, *gitMirror, *prInto, *gitopsPath)
+	workdir, err := git.CloneOrCheckout(*repo, gitopsdir, *gitMirror, *prInto, *gitopsPath, *deployBranchPrefix)
 	if err != nil {
 		log.Fatalf("Unable to clone repo: %v", err)
 	}

@@ -31,10 +31,11 @@ func Ex(dir, name string, arg ...string) (output string, err error) {
 
 // Mustex executes the command name arg... in directory dir
 // it will exit with fatal error if execution was not successful
-func Mustex(dir, name string, arg ...string) {
-	_, err := Ex(dir, name, arg...)
+func Mustex(dir, name string, arg ...string) string {
+	ret, err := Ex(dir, name, arg...)
 	if err != nil {
 		log.Fatalf("ERROR: %s", err)
 	}
+	return ret
 
 }

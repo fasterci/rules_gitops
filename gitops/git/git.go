@@ -17,6 +17,7 @@ import (
 	"os"
 	oe "os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/fasterci/rules_gitops/gitops/exec"
 )
@@ -48,8 +49,10 @@ func Clone(repo, dir, mirrorDir, primaryBranch, gitopsPath string) (*Repo, error
 	}, nil
 }
 
-func CloneOrCheckout(repo, dir, mirrorDir, primaryBranch, gitopsPath string) (r *Repo, err error) {
+func CloneOrCheckout(repo, dir, mirrorDir, primaryBranch, gitopsPath, branchPrefix string) (r *Repo, err error) {
+	newRepo := false
 	if _, err = os.Stat(dir + "/.git"); os.IsNotExist(err) {
+		newRepo = true
 		if err = os.MkdirAll(filepath.Dir(dir), os.ModePerm); err != nil && !os.IsExist(err) {
 			return nil, err
 		}
@@ -58,18 +61,39 @@ func CloneOrCheckout(repo, dir, mirrorDir, primaryBranch, gitopsPath string) (r 
 		} else {
 			exec.Mustex("", "git", "clone", "-n", repo, dir)
 		}
-
 	} else {
 		//existing repo
 		exec.Mustex(dir, "git", "remote", "set-url", "origin", repo)
-		exec.Mustex(dir, "git", "fetch", "origin", "--prune")
 		exec.Mustex(dir, "git", "reset", "--hard")
 	}
 	exec.Mustex(dir, "git", "checkout", "-f", primaryBranch)
+	if !newRepo {
+		PruneLocalBranches(dir, branchPrefix)
+	}
 
 	return &Repo{
 		Dir: dir,
 	}, nil
+}
+
+// PruneLocalBranches removes local branches not present in the remote repository
+func PruneLocalBranches(dir, branchprefix string) {
+	exec.Mustex(dir, "git", "fetch", "origin", "--prune")
+	branches := exec.Mustex(dir, "git", "for-each-ref", "--format", "%(refname) %(upstream:track)", "refs/heads/"+branchprefix)
+	// returned format:
+	// refs/heads/deploy/dev [gone]
+	// refs/heads/deploy/prod [gone]
+	// refs/heads/master
+	v := strings.Split(branches, "\n")
+	for _, line := range v {
+		line := strings.TrimSpace(line)
+		ref, remote, ok := strings.Cut(line, " ")
+		if (!ok || remote == "[gone]") && strings.HasPrefix(ref, "refs/heads/"+branchprefix) {
+			ref = strings.TrimPrefix(ref, "refs/heads/")
+			exec.Mustex(dir, "git", "branch", "-D", ref)
+		}
+
+	}
 }
 
 // Repo is a clone of a git repository. Create with Clone, and don't
