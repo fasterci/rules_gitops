@@ -18,3 +18,10 @@ GitopsArtifactsInfo = provider(
         "deployment_branch": "Branch to merge manifests into and create a PR from.",
     },
 )
+
+AliasInfo = provider(
+    "Alias for an image to be used in a manifest",
+    fields = {
+        "alias": "Alias for a target",
+    },
+)

@@ -19,9 +19,9 @@ k8s_deploy(
     cluster = "testcluster",
     deployment_branch = "test1",
     gitops = 1,
-    images = [
-        "//skylib/kustomize/tests:image",
-    ],
+    images = {
+        "testimage": "//skylib/kustomize/tests:image",
+    },
     manifests = [
         ":deployment_legacy.yaml",
     ],
@@ -98,9 +98,9 @@ k8s_deploy(
     cluster = "testcluster",
     deployment_branch = "test1",
     gitops = 1,
-    images = [
-        ":pushed_image",
-    ],
+    images = {
+        "testimage": ":pushed_image",
+    },
     manifests = [
         ":deployment_legacy.yaml",
     ],

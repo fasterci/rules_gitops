@@ -10,10 +10,11 @@
 
 load("@bazel_tools//tools/build_rules:test_rules.bzl", "file_test")
 load("@rules_oci//oci:defs.bzl", "oci_image")
-load("@rules_pkg//:pkg.bzl", "pkg_tar")
 load("//push_oci:push_oci.bzl", "push_oci_rule")
 load("//skylib/kustomize:kustomize.bzl", "gitops", "kubectl", "kustomize", "push_all")
+load("//skylib:push_alias.bzl", "pushed_image_alias")
 load("@aspect_bazel_lib//lib:write_source_files.bzl", "write_source_files")
+load("@aspect_bazel_lib//lib:tar.bzl", "tar")
 
 # to generate new test data if needed:
 # bazel run //skylib/kustomize:set_namespace newnamespace-1 <test.yaml >test_expected.yaml
@@ -73,7 +74,7 @@ kustomize(
     namespace = "",
 )
 
-pkg_tar(
+tar(
     name = "image_tar",
     srcs = [":container_content.txt"],
 )
@@ -93,6 +94,12 @@ push_oci_rule(
     visibility = ["//visibility:public"],
 )
 
+pushed_image_alias(
+    name = "image_alias",
+    alias = "testimage",
+    pushed_image = ":image_push",
+)
+
 kustomize(
     name = "image_test",
     images = [
@@ -102,6 +109,17 @@ kustomize(
         "deployment.yaml",
         "service.yaml",
         "crb.yaml",
+    ],
+    namespace = "",
+)
+
+kustomize(
+    name = "alias_test",
+    images = [
+        ":image_alias",
+    ],
+    manifests = [
+        "deployment_with_alias.yaml",
     ],
     namespace = "",
 )
@@ -255,6 +273,7 @@ write_source_files(
         "expected_raw_test.yaml": ":raw_test",
         "expected_raw2_test.yaml": ":raw2_test",
         "expected_image_resolved_test.yaml": ":image_test",
+        "expected_alias_test.yaml": ":alias_test",
         "expected_configmap_test.yaml": ":configmap_test",
         "expected_secret_test.yaml": ":secret_test",
         "expected_patch_test.yaml": ":patch",

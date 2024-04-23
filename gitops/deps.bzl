@@ -47,9 +47,9 @@ def rules_gitops_dependencies():
     maybe(
         http_archive,
         name = "aspect_bazel_lib",
-        sha256 = "979667bb7276ee8fcf2c114c9be9932b9a3052a64a647e0dcaacfb9c0016f0a3",
-        strip_prefix = "bazel-lib-2.4.1",
-        url = "https://github.com/aspect-build/bazel-lib/releases/download/v2.4.1/bazel-lib-v2.4.1.tar.gz",
+        sha256 = "b554eb7942a5ab44c90077df6a0c76fc67c5874c9446a007e9ba68be82bd4796",
+        strip_prefix = "bazel-lib-2.7.1",
+        url = "https://github.com/aspect-build/bazel-lib/releases/download/v2.4.1/bazel-lib-v2.7.1.tar.gz",
     )
 
     maybe(

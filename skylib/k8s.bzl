@@ -11,6 +11,7 @@
 load("//gitops:provider.bzl", "GitopsArtifactsInfo")
 load("//push_oci:push_oci.bzl", "push_oci")
 load("//skylib:runfile.bzl", "get_runfile_path")
+load("//skylib:push_alias.bzl", "pushed_image_alias")
 load(
     "//skylib/kustomize:kustomize.bzl",
     "imagePushStatements",
@@ -67,7 +68,7 @@ show = rule(
 def _image_pushes(name_suffix, images, image_registry, image_repository, image_digest_tag):
     image_pushes = []
 
-    def process_image(image_label):
+    def process_image(image_label, image_alias = None):
         rule_name_parts = [image_label, image_registry, image_repository]
         rule_name_parts = [p for p in rule_name_parts if p]
         rule_name = "_".join(rule_name_parts)
@@ -80,9 +81,31 @@ def _image_pushes(name_suffix, images, image_registry, image_repository, image_d
                 image_digest_tag = image_digest_tag,
                 registry = image_registry,
                 repository = image_repository,
+                visibility = ["//visibility:public"],
             )
-        return rule_name + name_suffix
+        if not image_alias:
+            return rule_name + name_suffix
 
+        #
+        if not native.existing_rule(rule_name + "_alias_" + name_suffix):
+            pushed_image_alias(
+                name = rule_name + "_alias_" + name_suffix,
+                alias = image_alias,
+                pushed_image = rule_name + name_suffix,
+                visibility = ["//visibility:public"],
+            )
+        return rule_name + "_alias_" + name_suffix
+
+    if type(images) == "dict":
+        for image_alias in images:
+            image = images[image_alias]
+            push = process_image(image, image_alias)
+            image_pushes.append(push)
+    else:
+        for image in images:
+            push = process_image(image)
+            image_pushes.append(push)
+    return image_pushes
     for image in images:
         image_push = process_image(image)
         image_pushes.append(image_push)
@@ -125,8 +148,6 @@ def k8s_deploy(
     """ k8s_deploy
     """
 
-    if type(images) == "dict":
-        fail("image_pushes: dict type is deprecated. Use list instead.")
     if not manifests:
         manifests = native.glob(["*.yaml", "*.yaml.tpl"])
     if prefix_suffix_app_labels:
