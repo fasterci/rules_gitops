@@ -12,6 +12,5 @@ spec:
         app: myapp
     spec:
       containers:
-      - name: myapp
-        image: testimage
-
+      - image: gcr.io/bs-dev/test_image@sha256:1abae145a9069d0f4fdf9a0527ff5aec503ec02c3df783e25172895745dd2172
+        name: myapp
