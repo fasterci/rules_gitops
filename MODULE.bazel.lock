@@ -1337,7 +1337,7 @@
   "moduleExtensions": {
     "//gitops:extensions.bzl%toolchains": {
       "general": {
-        "bzlTransitiveDigest": "5Wg3kxup7pYafCf0D82azWWCB3UgJlGHWwJmdsdcV8w=",
+        "bzlTransitiveDigest": "w0udGZ06pjvfPfwBEH3vYbxVT3GDtEeATpwctPJcC9o=",
         "accumulatedFileDigests": {},
         "envVariables": {},
         "generatedRepoSpecs": {

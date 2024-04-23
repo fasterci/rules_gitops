@@ -8,7 +8,7 @@
 # OF ANY KIND, either express or implied. See the License for the specific language
 # governing permissions and limitations under the License.
 
-load("//gitops:provider.bzl", "GitopsArtifactsInfo", "GitopsPushInfo")
+load("//gitops:provider.bzl", "AliasInfo", "GitopsArtifactsInfo", "GitopsPushInfo")
 load("//skylib:runfile.bzl", "get_runfile_path")
 load("//skylib:stamp.bzl", "stamp")
 
@@ -70,15 +70,6 @@ _script_template = """\
 set -euo pipefail
 {kustomize} build --load-restrictor LoadRestrictionsNone --reorder legacy {kustomize_dir} {template_part} {resolver_part} >{out}
 """
-
-def _no_at_str(label):
-    """Strips any leading '@'s for labels in the main repo."""
-    s = str(label)
-    if s.startswith("@@//"):
-        return s[2:]
-    if s.startswith("@//"):
-        return s[1:]
-    return s
 
 def _kustomize_impl(ctx):
     kustomize_bin = ctx.toolchains["@rules_gitops//gitops:kustomize_toolchain_type"].kustomizeinfo.bin
@@ -206,6 +197,9 @@ def _kustomize_impl(ctx):
             resolver_part += " --image {}={}@$(cat {})".format(label_str, regrepo, kpi.digestfile.path)
             tmpfiles.append(kpi.digestfile)
             transitive_runfiles.append(img[DefaultInfo].default_runfiles)
+            if AliasInfo in img:
+                alias = img[AliasInfo].alias
+                resolver_part += " --image {}={}@$(cat {})".format(alias, regrepo, kpi.digestfile.path)
 
     template_part = ""
     if ctx.attr.substitutions or ctx.attr.deps:
