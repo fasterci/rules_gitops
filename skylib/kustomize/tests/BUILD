@@ -10,10 +10,10 @@
 
 load("@bazel_tools//tools/build_rules:test_rules.bzl", "file_test")
 load("@rules_oci//oci:defs.bzl", "oci_image")
-load("@rules_pkg//:pkg.bzl", "pkg_tar")
 load("//push_oci:push_oci.bzl", "push_oci_rule")
 load("//skylib/kustomize:kustomize.bzl", "gitops", "kubectl", "kustomize", "push_all")
 load("@aspect_bazel_lib//lib:write_source_files.bzl", "write_source_files")
+load("@aspect_bazel_lib//lib:tar.bzl", "tar")
 
 # to generate new test data if needed:
 # bazel run //skylib/kustomize:set_namespace newnamespace-1 <test.yaml >test_expected.yaml
@@ -73,7 +73,7 @@ kustomize(
     namespace = "",
 )
 
-pkg_tar(
+tar(
     name = "image_tar",
     srcs = [":container_content.txt"],
 )
