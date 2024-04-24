@@ -1,0 +1,25 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: hello
+spec:
+  template:
+    spec:
+      containers:
+      - name: hello
+        image: busybox
+        command: ['sh', '-c', 'echo "Hello, Kubernetes!" && sleep 3600']
+        env:
+          - name: FULLNAME
+            value: "{{//skylib/kustomize/tests:image}}"
+          - name: FULLNAME_DIGEST
+            value: "{{//skylib/kustomize/tests:image.digest}}"
+          - name: FULLNAME_SHORTDIGEST
+            value: "{{//skylib/kustomize/tests:image.short-digest}}"
+          - name: ALIAS
+            value: "{{testimage}}"
+          - name: ALIAS_DIGEST
+            value: "{{testimage.digest}}"
+          - name: ALIAS_SHORTDIGEST
+            value: "{{testimage.short-digest}}"
+      restartPolicy: OnFailure

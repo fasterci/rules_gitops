@@ -267,6 +267,16 @@ kustomize(
     ],
 )
 
+kustomize(
+    name = "image_vars",
+    images = [
+        ":image_alias",
+    ],
+    manifests = [
+        "image_variables.yaml",
+    ],
+)
+
 write_source_files(
     name = "write_all",
     files = {
@@ -285,5 +295,6 @@ write_source_files(
         "expected_deployment_suffix.yaml": ":deployment_suffix",
         "expected_common_labels.yaml": ":common_labels",
         "expected_job.yaml": ":patch_images",
+        "expected_image_vars.yaml": ":image_vars",
     },
 )
