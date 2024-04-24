@@ -46,5 +46,3 @@ http_archive(
 \`\`\`
 EOF
 
-awk '/---SNIP---/{f=1;next}/---END_SNIP---/{f=0}f' examples/WORKSPACE
-echo "\`\`\`"
