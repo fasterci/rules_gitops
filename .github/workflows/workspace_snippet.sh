@@ -43,6 +43,22 @@ http_archive(
     strip_prefix = "${PREFIX}",
     urls = ["https://github.com/fasterci/rules_gitops/releases/download/${TAG}/${ARCHIVE}"],
 )
+
+load("@rules_gitops//gitops:deps.bzl", "rules_gitops_dependencies")
+
+rules_gitops_dependencies()
+
+load("@rules_gitops//gitops:repositories.bzl", "rules_gitops_repositories")
+
+rules_gitops_repositories()
+
+load("@rules_gitops//skylib:k8s.bzl", "kubeconfig")
+
+kubeconfig(
+    name = "k8s_dev_test",
+    cluster = "it_kubernetes_cluster_name",
+    use_host_config = True,
+)
 \`\`\`
 EOF
 
