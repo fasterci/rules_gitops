@@ -202,7 +202,7 @@ def _kustomize_impl(ctx):
                 resolver_part += " --image {}={}@$(cat {})".format(alias, regrepo, kpi.digestfile.path)
 
     template_part = ""
-    if ctx.attr.substitutions or ctx.attr.deps:
+    if ctx.attr.substitutions or ctx.attr.deps or ctx.attr.images:
         template_part += "| {} --stamp_info_file={} ".format(ctx.executable._template_engine.path, ctx.file._info_file.path)
         tmpfiles.append(ctx.executable._template_engine)
         tmpfiles.append(ctx.file._info_file)
@@ -236,6 +236,11 @@ def _kustomize_impl(ctx):
                 # Image digest
                 template_part += " --variable={}=$(cat {} | cut -d ':' -f 2)".format(label_str + ".digest", kpi.digestfile.path)
                 template_part += " --variable={}=$(cat {} | cut -c 8-17)".format(label_str + ".short-digest", kpi.digestfile.path)
+                if AliasInfo in img:
+                    alias = img[AliasInfo].alias
+                    template_part += " --variable={}={}@$(cat {})".format(alias, regrepo, kpi.digestfile.path)
+                    template_part += " --variable={}=$(cat {} | cut -d ':' -f 2)".format(alias + ".digest", kpi.digestfile.path)
+                    template_part += " --variable={}=$(cat {} | cut -c 8-17)".format(alias + ".short-digest", kpi.digestfile.path)
 
         template_part += " "
 
