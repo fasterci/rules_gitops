@@ -73,6 +73,7 @@ var (
 	kubeconfig      string
 	waitForApps     arrayFlags
 	allowErrors     bool
+	disablePodLogs  bool
 )
 
 func init() {
@@ -80,6 +81,7 @@ func init() {
 	flag.StringVar(&kubeconfig, "kubeconfig", os.Getenv("KUBECONFIG"), "path to kubernetes config file")
 	flag.Var(&waitForApps, "waitforapp", "wait for pods with label app=<this parameter>")
 	flag.BoolVar(&allowErrors, "allow_errors", false, "do not treat Failed in events as error. Use only if crashloop is expected")
+	flag.BoolVar(&disablePodLogs, "disable_pod_logs", false, "do not forward pod logs")
 }
 
 // contains returns true if slice v contains an item
@@ -372,7 +374,7 @@ func main() {
 	defer cleanup(clientset)
 
 	go func() {
-		err := stern.Run(ctx, *namespace, clientset, allowErrors)
+		err := stern.Run(ctx, *namespace, clientset, allowErrors, disablePodLogs)
 		if err != nil {
 			log.Print(err)
 		}
