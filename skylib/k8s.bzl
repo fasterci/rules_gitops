@@ -507,6 +507,18 @@ def _k8s_test_setup_impl(ctx):
 
     files.append(ctx.executable._template_engine)
 
+    sidecar_args = []
+    if ctx.attr.setup_timeout:
+        sidecar_args.append("-timeout=%s" % ctx.attr.setup_timeout)
+    for service in ctx.attr.portforward_services:
+        sidecar_args.append("--portforward=%s" % service)
+    for app in ctx.attr.wait_for_apps:
+        sidecar_args.append("--waitforapp=%s" % app)
+    if ctx.attr.allow_errors:
+        sidecar_args.append("--allow_errors")
+    if ctx.attr.disable_pod_logs:
+        sidecar_args.append("--disable_pod_logs")
+
     # create namespace script
     ctx.actions.expand_template(
         template = ctx.file._namespace_template,
@@ -515,13 +527,11 @@ def _k8s_test_setup_impl(ctx):
             "%{cluster}": ctx.file.cluster.path,
             "%{kubeconfig}": ctx.file.kubeconfig.path,
             "%{kubectl}": ctx.file.kubectl.path,
-            "%{portforwards}": " ".join(["-portforward=" + p for p in ctx.attr.portforward_services]),
             "%{push_statements}": push_statements,
             "%{set_namespace}": ctx.executable._set_namespace.short_path,
             "%{it_manifest_filter}": ctx.executable._it_manifest_filter.short_path,
             "%{statements}": "\n".join(commands),
-            "%{test_timeout}": ctx.attr.setup_timeout,
-            "%{waitforapps}": " ".join(["-waitforapp=" + p for p in ctx.attr.wait_for_apps]),
+            "%{sidecar_args}": " ".join(sidecar_args),
         },
         output = ctx.outputs.executable,
     )
@@ -555,6 +565,14 @@ k8s_test_setup = rule(
         "portforward_services": attr.string_list(),
         "setup_timeout": attr.string(default = "10m"),
         "wait_for_apps": attr.string_list(),
+        "allow_errors": attr.bool(
+            default = False,
+            doc = "If true, the test will ignore any kuberntetes errors. Use only in situations when error is a part of the normal workflow, like crashlooping to wait for dependencies.",
+        ),
+        "disable_pod_logs": attr.bool(
+            default = False,
+            doc = "If true, the test will not collect logs from pods.",
+        ),
         "cluster": attr.label(
             #default = Label("@k8s_test//:cluster"),
             allow_single_file = True,

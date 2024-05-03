@@ -110,4 +110,4 @@ function waitpids() {
 # create k8s objects
 %{statements}
 
-%{it_sidecar} -namespace=${NAMESPACE} -timeout=%{test_timeout} %{portforwards} %{waitforapps} ${DELETE_NAMESPACE_FLAG} "$@"
+%{it_sidecar} -namespace=${NAMESPACE} %{sidecar_args} ${DELETE_NAMESPACE_FLAG} "$@"

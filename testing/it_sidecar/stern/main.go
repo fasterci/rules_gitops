@@ -23,11 +23,14 @@ import (
 )
 
 // Run starts the main run loop
-func Run(ctx context.Context, namespace string, clientset *kubernetes.Clientset, allowErrors bool) error {
+func Run(ctx context.Context, namespace string, clientset *kubernetes.Clientset, allowErrors, disablePodLogs bool) error {
 
 	tails := make(map[string]*Tail)
 
 	err := Watch(ctx, clientset.CoreV1().Pods(namespace), RUNNING, labels.Everything(), allowErrors, func(p *Target) {
+		if disablePodLogs {
+			return
+		}
 		id := p.GetID()
 		if tails[id] != nil {
 			return
@@ -37,6 +40,9 @@ func Run(ctx context.Context, namespace string, clientset *kubernetes.Clientset,
 		tails[id] = tail
 		tail.Start(clientset.CoreV1().Pods(p.Namespace))
 	}, func(p *Target) {
+		if disablePodLogs {
+			return
+		}
 		id := p.GetID()
 		if tails[id] == nil {
 			return
