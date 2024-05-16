@@ -342,6 +342,7 @@ func cleanup(clientset *kubernetes.Clientset) {
 
 var ErrTimedOut = errors.New("timed out")
 var ErrStdinClosed = errors.New("stdin closed")
+var ErrTermSignalReceived = errors.New("TERM signal received")
 
 func main() {
 	flag.Parse()
@@ -349,8 +350,14 @@ func main() {
 	ctx, timeoutCancel := context.WithTimeoutCause(context.Background(), *timeout, ErrTimedOut)
 	defer timeoutCancel()
 	ctx, cancel := context.WithCancelCause(ctx)
-	ctx, stopSignal := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
-	defer stopSignal()
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-c
+		log.Print("First TERM signal, stopping...")
+		cancel(ErrTermSignalReceived)
+		signal.Stop(c)
+	}()
 	// cancel context if stdin is closed
 	go func() {
 		reader := bufio.NewReader(os.Stdin)
@@ -387,7 +394,6 @@ func main() {
 
 	listenForEvents(ctx, clientset, func(event *v1.Event) {
 		if !allowErrors {
-			log.Println("Terminate due to failure")
 			cancel(fmt.Errorf("terminate due to event %s/%s %s %s", event.Namespace, event.InvolvedObject.Name, event.Reason, event.Message))
 		}
 	})
