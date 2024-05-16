@@ -340,11 +340,15 @@ func cleanup(clientset *kubernetes.Clientset) {
 	}
 }
 
+var ErrTimedOut = errors.New("timed out")
+var ErrStdinClosed = errors.New("stdin closed")
+
 func main() {
 	flag.Parse()
 	log.SetOutput(os.Stdout)
-	ctx, cancel := context.WithTimeout(context.Background(), *timeout)
-	defer cancel()
+	ctx, timeoutCancel := context.WithTimeoutCause(context.Background(), *timeout, ErrTimedOut)
+	defer timeoutCancel()
+	ctx, cancel := context.WithCancelCause(ctx)
 	ctx, stopSignal := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
 	defer stopSignal()
 	// cancel context if stdin is closed
@@ -353,7 +357,7 @@ func main() {
 		for {
 			_, _, err := reader.ReadRune()
 			if err != nil && err == io.EOF {
-				cancel()
+				cancel(ErrStdinClosed)
 				break
 			}
 		}
@@ -378,13 +382,13 @@ func main() {
 		if err != nil {
 			log.Print(err)
 		}
-		cancel()
+		cancel(fmt.Errorf("terminate due to kubernetes listening failure: %w", err))
 	}()
 
 	listenForEvents(ctx, clientset, func(event *v1.Event) {
 		if !allowErrors {
 			log.Println("Terminate due to failure")
-			cancel()
+			cancel(fmt.Errorf("terminate due to event %s/%s %s %s", event.Namespace, event.InvolvedObject.Name, event.Reason, event.Message))
 		}
 	})
 
@@ -405,4 +409,13 @@ func main() {
 
 	fmt.Println("READY")
 	<-ctx.Done()
+	switch ctx.Err() {
+	case context.DeadlineExceeded:
+		log.Print("Deadline exceeded")
+	case context.Canceled:
+		log.Print("Context Canceled")
+	default:
+		log.Print(ctx.Err())
+	}
+
 }
