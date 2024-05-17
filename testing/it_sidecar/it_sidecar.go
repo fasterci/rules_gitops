@@ -415,13 +415,8 @@ func main() {
 
 	fmt.Println("READY")
 	<-ctx.Done()
-	switch ctx.Err() {
-	case context.DeadlineExceeded:
-		log.Print("Deadline exceeded")
-	case context.Canceled:
-		log.Print("Context Canceled")
-	default:
-		log.Print(ctx.Err())
+	if cause := context.Cause(ctx); cause != nil {
+		log.Print("ctx.Done: ", cause.Error())
 	}
 
 }
