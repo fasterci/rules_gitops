@@ -1,6 +1,6 @@
 module github.com/fasterci/rules_gitops
 
-go 1.19
+go 1.21
 
 require (
 	github.com/ghodss/yaml v1.0.0
