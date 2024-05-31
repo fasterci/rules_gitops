@@ -8,9 +8,9 @@
 # OF ANY KIND, either express or implied. See the License for the specific language
 # governing permissions and limitations under the License.
 
+load("@aspect_bazel_lib//lib:write_source_files.bzl", "write_source_files")
 load("//gitops:defs.bzl", "external_image", "k8s_deploy", "k8s_test_setup")
 load("//push_oci:push_oci.bzl", "push_oci")
-load("@aspect_bazel_lib//lib:write_source_files.bzl", "write_source_files")
 
 licenses(["notice"])  # Apache 2.0
 
