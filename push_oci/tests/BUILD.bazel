@@ -1,5 +1,5 @@
-load("@rules_oci//oci:defs.bzl", "oci_image")
 load("@aspect_bazel_lib//lib:tar.bzl", "tar")
+load("@rules_oci//oci:defs.bzl", "oci_image")
 load("//push_oci:push_oci.bzl", "push_oci")
 
 tar(

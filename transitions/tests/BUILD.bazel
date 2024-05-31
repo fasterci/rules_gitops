@@ -1,6 +1,6 @@
+load("@aspect_bazel_lib//lib:diff_test.bzl", "diff_test")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
-load("@aspect_bazel_lib//lib:diff_test.bzl", "diff_test")
 load("//transitions:transitions.bzl", "platform_transition_binary", "platform_transition_filegroup")
 
 platform(
@@ -104,7 +104,7 @@ diff_test(
 
 go_binary(
     name = "test_transition_binary",
-    embed = [":transitions_lib"],
+    embed = [":go_default_library"],
     tags = ["manual"],
     visibility = ["//visibility:public"],
 )
@@ -147,5 +147,12 @@ go_library(
     name = "transitions_lib",
     srcs = ["main.go"],
     importpath = "github.com/aspect-build/bazel-lib/lib/tests/transitions",
+    visibility = ["//visibility:private"],
+)
+
+go_library(
+    name = "go_default_library",
+    srcs = ["main.go"],
+    importpath = "github.com/fasterci/rules_gitops/transitions/tests",
     visibility = ["//visibility:private"],
 )

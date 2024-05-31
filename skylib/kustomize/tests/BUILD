@@ -8,13 +8,13 @@
 # OF ANY KIND, either express or implied. See the License for the specific language
 # governing permissions and limitations under the License.
 
+load("@aspect_bazel_lib//lib:tar.bzl", "tar")
+load("@aspect_bazel_lib//lib:write_source_files.bzl", "write_source_files")
 load("@bazel_tools//tools/build_rules:test_rules.bzl", "file_test")
 load("@rules_oci//oci:defs.bzl", "oci_image")
 load("//push_oci:push_oci.bzl", "push_oci_rule")
-load("//skylib/kustomize:kustomize.bzl", "gitops", "kubectl", "kustomize", "push_all")
 load("//skylib:push_alias.bzl", "pushed_image_alias")
-load("@aspect_bazel_lib//lib:write_source_files.bzl", "write_source_files")
-load("@aspect_bazel_lib//lib:tar.bzl", "tar")
+load("//skylib/kustomize:kustomize.bzl", "gitops", "kubectl", "kustomize", "push_all")
 
 # to generate new test data if needed:
 # bazel run //skylib/kustomize:set_namespace newnamespace-1 <test.yaml >test_expected.yaml

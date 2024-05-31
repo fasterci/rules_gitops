@@ -9,6 +9,7 @@ go_library(
         "source_gen.go",
         "type.go",
         "value.go",
+        "value_pure.go",
         "value_union.go",
         "value_unsafe.go",
     ],
