@@ -8,15 +8,17 @@ def go_image(
         tars = [],
         goarch = "amd64",
         goos = "linux",
-        gotags = ["containers_image_openpgp"],
+        gotags = [],
         pure = "on",
         package_dir = "",
         base = "@go_image_static",
+        data = None,
         visibility = ["//visibility:public"]):
     """Emulate syntax of rules_gitops go_image."""
     go_binary(
         name = name + "_binary",
         embed = embed,
+        data = data,
         goarch = goarch,
         goos = goos,
         gotags = gotags,
