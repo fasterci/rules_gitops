@@ -108,6 +108,7 @@ def push_oci(
         image_digest_tag = False,  # buildifier: disable=unused-variable either remove parameter or implement
         tag = None,
         remote_tags = None,  # file with tags to push
+        tags = [],  # bazel tags to add to the push_oci_rule
         visibility = None):
     if tag:
         tags_label = "_{}_write_tags".format(name)
@@ -128,5 +129,6 @@ def push_oci(
         image = image,
         repository = repository,
         remote_tags = remote_tags,
+        tags = tags,
         visibility = visibility,
     )

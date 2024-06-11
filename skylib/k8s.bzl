@@ -65,7 +65,7 @@ show = rule(
     executable = True,
 )
 
-def _image_pushes(name_suffix, images, image_registry, image_repository, image_digest_tag):
+def _image_pushes(name_suffix, images, image_registry, image_repository, image_digest_tag, tags = []):
     image_pushes = []
 
     def process_image(image_label, image_alias = None):
@@ -81,6 +81,7 @@ def _image_pushes(name_suffix, images, image_registry, image_repository, image_d
                 image_digest_tag = image_digest_tag,
                 registry = image_registry,
                 repository = image_repository,
+                tags = tags,
                 visibility = ["//visibility:public"],
             )
         if not image_alias:
@@ -92,6 +93,7 @@ def _image_pushes(name_suffix, images, image_registry, image_repository, image_d
                 name = rule_name + "_alias_" + name_suffix,
                 alias = image_alias,
                 pushed_image = rule_name + name_suffix,
+                tags = tags,
                 visibility = ["//visibility:public"],
             )
         return rule_name + "_alias_" + name_suffix
@@ -105,10 +107,6 @@ def _image_pushes(name_suffix, images, image_registry, image_repository, image_d
         for image in images:
             push = process_image(image)
             image_pushes.append(push)
-    return image_pushes
-    for image in images:
-        image_push = process_image(image)
-        image_pushes.append(image_push)
     return image_pushes
 
 def k8s_deploy(
@@ -144,6 +142,7 @@ def k8s_deploy(
         release_branch_prefix = "main",
         start_tag = "{{",
         end_tag = "}}",
+        tags = [],  # tags to add to all generated rules.
         visibility = None):
     """ k8s_deploy
     """
@@ -175,6 +174,7 @@ def k8s_deploy(
             image_registry = image_registry + "/mynamespace",
             image_repository = image_repository,
             image_digest_tag = image_digest_tag,
+            tags = tags,
         )
         kustomize(
             name = name,
@@ -200,6 +200,7 @@ def k8s_deploy(
             image_name_patches = image_name_patches,
             image_tag_patches = image_tag_patches,
             openapi_path = openapi_path,
+            tags = tags,
             visibility = visibility,
         )
         kubectl(
@@ -208,6 +209,7 @@ def k8s_deploy(
             cluster = cluster,
             user = user,
             namespace = namespace,
+            tags = tags,
             visibility = visibility,
         )
         kubectl(
@@ -218,12 +220,14 @@ def k8s_deploy(
             push = False,
             user = user,
             namespace = namespace,
+            tags = tags,
             visibility = visibility,
         )
         show(
             name = name + ".show",
             namespace = namespace,
             src = name,
+            tags = tags,
             visibility = visibility,
         )
     else:
@@ -236,6 +240,7 @@ def k8s_deploy(
             image_registry = image_registry,
             image_repository = image_repository,
             image_digest_tag = image_digest_tag,
+            tags = tags,
         )
         kustomize(
             name = name,
@@ -261,6 +266,7 @@ def k8s_deploy(
             image_name_patches = image_name_patches,
             image_tag_patches = image_tag_patches,
             openapi_path = openapi_path,
+            tags = tags,
         )
         kubectl(
             name = name + ".apply",
@@ -268,6 +274,7 @@ def k8s_deploy(
             cluster = cluster,
             user = user,
             namespace = namespace,
+            tags = tags,
             visibility = visibility,
         )
         kustomize_gitops(
@@ -282,12 +289,14 @@ def k8s_deploy(
             ],
             deployment_branch = deployment_branch,
             release_branch_prefix = release_branch_prefix,
+            tags = tags,
             visibility = ["//visibility:public"],
         )
         show(
             name = name + ".show",
             src = name,
             namespace = namespace,
+            tags = tags,
             visibility = visibility,
         )
 
