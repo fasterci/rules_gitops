@@ -122,14 +122,14 @@ sh_test(
         ":fasterci_gitops.setup",
         ":kubectl",
         ":push_image",
-        "@com_github_google_go_containerregistry//cmd/crane",
-        "@com_github_google_go_containerregistry//cmd/registry",
+        "//vendor/github.com/google/go-containerregistry/cmd/crane",
+        "//vendor/github.com/google/go-containerregistry/cmd/registry",
     ],
     env = {
         "KUBECTL": "$(location :kubectl)",
         "PUSH_IMAGE": "$(location :push_image)",
-        "CRANE_BIN": "$(location @com_github_google_go_containerregistry//cmd/crane)",
-        "REGISTRY_BIN": "$(location @com_github_google_go_containerregistry//cmd/registry)",
+        "CRANE_BIN": "$(location //vendor/github.com/google/go-containerregistry/cmd/crane)",
+        "REGISTRY_BIN": "$(location //vendor/github.com/google/go-containerregistry/cmd/registry)",
     },
     tags = [
         "exclusive",
@@ -147,14 +147,14 @@ sh_test(
         ":fasterci_gitops_deploy.apply",
         ":kubectl",
         ":push_image",
-        "@com_github_google_go_containerregistry//cmd/crane",
-        "@com_github_google_go_containerregistry//cmd/registry",
+        "//vendor/github.com/google/go-containerregistry/cmd/crane",
+        "//vendor/github.com/google/go-containerregistry/cmd/registry",
     ],
     env = {
         "KUBECTL": "$(location :kubectl)",
         "PUSH_IMAGE": "$(location :push_image)",
-        "CRANE_BIN": "$(location @com_github_google_go_containerregistry//cmd/crane)",
-        "REGISTRY_BIN": "$(location @com_github_google_go_containerregistry//cmd/registry)",
+        "CRANE_BIN": "$(location //vendor/github.com/google/go-containerregistry/cmd/crane)",
+        "REGISTRY_BIN": "$(location //vendor/github.com/google/go-containerregistry/cmd/registry)",
     },
     tags = ["exclusive"],  # this test starts a registry on fixed port 1338
 )
@@ -169,14 +169,14 @@ sh_test(
         ":image_mirror_with_tag",
         ":kubectl",
         ":push_image",
-        "@com_github_google_go_containerregistry//cmd/crane",
-        "@com_github_google_go_containerregistry//cmd/registry",
+        "//vendor/github.com/google/go-containerregistry/cmd/crane",
+        "//vendor/github.com/google/go-containerregistry/cmd/registry",
     ],
     env = {
         "KUBECTL": "$(location :kubectl)",
         "PUSH_IMAGE": "$(location :push_image)",
-        "CRANE_BIN": "$(location @com_github_google_go_containerregistry//cmd/crane)",
-        "REGISTRY_BIN": "$(location @com_github_google_go_containerregistry//cmd/registry)",
+        "CRANE_BIN": "$(location //vendor/github.com/google/go-containerregistry/cmd/crane)",
+        "REGISTRY_BIN": "$(location //vendor/github.com/google/go-containerregistry/cmd/registry)",
     },
     tags = ["exclusive"],  # this test starts a registry on fixed port 1338
 )
@@ -191,14 +191,14 @@ sh_test(
         ":image_mirror_with_tag",
         ":kubectl",
         ":push_image",
-        "@com_github_google_go_containerregistry//cmd/crane",
-        "@com_github_google_go_containerregistry//cmd/registry",
+        "//vendor/github.com/google/go-containerregistry/cmd/crane",
+        "//vendor/github.com/google/go-containerregistry/cmd/registry",
     ],
     env = {
         "KUBECTL": "$(location :kubectl)",
         "PUSH_IMAGE": "$(location :push_image)",
-        "CRANE_BIN": "$(location @com_github_google_go_containerregistry//cmd/crane)",
-        "REGISTRY_BIN": "$(location @com_github_google_go_containerregistry//cmd/registry)",
+        "CRANE_BIN": "$(location //vendor/github.com/google/go-containerregistry/cmd/crane)",
+        "REGISTRY_BIN": "$(location //vendor/github.com/google/go-containerregistry/cmd/registry)",
     },
     tags = ["exclusive"],  # this test starts a registry on fixed port 1338
 )
