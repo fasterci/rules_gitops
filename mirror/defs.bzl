@@ -141,14 +141,14 @@ def validate_image_test(name, image, digest, tags = [], **kwargs):
         size = "small",
         srcs = ["@rules_gitops//mirror:validate_image.sh"],
         data = [
-            "//vendor/github.com/google/go-containerregistry/cmd/crane:crane",
+            "@rules_gitops//vendor/github.com/google/go-containerregistry/cmd/crane:crane",
         ],
         args = [
             src_image,
         ],
         tags = ["requires-network"] + tags,
         env = {
-            "CRANE_BIN": "$(location //vendor/github.com/google/go-containerregistry/cmd/crane:crane)",
+            "CRANE_BIN": "$(location @rules_gitops//vendor/github.com/google/go-containerregistry/cmd/crane:crane)",
         },
         **kwargs
     )
