@@ -34,7 +34,10 @@ type K8STestSetup struct {
 // Callback function type is invoked post-setup but pre-test
 type Callback func() error
 
-var setupCMD = flag.String("setup", "", "the path to the it setup command")
+var (
+	setupCMD = flag.String("setup", "", "the path to the it setup command")
+	quiet    = flag.Bool("quiet", false, "silence logs from remote pods")
+)
 
 // TestMain will execute the provided setup command, wait for configured pods and services to be
 // ready, and then forwards service logs to test output.  On completion, signals to the it_sidecar
@@ -92,7 +95,6 @@ func (s *K8STestSetup) before(wg *sync.WaitGroup) {
 		log.Fatal(fmt.Errorf("unable to read  setup command STDOUT; %w", err))
 	}
 
-
 	go func() {
 		rd := bufio.NewReader(s.er)
 		for {
@@ -103,7 +105,9 @@ func (s *K8STestSetup) before(wg *sync.WaitGroup) {
 			if err != nil {
 				log.Fatal(err)
 			}
-			log.Print(str)
+			if !*quiet {
+				log.Print(str)
+			}
 		}
 		wg.Done()
 	}()
@@ -150,7 +154,9 @@ waitForReady:
 			if err != nil {
 				log.Fatal(err)
 			}
-			log.Print(str)
+			if !*quiet {
+				log.Print(str)
+			}
 		}
 		wg.Done()
 	}()
