@@ -1,0 +1,18 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp
+spec:
+  selector:
+    matchLabels:
+      app: myapp
+  template:
+    metadata:
+      labels:
+        app: myapp
+    spec:
+      containers:
+      - image: localhost:1338/mirror/localhost1338/image@sha256:b812c0570a7c369b2863c64e22760dc1b1dbc025a739f02db376bac62862f4cc
+        name: myapp
+        ports:
+        - containerPort: 8080

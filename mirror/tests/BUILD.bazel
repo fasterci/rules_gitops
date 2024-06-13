@@ -1,0 +1,204 @@
+load("@aspect_bazel_lib//lib:testing.bzl", "assert_contains")
+load("@aspect_bazel_lib//lib:write_source_files.bzl", "write_source_files")
+load("@rules_gitops//gitops:defs.bzl", "k8s_deploy", "k8s_test_setup")
+load("@rules_gitops//skylib/kustomize:kustomize.bzl", "kustomize")
+load("@rules_oci//oci:defs.bzl", "oci_image", "oci_push")
+load("//mirror:defs.bzl", "mirror_image")
+
+# create a simple image for testing
+
+oci_image(
+    name = "image",
+    architecture = "amd64",
+    cmd = [
+        "--arg1",
+        "--arg2",
+    ],
+    entrypoint = ["/custom_bin"],
+    env = {
+        "ENV": "/test",
+    },
+    os = "linux",
+)
+
+assert_contains(
+    name = "image_sanity_check",
+    actual = ":image.digest",
+    expected = "sha256:b812c0570a7c369b2863c64e22760dc1b1dbc025a739f02db376bac62862f4cc",
+)
+
+oci_push(
+    name = "push_image",
+    image = ":image",
+    remote_tags = ["tag1"],
+    repository = "localhost:1338/image",
+    visibility = ["//visibility:public"],
+)
+
+mirror_image(
+    name = "image_mirror",
+    digest = "sha256:b812c0570a7c369b2863c64e22760dc1b1dbc025a739f02db376bac62862f4cc",
+    dst_prefix = "localhost:1338/mirror",
+    push_timeout = "60s",
+    src_image = "localhost:1338/image",
+    tags = ["manual"],  # test should be tagged manual since it requires a running registry
+    visibility = ["//visibility:public"],
+)
+
+mirror_image(
+    name = "image_mirror_with_tag",
+    digest = "sha256:b812c0570a7c369b2863c64e22760dc1b1dbc025a739f02db376bac62862f4cc",
+    dst_prefix = "localhost:1338/mirror2",
+    src_image = "localhost:1338/image:tag1",
+    tags = ["manual"],  # test should be tagged manual since it requires a running registry
+    visibility = ["//visibility:public"],
+)
+
+kustomize(
+    name = "kustomize1",
+    images = [
+        ":image_mirror",
+    ],
+    manifests = [
+        "deployment.yaml",
+    ],
+    namespace = "",
+)
+
+write_source_files(
+    name = "write_golden_files",
+    files = {
+        "kustomize1.golden": ":kustomize1",
+    },
+)
+
+# use k8s_deploy with mirrored image
+k8s_deploy(
+    name = "fasterci_gitops_deploy",
+    cluster = "dummy",
+    images = [
+        ":image_mirror",
+    ],
+    manifests = [
+        "deployment.yaml",
+        "service.yaml",
+    ],
+    namespace = "{BUILD_USER}",
+)
+
+assert_contains(
+    name = "fasterci_gitops_deploy_has_mirrored_image",
+    actual = ":fasterci_gitops_deploy",
+    expected = "image: localhost:1338/mirror/localhost1338/image@sha256:b812c0570a7c369b2863c64e22760dc1b1dbc025a739f02db376bac62862f4cc",
+)
+
+exports_files([
+    "kubectl",
+    "kubeconfig.yaml",
+])
+
+# very it works with fasterci too
+# Execution of this setup should push the mirrored image to the registry
+k8s_test_setup(
+    name = "fasterci_gitops.setup",
+    cluster = "@k8s_test//:cluster",
+    kubeconfig = ":kubeconfig.yaml",
+    kubectl = ":kubectl",
+    objects = [
+        ":fasterci_gitops_deploy",
+    ],
+)
+
+# run the setup and verify the mirrored image is pushed
+# this test is marked manual because it runs the it_sidecar as a last step so it requires a running k8s cluster.
+# TODO: provide proper stubs after https://github.com/fasterci/rules_gitops/issues/23 is resolved
+sh_test(
+    name = "fasterci_gitops_setup_test",
+    srcs = ["gitops_setup_test.sh"],
+    args = [
+        "$(location :fasterci_gitops.setup) localhost:1338/mirror/localhost1338/image@sha256:b812c0570a7c369b2863c64e22760dc1b1dbc025a739f02db376bac62862f4cc",
+    ],
+    data = [
+        ":fasterci_gitops.setup",
+        ":kubectl",
+        ":push_image",
+        "@com_github_google_go_containerregistry//cmd/crane",
+        "@com_github_google_go_containerregistry//cmd/registry",
+    ],
+    env = {
+        "KUBECTL": "$(location :kubectl)",
+        "PUSH_IMAGE": "$(location :push_image)",
+        "CRANE_BIN": "$(location @com_github_google_go_containerregistry//cmd/crane)",
+        "REGISTRY_BIN": "$(location @com_github_google_go_containerregistry//cmd/registry)",
+    },
+    tags = [
+        "exclusive",
+        "manual",
+    ],  # this test starts a registry on fixed port 1338
+)
+
+sh_test(
+    name = "fasterci_gitops_apply_test",
+    srcs = ["gitops_setup_test.sh"],
+    args = [
+        "$(location :fasterci_gitops_deploy.apply) localhost:1338/mirror/localhost1338/image@sha256:b812c0570a7c369b2863c64e22760dc1b1dbc025a739f02db376bac62862f4cc",
+    ],
+    data = [
+        ":fasterci_gitops_deploy.apply",
+        ":kubectl",
+        ":push_image",
+        "@com_github_google_go_containerregistry//cmd/crane",
+        "@com_github_google_go_containerregistry//cmd/registry",
+    ],
+    env = {
+        "KUBECTL": "$(location :kubectl)",
+        "PUSH_IMAGE": "$(location :push_image)",
+        "CRANE_BIN": "$(location @com_github_google_go_containerregistry//cmd/crane)",
+        "REGISTRY_BIN": "$(location @com_github_google_go_containerregistry//cmd/registry)",
+    },
+    tags = ["exclusive"],  # this test starts a registry on fixed port 1338
+)
+
+sh_test(
+    name = "image_mirror_with_tag_test",
+    srcs = ["gitops_setup_test.sh"],
+    args = [
+        "$(location :image_mirror_with_tag) localhost:1338/mirror2/localhost1338/image@sha256:b812c0570a7c369b2863c64e22760dc1b1dbc025a739f02db376bac62862f4cc",
+    ],
+    data = [
+        ":image_mirror_with_tag",
+        ":kubectl",
+        ":push_image",
+        "@com_github_google_go_containerregistry//cmd/crane",
+        "@com_github_google_go_containerregistry//cmd/registry",
+    ],
+    env = {
+        "KUBECTL": "$(location :kubectl)",
+        "PUSH_IMAGE": "$(location :push_image)",
+        "CRANE_BIN": "$(location @com_github_google_go_containerregistry//cmd/crane)",
+        "REGISTRY_BIN": "$(location @com_github_google_go_containerregistry//cmd/registry)",
+    },
+    tags = ["exclusive"],  # this test starts a registry on fixed port 1338
+)
+
+sh_test(
+    name = "image_mirror_with_tag_test2",
+    srcs = ["gitops_setup_test.sh"],
+    args = [
+        "$(location :image_mirror_with_tag) localhost:1338/mirror2/localhost1338/image:tag1",
+    ],
+    data = [
+        ":image_mirror_with_tag",
+        ":kubectl",
+        ":push_image",
+        "@com_github_google_go_containerregistry//cmd/crane",
+        "@com_github_google_go_containerregistry//cmd/registry",
+    ],
+    env = {
+        "KUBECTL": "$(location :kubectl)",
+        "PUSH_IMAGE": "$(location :push_image)",
+        "CRANE_BIN": "$(location @com_github_google_go_containerregistry//cmd/crane)",
+        "REGISTRY_BIN": "$(location @com_github_google_go_containerregistry//cmd/registry)",
+    },
+    tags = ["exclusive"],  # this test starts a registry on fixed port 1338
+)
