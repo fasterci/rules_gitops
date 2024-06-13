@@ -25,6 +25,11 @@ cat << EOF
 
 \`\`\`starlark
 bazel_dep(name = "rules_gitops", version = "${TAG:1}")
+git_override(
+    module_name = "rules_gitops",
+    remote = "https://github.com/fasterci/rules_gitops",
+    commit = "${GITHUB_SHA}",
+)
 
 kustomize = use_extension("@rules_gitops//gitops:extensions.bzl", "kustomize")
 kustomize.kustomize_toolchain()
