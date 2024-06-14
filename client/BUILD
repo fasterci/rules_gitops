@@ -8,6 +8,6 @@ go_library(
     data = [
         ":noop.setup",
     ],
-    importpath = "github.com/fasterci/rules_gitops/testing/it_sidecar/client",
+    importpath = "github.com/fasterci/rules_gitops/client",
     visibility = ["//visibility:public"],
 )

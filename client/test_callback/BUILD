@@ -5,11 +5,11 @@ go_test(
     srcs = ["sidecar_client_test.go"],
     args = [
         "-setup",
-        "$(location //testing/it_sidecar/client:noop.setup)",
+        "$(location //client:noop.setup)",
     ],
     data = [
-        "//testing/it_sidecar/client:noop.setup",
+        "//client:noop.setup",
     ],
     rundir = ".",
-    deps = ["//testing/it_sidecar/client:go_default_library"],
+    deps = ["//client:go_default_library"],
 )

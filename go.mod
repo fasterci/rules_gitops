@@ -71,4 +71,4 @@ require (
 	sigs.k8s.io/yaml v1.3.0 // indirect
 )
 
-replace github.com/fasterci/rules_gitops/testing/it_sidecar/client => ./testing/it_sidecar/client
+replace github.com/fasterci/rules_gitops/client => ./client

@@ -18,7 +18,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/fasterci/rules_gitops/testing/it_sidecar/client"
+	"github.com/fasterci/rules_gitops/client"
 )
 
 var setup client.K8STestSetup
