@@ -15,13 +15,16 @@ GtiOps rules repositories initialization
 load("@aspect_bazel_lib//lib:repositories.bzl", "aspect_bazel_lib_dependencies", "aspect_bazel_lib_register_toolchains")
 load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies")
 load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
-load("@rules_gitops//skylib/kustomize:kustomize.bzl", "download_kustomize", "kustomize_setup")
+load("@rules_gitops//skylib/kustomize:kustomize.bzl", "kustomize_setup")
 load("@rules_oci//oci:dependencies.bzl", "rules_oci_dependencies")
 load("@rules_oci//oci:repositories.bzl", "LATEST_CRANE_VERSION", "oci_register_toolchains")
 load("@rules_pkg//:deps.bzl", "rules_pkg_dependencies")
-load("//gitops/private:kustomize_toolchain.bzl", "KUSTOMIZE_PLATFORMS", "kustomize_host_alias_repo", "kustomize_platform_repo", "kustomize_toolchains_repo", _DEFAULT_KUSTOMIZE_VERSION = "DEFAULT_KUSTOMIZE_VERSION")
-
-DEFAULT_KUSTOMIZE_VERSION = _DEFAULT_KUSTOMIZE_VERSION
+load(
+    ":toolchains.bzl",
+    _register_kustomize_toolchains = "register_kustomize_toolchains",
+    _DEFAULT_KUSTOMIZE_REPOSITORY = "DEFAULT_KUSTOMIZE_REPOSITORY",
+    _DEFAULT_KUSTOMIZE_VERSION = "DEFAULT_KUSTOMIZE_VERSION",
+)
 
 def rules_gitops_repositories():
     """Initializes Declares workspaces the GitOps rules depend on.
@@ -43,31 +46,7 @@ def rules_gitops_repositories():
         crane_version = LATEST_CRANE_VERSION,
     )
 
-DEFAULT_KUSTOMIZE_REPOSITORY = "kustomize"
-
-def register_kustomize_toolchains(name = DEFAULT_KUSTOMIZE_REPOSITORY, version = DEFAULT_KUSTOMIZE_VERSION, register = True):
-    """Registers kustomize toolchain and repositories
-
-    Args:
-        name: override the prefix for the generated toolchain repositories
-        version: the version of kustomize to execute (see https://github.com/kubernetes-sigs/kustomize/releases)
-        register: whether to call through to native.register_toolchains.
-            Should be True for WORKSPACE users, but false when used under bzlmod extension
-    """
-
-    download_kustomize(name = "kustomize_bin")
-    for [platform, meta] in KUSTOMIZE_PLATFORMS.items():
-        kustomize_platform_repo(
-            name = "%s_%s" % (name, platform),
-            platform = platform,
-            version = version,
-        )
-        if register:
-            native.register_toolchains("@%s_toolchains//:%s_toolchain" % (name, platform))
-
-    kustomize_host_alias_repo(name = name)
-
-    kustomize_toolchains_repo(
-        name = "%s_toolchains" % name,
-        user_repository_name = name,
-    )
+# Re-host for backwards compatiblity
+register_kustomize_toolchains = _register_kustomize_toolchains
+DEFAULT_KUSTOMIZE_REPOSITORY = _DEFAULT_KUSTOMIZE_REPOSITORY
+DEFAULT_KUSTOMIZE_VERSION = _DEFAULT_KUSTOMIZE_VERSION
