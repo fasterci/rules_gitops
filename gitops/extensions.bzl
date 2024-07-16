@@ -6,7 +6,7 @@ TODO: implement a proper toolchain resolution mechanism in bzlmod
 load("//gitops/private:extension_utils.bzl", "extension_utils")
 load("//gitops/private:host_repo.bzl", "host_repo")
 load(
-    ":repositories.bzl",
+    ":toolchains.bzl",
     "DEFAULT_KUSTOMIZE_REPOSITORY",
     "DEFAULT_KUSTOMIZE_VERSION",
     "register_kustomize_toolchains",
