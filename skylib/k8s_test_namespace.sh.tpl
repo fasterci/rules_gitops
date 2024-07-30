@@ -49,7 +49,7 @@ set +e
 
 ns_cleanup() {
     echo "Performing namespace ${NAMESPACE} cleanup..."
-    ${KUBECTL} --kubeconfig=${KUBECONFIG} --cluster=${CLUSTER} --user=${USER} delete namespace ${NAMESPACE}
+    ${KUBECTL} --kubeconfig=${KUBECONFIG} --cluster=${CLUSTER} --user=${USER} delete namespace --wait=false ${NAMESPACE}
 }
 
 if [ -n "${K8S_TEST_NAMESPACE:-}" ]
