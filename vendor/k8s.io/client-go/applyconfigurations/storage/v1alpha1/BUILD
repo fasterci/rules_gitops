@@ -8,6 +8,7 @@ go_library(
         "volumeattachmentsource.go",
         "volumeattachmentspec.go",
         "volumeattachmentstatus.go",
+        "volumeattributesclass.go",
         "volumeerror.go",
     ],
     importmap = "github.com/fasterci/rules_gitops/vendor/k8s.io/client-go/applyconfigurations/storage/v1alpha1",

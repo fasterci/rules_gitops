@@ -6,6 +6,7 @@ go_library(
         "csistoragecapacity.go",
         "expansion_generated.go",
         "volumeattachment.go",
+        "volumeattributesclass.go",
     ],
     importmap = "github.com/fasterci/rules_gitops/vendor/k8s.io/client-go/listers/storage/v1alpha1",
     importpath = "k8s.io/client-go/listers/storage/v1alpha1",

@@ -8,7 +8,6 @@ go_library(
         "ingress.go",
         "interface.go",
         "networkpolicy.go",
-        "podsecuritypolicy.go",
         "replicaset.go",
     ],
     importmap = "github.com/fasterci/rules_gitops/vendor/k8s.io/client-go/informers/extensions/v1beta1",

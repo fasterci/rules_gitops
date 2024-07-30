@@ -7,7 +7,6 @@ go_library(
         "expansion_generated.go",
         "poddisruptionbudget.go",
         "poddisruptionbudget_expansion.go",
-        "podsecuritypolicy.go",
     ],
     importmap = "github.com/fasterci/rules_gitops/vendor/k8s.io/client-go/listers/policy/v1beta1",
     importpath = "k8s.io/client-go/listers/policy/v1beta1",

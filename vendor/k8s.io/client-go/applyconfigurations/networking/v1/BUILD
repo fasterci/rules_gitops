@@ -26,7 +26,6 @@ go_library(
         "networkpolicypeer.go",
         "networkpolicyport.go",
         "networkpolicyspec.go",
-        "networkpolicystatus.go",
         "servicebackendport.go",
     ],
     importmap = "github.com/fasterci/rules_gitops/vendor/k8s.io/client-go/applyconfigurations/networking/v1",

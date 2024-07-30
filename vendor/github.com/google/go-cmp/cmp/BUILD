@@ -4,8 +4,7 @@ go_library(
     name = "go_default_library",
     srcs = [
         "compare.go",
-        "export_panic.go",
-        "export_unsafe.go",
+        "export.go",
         "options.go",
         "path.go",
         "report.go",
