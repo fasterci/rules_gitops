@@ -13,15 +13,15 @@ load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 licenses(["notice"])  # Apache 2.0
 
 go_library(
-    name = "go_default_library",
+    name = "templating_lib",
     srcs = ["main.go"],
     importpath = "github.com/fasterci/rules_gitops/templating",
     visibility = ["//visibility:private"],
-    deps = ["//templating/fasttemplate:go_default_library"],
+    deps = ["//templating/fasttemplate"],
 )
 
 go_binary(
     name = "fast_template_engine",
-    embed = [":go_default_library"],
+    embed = [":templating_lib"],
     visibility = ["//visibility:public"],
 )

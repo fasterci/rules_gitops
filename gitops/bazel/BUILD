@@ -13,14 +13,14 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 licenses(["notice"])  # Apache 2.0
 
 go_library(
-    name = "go_default_library",
+    name = "bazel",
     srcs = ["bazeltargets.go"],
     importpath = "github.com/fasterci/rules_gitops/gitops/bazel",
     visibility = ["//visibility:public"],
 )
 
 go_test(
-    name = "go_default_test",
+    name = "bazel_test",
     srcs = ["bazeltargets_test.go"],
-    embed = [":go_default_library"],
+    embed = [":bazel"],
 )

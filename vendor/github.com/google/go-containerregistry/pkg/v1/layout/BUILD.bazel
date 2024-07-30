@@ -1,0 +1,29 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "layout",
+    srcs = [
+        "blob.go",
+        "doc.go",
+        "gc.go",
+        "image.go",
+        "index.go",
+        "layoutpath.go",
+        "options.go",
+        "read.go",
+        "write.go",
+    ],
+    importmap = "github.com/fasterci/rules_gitops/vendor/github.com/google/go-containerregistry/pkg/v1/layout",
+    importpath = "github.com/google/go-containerregistry/pkg/v1/layout",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/google/go-containerregistry/pkg/logs",
+        "//vendor/github.com/google/go-containerregistry/pkg/v1:pkg",
+        "//vendor/github.com/google/go-containerregistry/pkg/v1/match",
+        "//vendor/github.com/google/go-containerregistry/pkg/v1/mutate",
+        "//vendor/github.com/google/go-containerregistry/pkg/v1/partial",
+        "//vendor/github.com/google/go-containerregistry/pkg/v1/stream",
+        "//vendor/github.com/google/go-containerregistry/pkg/v1/types",
+        "//vendor/golang.org/x/sync/errgroup",
+    ],
+)

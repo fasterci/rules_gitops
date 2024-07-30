@@ -11,15 +11,15 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "stamper_lib",
     srcs = ["main.go"],
     importpath = "github.com/fasterci/rules_gitops/stamper",
     visibility = ["//visibility:private"],
-    deps = ["//templating/fasttemplate:go_default_library"],
+    deps = ["//templating/fasttemplate"],
 )
 
 go_binary(
     name = "stamper",
-    embed = [":go_default_library"],
+    embed = [":stamper_lib"],
     visibility = ["//visibility:public"],
 )

@@ -13,25 +13,25 @@ load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 licenses(["notice"])  # Apache 2.0
 
 go_library(
-    name = "go_default_library",
+    name = "prer_lib",
     srcs = ["create_gitops_prs.go"],
     importpath = "github.com/fasterci/rules_gitops/gitops/prer",
     visibility = ["//visibility:private"],
     deps = [
-        "//gitops/analysis:go_default_library",
-        "//gitops/bazel:go_default_library",
-        "//gitops/commitmsg:go_default_library",
-        "//gitops/exec:go_default_library",
-        "//gitops/git:go_default_library",
-        "//gitops/git/bitbucket:go_default_library",
-        "//gitops/git/github:go_default_library",
-        "//gitops/git/gitlab:go_default_library",
-        "//vendor/google.golang.org/protobuf/proto:go_default_library",
+        "//gitops/analysis",
+        "//gitops/bazel",
+        "//gitops/commitmsg",
+        "//gitops/exec",
+        "//gitops/git",
+        "//gitops/git/bitbucket",
+        "//gitops/git/github",
+        "//gitops/git/gitlab",
+        "//vendor/google.golang.org/protobuf/proto",
     ],
 )
 
 go_binary(
     name = "create_gitops_prs",
-    embed = [":go_default_library"],
+    embed = [":prer_lib"],
     visibility = ["//visibility:public"],
 )

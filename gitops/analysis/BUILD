@@ -20,13 +20,13 @@ go_proto_library(
 )
 
 go_library(
-    name = "go_default_library",
+    name = "analysis",
     srcs = ["analysis.pb.go"],
     importpath = "github.com/fasterci/rules_gitops/gitops/analysis",
     visibility = ["//visibility:public"],
     deps = [
-        "//gitops/blaze_query:go_default_library",
-        "//vendor/google.golang.org/protobuf/reflect/protoreflect:go_default_library",
-        "//vendor/google.golang.org/protobuf/runtime/protoimpl:go_default_library",
+        "//gitops/blaze_query",
+        "//vendor/google.golang.org/protobuf/reflect/protoreflect",
+        "//vendor/google.golang.org/protobuf/runtime/protoimpl",
     ],
 )

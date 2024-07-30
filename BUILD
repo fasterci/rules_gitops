@@ -8,11 +8,10 @@
 # OF ANY KIND, either express or implied. See the License for the specific language
 # governing permissions and limitations under the License.
 
-# gazelle:build_tags darwin,linux
-# gazelle:resolve go github.com/fasterci/rules_gitops/gitops/blaze_query @rules_gitops//gitops/blaze_query:go_default_library
-# gazelle:resolve go github.com/fasterci/rules_gitops/gitops/analysis @rules_gitops//gitops/analysis:go_default_library
+# gazelle:resolve go github.com/fasterci/rules_gitops/gitops/blaze_query @rules_gitops//gitops/blaze_query
+# gazelle:resolve go github.com/fasterci/rules_gitops/gitops/analysis @rules_gitops//gitops/analysis
 
-# gazelle:exclude examples e2e
+# gazelle:exclude e2e
 # gazelle:proto disable_global
 
 load("@bazel_gazelle//:def.bzl", "gazelle")
@@ -22,17 +21,14 @@ licenses(["notice"])  # Apache 2.0
 
 exports_files(["WORKSPACE"])
 
+# gazelle:go_naming_convention import
 # gazelle:prefix github.com/fasterci/rules_gitops
 gazelle(
     name = "gazelle",
-    build_tags = [
-        "integration",
-        "debug",
-    ],
     command = "fix",
     extra_args = [
         "-build_file_name",
-        "BUILD,BUILD.bazel",
+        "BUILD.bazel,BUILD",
     ],
 )
 

@@ -26,12 +26,12 @@ go_proto_library(
 )
 
 go_library(
-    name = "go_default_library",
+    name = "blaze_query",
     srcs = ["build.pb.go"],
     importpath = "github.com/fasterci/rules_gitops/gitops/blaze_query",
     visibility = ["//visibility:public"],
     deps = [
-        "//vendor/google.golang.org/protobuf/reflect/protoreflect:go_default_library",
-        "//vendor/google.golang.org/protobuf/runtime/protoimpl:go_default_library",
+        "//vendor/google.golang.org/protobuf/reflect/protoreflect",
+        "//vendor/google.golang.org/protobuf/runtime/protoimpl",
     ],
 )
