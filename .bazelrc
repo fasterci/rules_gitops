@@ -1,5 +1,6 @@
 common --enable_bzlmod
 common --incompatible_enable_proto_toolchain_resolution
+common --host_platform=//:no_cgo_host_platform
 build --nolegacy_external_runfiles
 build --verbose_failures
 build --@io_bazel_rules_go//go/config:pure
