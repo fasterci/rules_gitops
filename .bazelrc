@@ -1,6 +1,6 @@
 common --enable_bzlmod
 common --incompatible_enable_proto_toolchain_resolution
-common --host_platform=//:no_cgo_host_platform
+#common --host_platform=//:no_cgo_host_platform
 build --nolegacy_external_runfiles
 build --remote_download_all
 build --verbose_failures

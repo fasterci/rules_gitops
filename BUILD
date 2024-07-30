@@ -16,7 +16,7 @@
 
 load("@bazel_gazelle//:def.bzl", "gazelle")
 load("@buildifier_prebuilt//:rules.bzl", "buildifier")
-load("@platforms//host:constraints.bzl", "HOST_CONSTRAINTS")
+# load("@platforms//host:constraints.bzl", "HOST_CONSTRAINTS")
 
 licenses(["notice"])  # Apache 2.0
 
@@ -50,9 +50,10 @@ buildifier(
     lint_mode = "fix",
 )
 
-platform(
-    name = "no_cgo_host_platform",
-    constraint_values = HOST_CONSTRAINTS + [
-        "@io_bazel_rules_go//go/toolchain:cgo_off",
-    ],
-)
+# TODO: come up with a way compatible at least with bazel 7.1
+# platform(
+#     name = "no_cgo_host_platform",
+#     constraint_values = HOST_CONSTRAINTS + [
+#         "@io_bazel_rules_go//go/toolchain:cgo_off",
+#     ],
+# )
