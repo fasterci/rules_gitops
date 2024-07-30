@@ -66,14 +66,13 @@ func (i *arrayFlags) Set(value string) error {
 }
 
 var (
-	namespace       = flag.String("namespace", os.Getenv("NAMESPACE"), "kubernetes namespace")
-	timeout         = flag.Duration("timeout", time.Second*30, "execution timeout")
-	deleteNamespace = flag.Bool("delete_namespace", false, "delete namespace as part of the cleanup")
-	pfconfig        = portForwardConf{services: make(map[string][]uint16)}
-	kubeconfig      string
-	waitForApps     arrayFlags
-	allowErrors     bool
-	disablePodLogs  bool
+	namespace      = flag.String("namespace", os.Getenv("NAMESPACE"), "kubernetes namespace")
+	timeout        = flag.Duration("timeout", time.Second*30, "execution timeout")
+	pfconfig       = portForwardConf{services: make(map[string][]uint16)}
+	kubeconfig     string
+	waitForApps    arrayFlags
+	allowErrors    bool
+	disablePodLogs bool
 )
 
 func init() {
@@ -329,17 +328,6 @@ func portForward(ctx context.Context, clientset *kubernetes.Clientset, config *r
 	return nil
 }
 
-func cleanup(clientset *kubernetes.Clientset) {
-	log.Print("Cleanup")
-	if *deleteNamespace && *namespace != "" {
-		log.Printf("deleting namespace %s", *namespace)
-		s := meta_v1.DeletePropagationBackground
-		if err := clientset.CoreV1().Namespaces().Delete(context.Background(), *namespace, meta_v1.DeleteOptions{PropagationPolicy: &s}); err != nil {
-			log.Printf("Unable to delete namespace %s: %v", *namespace, err)
-		}
-	}
-}
-
 var ErrTimedOut = errors.New("timed out")
 var ErrStdinClosed = errors.New("stdin closed")
 var ErrTermSignalReceived = errors.New("TERM signal received")
@@ -382,7 +370,6 @@ func main() {
 		log.Fatal(err)
 	}
 	clientset = kubernetes.NewForConfigOrDie(config)
-	defer cleanup(clientset)
 
 	go func() {
 		err := stern.Run(ctx, *namespace, clientset, allowErrors, disablePodLogs)
