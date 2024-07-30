@@ -104,7 +104,7 @@ diff_test(
 
 go_binary(
     name = "test_transition_binary",
-    embed = [":go_default_library"],
+    embed = [":tests_lib"],
     tags = ["manual"],
     visibility = ["//visibility:public"],
 )
@@ -151,7 +151,7 @@ go_library(
 )
 
 go_library(
-    name = "go_default_library",
+    name = "tests_lib",
     srcs = ["main.go"],
     importpath = "github.com/fasterci/rules_gitops/transitions/tests",
     visibility = ["//visibility:private"],

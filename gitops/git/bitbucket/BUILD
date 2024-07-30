@@ -13,15 +13,15 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 licenses(["notice"])  # Apache 2.0
 
 go_library(
-    name = "go_default_library",
+    name = "bitbucket",
     srcs = ["bitbucket.go"],
     importpath = "github.com/fasterci/rules_gitops/gitops/git/bitbucket",
     visibility = ["//visibility:public"],
 )
 
 go_test(
-    name = "go_default_test",
+    name = "bitbucket_test",
     srcs = ["bitbucket_test.go"],
     data = glob(["testdata/**"]),
-    embed = [":go_default_library"],
+    embed = [":bitbucket"],
 )

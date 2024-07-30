@@ -1,12 +1,12 @@
-def _list_runfiles_impl(ctx): 
+def _list_runfiles_impl(ctx):
     ctx.actions.write(
         output = ctx.outputs.executable,
-        content = '\n'.join([
-            "#!/bin/bash",   
+        content = "\n".join([
+            "#!/bin/bash",
             "cd $0.runfiles",
-            "find ."
+            "find .",
         ]),
-        is_executable = True
+        is_executable = True,
     )
 
     runfiles = ctx.runfiles(files = ctx.files.data)
