@@ -2031,7 +2031,7 @@
     },
     "@@rules_gitops~override//gitops:extensions.bzl%toolchains": {
       "general": {
-        "bzlTransitiveDigest": "X7xbfrEEvUs1hTw3RrBtdAG/XzIy7gqQ1ISbBMwOMCc=",
+        "bzlTransitiveDigest": "FGf6BOQWyrk5QqZcZ36h4LUJ8pF2gr/29tiriEROGDo=",
         "accumulatedFileDigests": {},
         "envVariables": {},
         "generatedRepoSpecs": {
@@ -2105,31 +2105,6 @@
         },
         "recordedRepoMappingEntries": [
           [
-            "aspect_bazel_lib~2.7.1",
-            "bazel_tools",
-            "bazel_tools"
-          ],
-          [
-            "bazel_skylib~1.5.0",
-            "bazel_skylib",
-            "bazel_skylib~1.5.0"
-          ],
-          [
-            "gazelle~0.37.0",
-            "bazel_tools",
-            "bazel_tools"
-          ],
-          [
-            "rules_gitops~override",
-            "aspect_bazel_lib",
-            "aspect_bazel_lib~2.7.1"
-          ],
-          [
-            "rules_gitops~override",
-            "bazel_gazelle",
-            "gazelle~0.37.0"
-          ],
-          [
             "rules_gitops~override",
             "bazel_skylib",
             "bazel_skylib~1.5.0"
@@ -2138,31 +2113,6 @@
             "rules_gitops~override",
             "rules_gitops",
             "rules_gitops~override"
-          ],
-          [
-            "rules_gitops~override",
-            "rules_oci",
-            "rules_oci~1.7.2"
-          ],
-          [
-            "rules_gitops~override",
-            "rules_pkg",
-            "rules_pkg~0.9.1"
-          ],
-          [
-            "rules_oci~1.7.2",
-            "aspect_bazel_lib",
-            "aspect_bazel_lib~2.7.1"
-          ],
-          [
-            "rules_oci~1.7.2",
-            "bazel_tools",
-            "bazel_tools"
-          ],
-          [
-            "rules_pkg~0.9.1",
-            "bazel_tools",
-            "bazel_tools"
           ]
         ]
       }
@@ -3438,6 +3388,111 @@
             "rules_oci~1.7.2",
             "bazel_skylib",
             "bazel_skylib~1.5.0"
+          ]
+        ]
+      }
+    },
+    "@@toolchains_protoc~0.3.1//protoc:extensions.bzl%protoc": {
+      "general": {
+        "bzlTransitiveDigest": "H8HGqLmXPUv5Divx2DooqAgB6GXuy6Uq5VaRXjJZSfI=",
+        "accumulatedFileDigests": {},
+        "envVariables": {},
+        "generatedRepoSpecs": {
+          "toolchains_protoc_hub.linux_aarch_64": {
+            "bzlFile": "@@toolchains_protoc~0.3.1//protoc/private:prebuilt_protoc_toolchain.bzl",
+            "ruleClassName": "prebuilt_protoc_repo",
+            "attributes": {
+              "name": "toolchains_protoc~0.3.1~protoc~toolchains_protoc_hub.linux_aarch_64",
+              "platform": "linux-aarch_64",
+              "version": "v27.1"
+            }
+          },
+          "toolchains_protoc_hub": {
+            "bzlFile": "@@toolchains_protoc~0.3.1//protoc/private:protoc_toolchains.bzl",
+            "ruleClassName": "protoc_toolchains_repo",
+            "attributes": {
+              "name": "toolchains_protoc~0.3.1~protoc~toolchains_protoc_hub",
+              "user_repository_name": "toolchains_protoc_hub"
+            }
+          },
+          "toolchains_protoc_hub.osx_x86_64": {
+            "bzlFile": "@@toolchains_protoc~0.3.1//protoc/private:prebuilt_protoc_toolchain.bzl",
+            "ruleClassName": "prebuilt_protoc_repo",
+            "attributes": {
+              "name": "toolchains_protoc~0.3.1~protoc~toolchains_protoc_hub.osx_x86_64",
+              "platform": "osx-x86_64",
+              "version": "v27.1"
+            }
+          },
+          "toolchains_protoc_hub.linux_s390_64": {
+            "bzlFile": "@@toolchains_protoc~0.3.1//protoc/private:prebuilt_protoc_toolchain.bzl",
+            "ruleClassName": "prebuilt_protoc_repo",
+            "attributes": {
+              "name": "toolchains_protoc~0.3.1~protoc~toolchains_protoc_hub.linux_s390_64",
+              "platform": "linux-s390_64",
+              "version": "v27.1"
+            }
+          },
+          "toolchains_protoc_hub.osx_aarch_64": {
+            "bzlFile": "@@toolchains_protoc~0.3.1//protoc/private:prebuilt_protoc_toolchain.bzl",
+            "ruleClassName": "prebuilt_protoc_repo",
+            "attributes": {
+              "name": "toolchains_protoc~0.3.1~protoc~toolchains_protoc_hub.osx_aarch_64",
+              "platform": "osx-aarch_64",
+              "version": "v27.1"
+            }
+          },
+          "com_google_protobuf": {
+            "bzlFile": "@@toolchains_protoc~0.3.1//protoc:toolchain.bzl",
+            "ruleClassName": "_google_protobuf_alias_repo",
+            "attributes": {
+              "name": "toolchains_protoc~0.3.1~protoc~com_google_protobuf",
+              "alias_to": "toolchains_protoc_hub.osx_aarch_64"
+            }
+          },
+          "toolchains_protoc_hub.win64": {
+            "bzlFile": "@@toolchains_protoc~0.3.1//protoc/private:prebuilt_protoc_toolchain.bzl",
+            "ruleClassName": "prebuilt_protoc_repo",
+            "attributes": {
+              "name": "toolchains_protoc~0.3.1~protoc~toolchains_protoc_hub.win64",
+              "platform": "win64",
+              "version": "v27.1"
+            }
+          },
+          "toolchains_protoc_hub.linux_x86_64": {
+            "bzlFile": "@@toolchains_protoc~0.3.1//protoc/private:prebuilt_protoc_toolchain.bzl",
+            "ruleClassName": "prebuilt_protoc_repo",
+            "attributes": {
+              "name": "toolchains_protoc~0.3.1~protoc~toolchains_protoc_hub.linux_x86_64",
+              "platform": "linux-x86_64",
+              "version": "v27.1"
+            }
+          },
+          "toolchains_protoc_hub.linux_ppcle_64": {
+            "bzlFile": "@@toolchains_protoc~0.3.1//protoc/private:prebuilt_protoc_toolchain.bzl",
+            "ruleClassName": "prebuilt_protoc_repo",
+            "attributes": {
+              "name": "toolchains_protoc~0.3.1~protoc~toolchains_protoc_hub.linux_ppcle_64",
+              "platform": "linux-ppcle_64",
+              "version": "v27.1"
+            }
+          }
+        },
+        "recordedRepoMappingEntries": [
+          [
+            "bazel_features~1.9.1",
+            "bazel_features_globals",
+            "bazel_features~1.9.1~version_extension~bazel_features_globals"
+          ],
+          [
+            "bazel_features~1.9.1",
+            "bazel_features_version",
+            "bazel_features~1.9.1~version_extension~bazel_features_version"
+          ],
+          [
+            "toolchains_protoc~0.3.1",
+            "bazel_features",
+            "bazel_features~1.9.1"
           ]
         ]
       }
