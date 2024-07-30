@@ -30,5 +30,8 @@ go_library(
     srcs = ["build.pb.go"],
     importpath = "github.com/fasterci/rules_gitops/gitops/blaze_query",
     visibility = ["//visibility:public"],
-    deps = ["//vendor/github.com/golang/protobuf/proto:go_default_library"],
+    deps = [
+        "//vendor/google.golang.org/protobuf/reflect/protoreflect:go_default_library",
+        "//vendor/google.golang.org/protobuf/runtime/protoimpl:go_default_library",
+    ],
 )

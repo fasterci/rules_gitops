@@ -31,7 +31,7 @@ import (
 	"github.com/fasterci/rules_gitops/gitops/git/github"
 	"github.com/fasterci/rules_gitops/gitops/git/gitlab"
 
-	proto "github.com/golang/protobuf/proto"
+	"google.golang.org/protobuf/proto"
 )
 
 func init() {

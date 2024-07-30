@@ -9,6 +9,9 @@
 # governing permissions and limitations under the License.
 
 # gazelle:build_tags darwin,linux
+# gazelle:resolve go github.com/fasterci/rules_gitops/gitops/blaze_query @rules_gitops//gitops/blaze_query:go_default_library
+# gazelle:resolve go github.com/fasterci/rules_gitops/gitops/analysis @rules_gitops//gitops/analysis:go_default_library
+
 # gazelle:exclude examples e2e
 # gazelle:proto disable_global
 
