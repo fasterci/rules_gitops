@@ -66,13 +66,13 @@ func (i *arrayFlags) Set(value string) error {
 }
 
 var (
-	namespace       = flag.String("namespace", os.Getenv("NAMESPACE"), "kubernetes namespace")
-	timeout         = flag.Duration("timeout", time.Second*30, "execution timeout")
-	deleteNamespace = flag.Bool("delete_namespace", false, "delete namespace as part of the cleanup")
-	pfconfig        = portForwardConf{services: make(map[string][]uint16)}
-	kubeconfig      string
-	waitForApps     arrayFlags
-	allowErrors     bool
+	namespace      = flag.String("namespace", os.Getenv("NAMESPACE"), "kubernetes namespace")
+	timeout        = flag.Duration("timeout", time.Second*30, "execution timeout")
+	pfconfig       = portForwardConf{services: make(map[string][]uint16)}
+	kubeconfig     string
+	waitForApps    arrayFlags
+	allowErrors    bool
+	disablePodLogs bool
 )
 
 func init() {
@@ -80,6 +80,7 @@ func init() {
 	flag.StringVar(&kubeconfig, "kubeconfig", os.Getenv("KUBECONFIG"), "path to kubernetes config file")
 	flag.Var(&waitForApps, "waitforapp", "wait for pods with label app=<this parameter>")
 	flag.BoolVar(&allowErrors, "allow_errors", false, "do not treat Failed in events as error. Use only if crashloop is expected")
+	flag.BoolVar(&disablePodLogs, "disable_pod_logs", false, "do not forward pod logs")
 }
 
 // contains returns true if slice v contains an item
@@ -327,31 +328,31 @@ func portForward(ctx context.Context, clientset *kubernetes.Clientset, config *r
 	return nil
 }
 
-func cleanup(clientset *kubernetes.Clientset) {
-	log.Print("Cleanup")
-	if *deleteNamespace && *namespace != "" {
-		log.Printf("deleting namespace %s", *namespace)
-		s := meta_v1.DeletePropagationBackground
-		if err := clientset.CoreV1().Namespaces().Delete(context.Background(), *namespace, meta_v1.DeleteOptions{PropagationPolicy: &s}); err != nil {
-			log.Printf("Unable to delete namespace %s: %v", *namespace, err)
-		}
-	}
-}
+var ErrTimedOut = errors.New("timed out")
+var ErrStdinClosed = errors.New("stdin closed")
+var ErrTermSignalReceived = errors.New("TERM signal received")
 
 func main() {
 	flag.Parse()
 	log.SetOutput(os.Stdout)
-	ctx, cancel := context.WithTimeout(context.Background(), *timeout)
-	defer cancel()
-	ctx, stopSignal := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
-	defer stopSignal()
+	ctx, timeoutCancel := context.WithTimeoutCause(context.Background(), *timeout, ErrTimedOut)
+	defer timeoutCancel()
+	ctx, cancel := context.WithCancelCause(ctx)
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-c
+		log.Print("First TERM signal, stopping...")
+		cancel(ErrTermSignalReceived)
+		signal.Stop(c)
+	}()
 	// cancel context if stdin is closed
 	go func() {
 		reader := bufio.NewReader(os.Stdin)
 		for {
 			_, _, err := reader.ReadRune()
 			if err != nil && err == io.EOF {
-				cancel()
+				cancel(ErrStdinClosed)
 				break
 			}
 		}
@@ -369,20 +370,18 @@ func main() {
 		log.Fatal(err)
 	}
 	clientset = kubernetes.NewForConfigOrDie(config)
-	defer cleanup(clientset)
 
 	go func() {
-		err := stern.Run(ctx, *namespace, clientset, allowErrors)
+		err := stern.Run(ctx, *namespace, clientset, allowErrors, disablePodLogs)
 		if err != nil {
 			log.Print(err)
 		}
-		cancel()
+		cancel(fmt.Errorf("terminate due to kubernetes listening failure: %w", err))
 	}()
 
 	listenForEvents(ctx, clientset, func(event *v1.Event) {
 		if !allowErrors {
-			log.Println("Terminate due to failure")
-			cancel()
+			cancel(fmt.Errorf("terminate due to event %s/%s %s %s", event.Namespace, event.InvolvedObject.Name, event.Reason, event.Message))
 		}
 	})
 
@@ -403,4 +402,8 @@ func main() {
 
 	fmt.Println("READY")
 	<-ctx.Done()
+	if cause := context.Cause(ctx); cause != nil {
+		log.Print("ctx.Done: ", cause.Error())
+	}
+
 }

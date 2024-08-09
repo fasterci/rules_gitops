@@ -4,6 +4,7 @@ go_library(
     name = "go_default_library",
     srcs = [
         "strings.go",
+        "strings_pure.go",
         "strings_unsafe.go",
     ],
     importmap = "github.com/fasterci/rules_gitops/vendor/google.golang.org/protobuf/internal/strs",

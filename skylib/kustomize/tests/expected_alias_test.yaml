@@ -1,0 +1,16 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp
+spec:
+  selector:
+    matchLabels:
+      app: myapp
+  template:
+    metadata:
+      labels:
+        app: myapp
+    spec:
+      containers:
+      - image: gcr.io/bs-dev/test_image@sha256:1abae145a9069d0f4fdf9a0527ff5aec503ec02c3df783e25172895745dd2172
+        name: myapp

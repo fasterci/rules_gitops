@@ -1,5 +1,6 @@
 common --enable_bzlmod
 build --nolegacy_external_runfiles
+build --remote_download_all
 build --verbose_failures
 build --@io_bazel_rules_go//go/config:pure
 test --test_output=errors

@@ -4,6 +4,7 @@ go_library(
     name = "go_default_library",
     srcs = [
         "name.go",
+        "pointer_purego.go",
         "pointer_unsafe.go",
         "sort.go",
     ],

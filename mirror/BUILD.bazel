@@ -1,0 +1,7 @@
+exports_files([
+    # For stardoc to reference the files
+    "defs.bzl",
+    # For mirror rule
+    "mirror_image.sh",
+    "validate_image.sh",
+])

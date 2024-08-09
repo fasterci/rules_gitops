@@ -1,6 +1,6 @@
+load("@aspect_bazel_lib//lib:diff_test.bzl", "diff_test")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
-load("@aspect_bazel_lib//lib:diff_test.bzl", "diff_test")
 load("//transitions:transitions.bzl", "platform_transition_binary", "platform_transition_filegroup")
 
 platform(

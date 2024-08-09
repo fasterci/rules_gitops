@@ -11,6 +11,7 @@
 load("//gitops:provider.bzl", "GitopsArtifactsInfo")
 load("//push_oci:push_oci.bzl", "push_oci")
 load("//skylib:runfile.bzl", "get_runfile_path")
+load("//skylib:push_alias.bzl", "pushed_image_alias")
 load(
     "//skylib/kustomize:kustomize.bzl",
     "imagePushStatements",
@@ -64,10 +65,10 @@ show = rule(
     executable = True,
 )
 
-def _image_pushes(name_suffix, images, image_registry, image_repository, image_digest_tag):
+def _image_pushes(name_suffix, images, image_registry, image_repository, image_digest_tag, tags = []):
     image_pushes = []
 
-    def process_image(image_label):
+    def process_image(image_label, image_alias = None):
         rule_name_parts = [image_label, image_registry, image_repository]
         rule_name_parts = [p for p in rule_name_parts if p]
         rule_name = "_".join(rule_name_parts)
@@ -80,12 +81,32 @@ def _image_pushes(name_suffix, images, image_registry, image_repository, image_d
                 image_digest_tag = image_digest_tag,
                 registry = image_registry,
                 repository = image_repository,
+                tags = tags,
+                visibility = ["//visibility:public"],
             )
-        return rule_name + name_suffix
+        if not image_alias:
+            return rule_name + name_suffix
 
-    for image in images:
-        image_push = process_image(image)
-        image_pushes.append(image_push)
+        #
+        if not native.existing_rule(rule_name + "_alias_" + name_suffix):
+            pushed_image_alias(
+                name = rule_name + "_alias_" + name_suffix,
+                alias = image_alias,
+                pushed_image = rule_name + name_suffix,
+                tags = tags,
+                visibility = ["//visibility:public"],
+            )
+        return rule_name + "_alias_" + name_suffix
+
+    if type(images) == "dict":
+        for image_alias in images:
+            image = images[image_alias]
+            push = process_image(image, image_alias)
+            image_pushes.append(push)
+    else:
+        for image in images:
+            push = process_image(image)
+            image_pushes.append(push)
     return image_pushes
 
 def k8s_deploy(
@@ -121,12 +142,11 @@ def k8s_deploy(
         release_branch_prefix = "main",
         start_tag = "{{",
         end_tag = "}}",
+        tags = [],  # tags to add to all generated rules.
         visibility = None):
     """ k8s_deploy
     """
 
-    if type(images) == "dict":
-        fail("image_pushes: dict type is deprecated. Use list instead.")
     if not manifests:
         manifests = native.glob(["*.yaml", "*.yaml.tpl"])
     if prefix_suffix_app_labels:
@@ -154,6 +174,7 @@ def k8s_deploy(
             image_registry = image_registry + "/mynamespace",
             image_repository = image_repository,
             image_digest_tag = image_digest_tag,
+            tags = tags,
         )
         kustomize(
             name = name,
@@ -179,6 +200,7 @@ def k8s_deploy(
             image_name_patches = image_name_patches,
             image_tag_patches = image_tag_patches,
             openapi_path = openapi_path,
+            tags = tags,
             visibility = visibility,
         )
         kubectl(
@@ -187,6 +209,7 @@ def k8s_deploy(
             cluster = cluster,
             user = user,
             namespace = namespace,
+            tags = tags,
             visibility = visibility,
         )
         kubectl(
@@ -197,12 +220,14 @@ def k8s_deploy(
             push = False,
             user = user,
             namespace = namespace,
+            tags = tags,
             visibility = visibility,
         )
         show(
             name = name + ".show",
             namespace = namespace,
             src = name,
+            tags = tags,
             visibility = visibility,
         )
     else:
@@ -215,6 +240,7 @@ def k8s_deploy(
             image_registry = image_registry,
             image_repository = image_repository,
             image_digest_tag = image_digest_tag,
+            tags = tags,
         )
         kustomize(
             name = name,
@@ -240,6 +266,7 @@ def k8s_deploy(
             image_name_patches = image_name_patches,
             image_tag_patches = image_tag_patches,
             openapi_path = openapi_path,
+            tags = tags,
         )
         kubectl(
             name = name + ".apply",
@@ -247,6 +274,7 @@ def k8s_deploy(
             cluster = cluster,
             user = user,
             namespace = namespace,
+            tags = tags,
             visibility = visibility,
         )
         kustomize_gitops(
@@ -261,12 +289,14 @@ def k8s_deploy(
             ],
             deployment_branch = deployment_branch,
             release_branch_prefix = release_branch_prefix,
+            tags = tags,
             visibility = ["//visibility:public"],
         )
         show(
             name = name + ".show",
             src = name,
             namespace = namespace,
+            tags = tags,
             visibility = visibility,
         )
 
@@ -486,6 +516,18 @@ def _k8s_test_setup_impl(ctx):
 
     files.append(ctx.executable._template_engine)
 
+    sidecar_args = []
+    if ctx.attr.setup_timeout:
+        sidecar_args.append("-timeout=%s" % ctx.attr.setup_timeout)
+    for service in ctx.attr.portforward_services:
+        sidecar_args.append("--portforward=%s" % service)
+    for app in ctx.attr.wait_for_apps:
+        sidecar_args.append("--waitforapp=%s" % app)
+    if ctx.attr.allow_errors:
+        sidecar_args.append("--allow_errors")
+    if ctx.attr.disable_pod_logs:
+        sidecar_args.append("--disable_pod_logs")
+
     # create namespace script
     ctx.actions.expand_template(
         template = ctx.file._namespace_template,
@@ -494,13 +536,11 @@ def _k8s_test_setup_impl(ctx):
             "%{cluster}": ctx.file.cluster.path,
             "%{kubeconfig}": ctx.file.kubeconfig.path,
             "%{kubectl}": ctx.file.kubectl.path,
-            "%{portforwards}": " ".join(["-portforward=" + p for p in ctx.attr.portforward_services]),
             "%{push_statements}": push_statements,
             "%{set_namespace}": ctx.executable._set_namespace.short_path,
             "%{it_manifest_filter}": ctx.executable._it_manifest_filter.short_path,
             "%{statements}": "\n".join(commands),
-            "%{test_timeout}": ctx.attr.setup_timeout,
-            "%{waitforapps}": " ".join(["-waitforapp=" + p for p in ctx.attr.wait_for_apps]),
+            "%{sidecar_args}": " ".join(sidecar_args),
         },
         output = ctx.outputs.executable,
     )
@@ -534,6 +574,14 @@ k8s_test_setup = rule(
         "portforward_services": attr.string_list(),
         "setup_timeout": attr.string(default = "10m"),
         "wait_for_apps": attr.string_list(),
+        "allow_errors": attr.bool(
+            default = False,
+            doc = "If true, the test will ignore any kuberntetes errors. Use only in situations when error is a part of the normal workflow, like crashlooping to wait for dependencies.",
+        ),
+        "disable_pod_logs": attr.bool(
+            default = False,
+            doc = "If true, the test will not collect logs from pods.",
+        ),
         "cluster": attr.label(
             #default = Label("@k8s_test//:cluster"),
             allow_single_file = True,

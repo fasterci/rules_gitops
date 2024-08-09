@@ -12,6 +12,8 @@ workflows:
     steps:
       - name: Build & test
         bazel:
+          build_flags:
+            - --enable_bzlmod=false
           build_targets:
             - //...
           test_targets:
@@ -19,6 +21,8 @@ workflows:
       - name: Build & test e2e
         working-directory: e2e
         bazel:
+          build_flags:
+            - --enable_bzlmod=false
           build_targets:
             - //...
           test_targets:
@@ -31,11 +35,11 @@ workflows:
           build_targets:
             - //...
           build_flags:
-            - --config=bzlmod
+            - --enable_bzlmod
           test_targets:
             - //...
           test_flags:
-            - --config=bzlmod
+            - --enable_bzlmod
             - --test_size_filters=-large,-enormous
 
   - <<: *build_workflow

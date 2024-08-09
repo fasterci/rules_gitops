@@ -1,8 +1,8 @@
+load("@aspect_bazel_lib//lib:tar.bzl", "tar")
 load("@rules_oci//oci:defs.bzl", "oci_image")
-load("@rules_pkg//:pkg.bzl", "pkg_tar")
 load("//push_oci:push_oci.bzl", "push_oci")
 
-pkg_tar(
+tar(
     name = "image_tar",
     srcs = [":container_content.txt"],
 )
