@@ -1678,7 +1678,7 @@
   "moduleExtensions": {
     "//gitops:extensions.bzl%toolchains": {
       "general": {
-        "bzlTransitiveDigest": "lYLYpl8Olz+0KEMZGJoRl4qsxo8SZN/RZzUhX7BwZtU=",
+        "bzlTransitiveDigest": "7KoML+gmGc0zw78Cvm/P9ybt0yMKHvqdlM+SHqm6cn4=",
         "recordedFileInputs": {},
         "recordedDirentsInputs": {},
         "envVariables": {},
@@ -1744,16 +1744,6 @@
         "recordedRepoMappingEntries": [
           [
             "",
-            "aspect_bazel_lib",
-            "aspect_bazel_lib~"
-          ],
-          [
-            "",
-            "bazel_gazelle",
-            "gazelle~"
-          ],
-          [
-            "",
             "bazel_skylib",
             "bazel_skylib~"
           ],
@@ -1761,46 +1751,6 @@
             "",
             "rules_gitops",
             ""
-          ],
-          [
-            "",
-            "rules_oci",
-            "rules_oci~"
-          ],
-          [
-            "",
-            "rules_pkg",
-            "rules_pkg~"
-          ],
-          [
-            "aspect_bazel_lib~",
-            "bazel_tools",
-            "bazel_tools"
-          ],
-          [
-            "bazel_skylib~",
-            "bazel_skylib",
-            "bazel_skylib~"
-          ],
-          [
-            "gazelle~",
-            "bazel_tools",
-            "bazel_tools"
-          ],
-          [
-            "rules_oci~",
-            "aspect_bazel_lib",
-            "aspect_bazel_lib~"
-          ],
-          [
-            "rules_oci~",
-            "bazel_tools",
-            "bazel_tools"
-          ],
-          [
-            "rules_pkg~",
-            "bazel_tools",
-            "bazel_tools"
           ]
         ]
       }
