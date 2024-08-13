@@ -94,7 +94,7 @@ push_oci_rule = rule(
                 default = Label("//push_oci:tag.sh.tpl"),
                 allow_single_file = True,
             )},
-    toolchains = ["@aspect_bazel_lib//lib:yq_toolchain_type"] + oci_push_lib.toolchains,
+    toolchains = ["@aspect_bazel_lib//lib:jq_toolchain_type"] + oci_push_lib.toolchains,
     executable = True,
     # provides = [GitopsPushInfo, DefaultInfo],
 )
