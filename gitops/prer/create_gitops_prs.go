@@ -288,7 +288,7 @@ func main() {
 
 	for _, branch := range updatedGitopsBranches {
 		if *dryRun {
-			log.Println("dry-run: skipping PR creation: branch ", branch, "into ", *prInto)
+			log.Println("dry-run: skipping PR creation: branch", branch, "into", *prInto)
 			continue
 		}
 

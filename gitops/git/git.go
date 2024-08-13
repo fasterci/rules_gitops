@@ -68,7 +68,8 @@ func CloneOrCheckout(repo, dir, mirrorDir, primaryBranch, gitopsPath, branchPref
 	}
 	exec.Mustex(dir, "git", "checkout", "-f", primaryBranch)
 	if !newRepo {
-		PruneLocalBranches(dir, branchPrefix)
+		exec.Mustex(dir, "git", "fetch", "origin", "--prune")
+		DeleteLocalBranches(dir, branchPrefix)
 	}
 
 	return &Repo{
@@ -76,19 +77,17 @@ func CloneOrCheckout(repo, dir, mirrorDir, primaryBranch, gitopsPath, branchPref
 	}, nil
 }
 
-// PruneLocalBranches removes local branches not present in the remote repository
-func PruneLocalBranches(dir, branchprefix string) {
-	exec.Mustex(dir, "git", "fetch", "origin", "--prune")
-	branches := exec.Mustex(dir, "git", "for-each-ref", "--format", "%(refname) %(upstream:track)", "refs/heads/"+branchprefix)
+// DeleteLocalBranches removes local branches by prefix.
+func DeleteLocalBranches(dir, branchprefix string) {
+	branches := exec.Mustex(dir, "git", "for-each-ref", "--format", "%(refname)", "refs/heads/"+branchprefix)
 	// returned format:
-	// refs/heads/deploy/dev [gone]
-	// refs/heads/deploy/prod [gone]
+	// refs/heads/deploy/dev
+	// refs/heads/deploy/prod
 	// refs/heads/master
 	v := strings.Split(branches, "\n")
 	for _, line := range v {
-		line := strings.TrimSpace(line)
-		ref, remote, ok := strings.Cut(line, " ")
-		if (!ok || remote == "[gone]") && strings.HasPrefix(ref, "refs/heads/"+branchprefix) {
+		ref := strings.TrimSpace(line)
+		if strings.HasPrefix(ref, "refs/heads/"+branchprefix) {
 			ref = strings.TrimPrefix(ref, "refs/heads/")
 			exec.Mustex(dir, "git", "branch", "-D", ref)
 		}
