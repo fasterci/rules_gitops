@@ -66,16 +66,15 @@ def _impl(ctx):
 
     default_info = oci_push_lib.implementation(ctx = ctx)
 
-    yq_bin = ctx.toolchains["@aspect_bazel_lib//lib:yq_toolchain_type"].yqinfo.bin
+    jq_bin = ctx.toolchains["@aspect_bazel_lib//lib:jq_toolchain_type"].jqinfo.bin
     digest = ctx.actions.declare_file(ctx.attr.name + ".digest")
     ctx.actions.run_shell(
         inputs = [ctx.file.image],
         outputs = [digest],
-        arguments = [yq_bin.path, ctx.file.image.path, digest.path],
-        command = "${1} '.manifests[].digest' ${2}/index.json > ${3}",
+        arguments = [jq_bin.path, ctx.file.image.path, digest.path],
+        command = "${1} --raw-output '.manifests[].digest' ${2}/index.json > ${3}",
         progress_message = "Extracting digest from %s" % ctx.file.image.short_path,
-        tools = [yq_bin],
-        # toolchain = "@aspect_bazel_lib//lib:yq_toolchain_type",
+        tools = [jq_bin],
     )
 
     return [
@@ -95,7 +94,7 @@ push_oci_rule = rule(
                 default = Label("//push_oci:tag.sh.tpl"),
                 allow_single_file = True,
             )},
-    toolchains = ["@aspect_bazel_lib//lib:yq_toolchain_type"] + oci_push_lib.toolchains,
+    toolchains = ["@aspect_bazel_lib//lib:jq_toolchain_type"] + oci_push_lib.toolchains,
     executable = True,
     # provides = [GitopsPushInfo, DefaultInfo],
 )
