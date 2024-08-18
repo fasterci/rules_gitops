@@ -130,7 +130,7 @@ func listReadyApps(list []interface{}) (readypods, notReady []string) {
 // listenForEvents listens for events and prints them to stdout. if event reason is "Failed" it will call the failure callback
 func listenForEvents(ctx context.Context, clientset *kubernetes.Clientset, onFailure func(*v1.Event)) {
 
-	kubeInformerFactory := informers.NewFilteredSharedInformerFactory(clientset, time.Second*30, *namespace, nil)
+	kubeInformerFactory := informers.NewSharedInformerFactoryWithOptions(clientset, 0, informers.WithNamespace(*namespace))
 	eventsInformer := kubeInformerFactory.Core().V1().Events().Informer()
 
 	fn := func(obj interface{}) {
@@ -146,8 +146,7 @@ func listenForEvents(ctx context.Context, clientset *kubernetes.Clientset, onFai
 	}
 
 	handler := &cache.ResourceEventHandlerFuncs{
-		AddFunc:    fn,
-		DeleteFunc: fn,
+		AddFunc: fn,
 		UpdateFunc: func(old interface{}, new interface{}) {
 			fn(new)
 		},
