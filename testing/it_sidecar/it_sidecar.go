@@ -66,17 +66,18 @@ func (i *arrayFlags) Set(value string) error {
 }
 
 var (
-	namespace       = flag.String("namespace", os.Getenv("NAMESPACE"), "kubernetes namespace")
-	timeout         = flag.Duration("timeout", time.Second*30, "execution timeout")
-	deleteNamespace = flag.Bool("delete_namespace", false, "delete namespace as part of the cleanup")
-	pfconfig        = portForwardConf{services: make(map[string][]uint16)}
-	kubeconfig      string
-	waitForApps     arrayFlags
-	allowErrors     bool
-	disablePodLogs  bool
+	namespace      string
+	timeout        time.Duration
+	pfconfig       = portForwardConf{services: make(map[string][]uint16)}
+	kubeconfig     string
+	waitForApps    arrayFlags
+	allowErrors    bool
+	disablePodLogs bool
 )
 
 func init() {
+	flag.StringVar(&namespace, "namespace", os.Getenv("NAMESPACE"), "kubernetes namespace")
+	flag.DurationVar(&timeout, "timeout", time.Second*30, "execution timeout")
 	flag.Var(&pfconfig, "portforward", "set a port forward item in form of servicename:port")
 	flag.StringVar(&kubeconfig, "kubeconfig", os.Getenv("KUBECONFIG"), "path to kubernetes config file")
 	flag.Var(&waitForApps, "waitforapp", "wait for pods with label app=<this parameter>")
@@ -131,7 +132,7 @@ func listReadyApps(list []interface{}) (readypods, notReady []string) {
 // listenForEvents listens for events and prints them to stdout. if event reason is "Failed" it will call the failure callback
 func listenForEvents(ctx context.Context, clientset *kubernetes.Clientset, onFailure func(*v1.Event)) {
 
-	kubeInformerFactory := informers.NewFilteredSharedInformerFactory(clientset, time.Second*30, *namespace, nil)
+	kubeInformerFactory := informers.NewSharedInformerFactoryWithOptions(clientset, 0, informers.WithNamespace(namespace))
 	eventsInformer := kubeInformerFactory.Core().V1().Events().Informer()
 
 	fn := func(obj interface{}) {
@@ -147,8 +148,7 @@ func listenForEvents(ctx context.Context, clientset *kubernetes.Clientset, onFai
 	}
 
 	handler := &cache.ResourceEventHandlerFuncs{
-		AddFunc:    fn,
-		DeleteFunc: fn,
+		AddFunc: fn,
 		UpdateFunc: func(old interface{}, new interface{}) {
 			fn(new)
 		},
@@ -173,7 +173,7 @@ func waitForPods(ctx context.Context, clientset *kubernetes.Clientset) error {
 		},
 	}
 
-	kubeInformerFactory := informers.NewFilteredSharedInformerFactory(clientset, time.Second*30, *namespace, nil)
+	kubeInformerFactory := informers.NewFilteredSharedInformerFactory(clientset, time.Second*30, namespace, nil)
 	podsInformer := kubeInformerFactory.Core().V1().Pods().Informer()
 	podsInformer.AddEventHandler(handler)
 	go kubeInformerFactory.Start(ctx.Done())
@@ -234,7 +234,7 @@ func waitForEndpoints(ctx context.Context, clientset *kubernetes.Clientset, conf
 		},
 	}
 
-	kubeInformerFactory := informers.NewFilteredSharedInformerFactory(clientset, time.Second*30, *namespace, nil)
+	kubeInformerFactory := informers.NewFilteredSharedInformerFactory(clientset, time.Second*30, namespace, nil)
 	endpointsInformer := kubeInformerFactory.Core().V1().Endpoints().Informer()
 	endpointsInformer.AddEventHandler(handler)
 	go kubeInformerFactory.Start(ctx.Done())
@@ -277,7 +277,7 @@ func portForward(ctx context.Context, clientset *kubernetes.Clientset, config *r
 	var wg sync.WaitGroup
 	wg.Add(len(ports))
 	for _, port := range ports {
-		ep, err := clientset.CoreV1().Endpoints(*namespace).Get(ctx, serviceName, meta_v1.GetOptions{})
+		ep, err := clientset.CoreV1().Endpoints(namespace).Get(ctx, serviceName, meta_v1.GetOptions{})
 		if err != nil {
 			return fmt.Errorf("error listing endpoints for service %s: %v", serviceName, err)
 		}
@@ -329,17 +329,6 @@ func portForward(ctx context.Context, clientset *kubernetes.Clientset, config *r
 	return nil
 }
 
-func cleanup(clientset *kubernetes.Clientset) {
-	log.Print("Cleanup")
-	if *deleteNamespace && *namespace != "" {
-		log.Printf("deleting namespace %s", *namespace)
-		s := meta_v1.DeletePropagationBackground
-		if err := clientset.CoreV1().Namespaces().Delete(context.Background(), *namespace, meta_v1.DeleteOptions{PropagationPolicy: &s}); err != nil {
-			log.Printf("Unable to delete namespace %s: %v", *namespace, err)
-		}
-	}
-}
-
 var ErrTimedOut = errors.New("timed out")
 var ErrStdinClosed = errors.New("stdin closed")
 var ErrTermSignalReceived = errors.New("TERM signal received")
@@ -347,7 +336,7 @@ var ErrTermSignalReceived = errors.New("TERM signal received")
 func main() {
 	flag.Parse()
 	log.SetOutput(os.Stdout)
-	ctx, timeoutCancel := context.WithTimeoutCause(context.Background(), *timeout, ErrTimedOut)
+	ctx, timeoutCancel := context.WithTimeoutCause(context.Background(), timeout, ErrTimedOut)
 	defer timeoutCancel()
 	ctx, cancel := context.WithCancelCause(ctx)
 	c := make(chan os.Signal, 1)
@@ -382,10 +371,9 @@ func main() {
 		log.Fatal(err)
 	}
 	clientset = kubernetes.NewForConfigOrDie(config)
-	defer cleanup(clientset)
 
 	go func() {
-		err := stern.Run(ctx, *namespace, clientset, allowErrors, disablePodLogs)
+		err := stern.Run(ctx, namespace, clientset, allowErrors, disablePodLogs)
 		if err != nil {
 			log.Print(err)
 		}
