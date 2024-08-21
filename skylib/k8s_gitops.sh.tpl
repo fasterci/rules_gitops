@@ -59,7 +59,7 @@ function waitpids() {
     # Wait for all of the subprocesses, failing the script if any of them failed.
     if [ "${#PIDS[@]}" != 0 ]; then
         for pid in ${PIDS[@]}; do
-            wait ${pid}
+            wait ${pid} || return $?
         done
     fi
 }
