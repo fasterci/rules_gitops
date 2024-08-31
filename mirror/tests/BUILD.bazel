@@ -202,3 +202,25 @@ sh_test(
     },
     tags = ["exclusive"],  # this test starts a registry on fixed port 1338
 )
+
+sh_test(
+    name = "image_mirror_verify_test",
+    srcs = ["image_mirror_test.sh"],
+    data = [
+        ":image_mirror",
+        ":image_mirror_validate_src",
+        ":push_image",
+        "//vendor/github.com/google/go-containerregistry/cmd/crane",
+        "//vendor/github.com/google/go-containerregistry/cmd/registry",
+    ],
+    env = {
+        "LOCAL": "localhost:1338/mirror/localhost1338/image@sha256:b812c0570a7c369b2863c64e22760dc1b1dbc025a739f02db376bac62862f4cc",
+        "REMOTE": "localhost:1338/image@sha256:b812c0570a7c369b2863c64e22760dc1b1dbc025a739f02db376bac62862f4cc",
+        "PUSH_IMAGE": "$(location :push_image)",
+        "IMAGE_MIRROR": "$(location :image_mirror)",
+        "IMAGE_MIRROR_VALIDATE_SRC": "$(location :image_mirror_validate_src)",
+        "CRANE_BIN": "$(location //vendor/github.com/google/go-containerregistry/cmd/crane)",
+        "REGISTRY_BIN": "$(location //vendor/github.com/google/go-containerregistry/cmd/registry)",
+    },
+    tags = ["exclusive"],  # this test starts a registry on fixed port 1338
+)

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 set -eu
 
 function guess_runfiles() {
