@@ -10,7 +10,10 @@ def _replace_colon_except_last_segment(input_string):
     output_string = "/".join(segments)
     return output_string
 
-def _mirror_image_impl(ctx):
+# Common implementation for mirror_image and mirror_image_test
+# Uses the following ctx attributes: src_image, digest, dst, dst_prefix
+# Returns the src_image, digest, and dst_without_hash
+def _impl_common(ctx):
     digest = ctx.attr.digest
     src_image = ctx.attr.src_image
     v = src_image.split("@", 1)
@@ -38,6 +41,11 @@ def _mirror_image_impl(ctx):
         src_repository = _replace_colon_except_last_segment(s)
         dst_prefix = ctx.expand_make_variables("dst_prefix", ctx.attr.dst_prefix, {})
         dst_without_hash = dst_prefix.strip("/") + "/" + src_repository
+
+    return src_image, digest, dst_without_hash
+
+def _mirror_image_impl(ctx):
+    src_image, digest, dst_without_hash = _impl_common(ctx)
 
     digest_file = ctx.actions.declare_file(ctx.label.name + ".digest")
     ctx.actions.write(
@@ -81,9 +89,6 @@ mirror_image_rule = rule(
             mandatory = True,
             doc = "The image to mirror",
         ),
-        "image_name": attr.string(
-            doc = "The name that could be referred in manifests. This field is deprecated and unused.",
-        ),
         "digest": attr.string(
             mandatory = False,
             doc = "The digest of the image. If not provided, it will be extracted from the src_image.",
@@ -114,46 +119,63 @@ Implements GitopsPushInfo and K8sPushInfo providers so the returned image can be
 """,
 )
 
-def validate_image_test(name, image, digest, tags = [], **kwargs):
-    """
-    Create a test that validates the image existance using crane validate.
-    Image tag will be ignored if provided and only the digest will be used.
-    if digest is provided as a part of the image, it will be used.
-    It is an error to provide both digest and image with digest if they do not match.
-    """
-    src_image = image
-    v = src_image.split("@", 1)
-    s = v[0]
-    if len(v) > 1:
-        # If the image has a digest, use that.
-        if digest and v[1] != digest:
-            fail("digest mismatch: %s != %s" % (v[1], digest))
-        digest = v[1]
-    else:
-        # If the image does not have a digest, use the one provided.
-        src_image = s + "@" + digest
+def _validate_mirror_impl(ctx):
+    src_image, digest, dst_without_hash = _impl_common(ctx)
 
-    if not digest:
-        fail("digest must be provided as an attribute to mirror_image or in the src_image")
-
-    native.sh_test(
-        name = name,
-        size = "small",
-        srcs = ["@rules_gitops//mirror:validate_image.sh"],
-        data = [
-            "@rules_gitops//vendor/github.com/google/go-containerregistry/cmd/crane:crane",
-        ],
-        args = [
-            src_image,
-        ],
-        tags = ["requires-network"] + tags,
-        env = {
-            "CRANE_BIN": "$(location @rules_gitops//vendor/github.com/google/go-containerregistry/cmd/crane:crane)",
+    ctx.actions.expand_template(
+        template = ctx.file._validate_image_script,
+        output = ctx.outputs.executable,
+        substitutions = {
+            "{crane_tool}": ctx.executable.crane_tool.short_path,
+            "{src_image}": src_image,
+            "{digest}": digest,
+            "{dst_image}": dst_without_hash,
         },
-        **kwargs
+        is_executable = True,
     )
 
-def mirror_image(name, src_image, digest, tags = [], **kwargs):
-    visibility = kwargs.pop("visibility", None)
-    mirror_image_rule(name = name, src_image = src_image, digest = digest, tags = tags, visibility = visibility, **kwargs)
-    validate_image_test(name = name + "_validate_src", image = src_image, digest = digest, visibility = visibility, tags = tags)
+    runfiles = ctx.runfiles(files = [ctx.file._validate_image_script]).merge(ctx.attr.crane_tool[DefaultInfo].default_runfiles)
+
+    return DefaultInfo(
+        runfiles = runfiles,
+        executable = ctx.outputs.executable,
+    )
+
+validate_mirror_test = rule(
+    implementation = _validate_mirror_impl,
+    test = True,
+    attrs = {
+        "src_image": attr.string(
+            mandatory = True,
+            doc = "The image to mirror",
+        ),
+        "digest": attr.string(
+            mandatory = False,
+            doc = "The digest of the image. If not provided, it will be extracted from the src_image.",
+        ),
+        "dst_prefix": attr.string(
+            doc = "The prefix of the destination image, should include the registry and repository. Either dst_prefix or dst_image must be specified.",
+        ),
+        "dst": attr.string(
+            doc = "The destination image location, should include the registry and repository. Either dst_prefix or dst_image must be specified.",
+        ),
+        "crane_tool": attr.label(
+            default = Label("//vendor/github.com/google/go-containerregistry/cmd/crane:crane"),
+            executable = True,
+            cfg = "exec",
+        ),
+        "_validate_image_script": attr.label(
+            default = ":validate_image.sh",
+            allow_single_file = True,
+        ),
+    },
+    executable = True,
+    doc = """Validate a mirrored image. It checks if at least one of remote or local image exists.
+""",
+)
+
+def mirror_image(name, image_name = None, push_timeout = "30s", **kwargs):
+    if image_name:
+        fail("image_name is deprecated and unused")
+    mirror_image_rule(name = name, push_timeout = push_timeout, **kwargs)
+    validate_mirror_test(name = name + "_validate_src", **kwargs)
