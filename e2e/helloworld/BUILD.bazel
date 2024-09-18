@@ -101,5 +101,5 @@ go_test(
     ],
     data = [":hello_server_it.setup"],
     rundir = ".",
-    deps = ["@rules_gitops//client:go_default_library"],
+    deps = ["//vendor/github.com/fasterci/rules_gitops/client"],
 )

@@ -1,0 +1,22 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "cmd",
+    srcs = ["edit.go"],
+    importmap = "github.com/fasterci/rules_gitops/vendor/github.com/google/go-containerregistry/internal/cmd",
+    importpath = "github.com/google/go-containerregistry/internal/cmd",
+    visibility = ["//vendor/github.com/google/go-containerregistry:__subpackages__"],
+    deps = [
+        "//vendor/github.com/google/go-containerregistry/internal/editor",
+        "//vendor/github.com/google/go-containerregistry/internal/verify",
+        "//vendor/github.com/google/go-containerregistry/pkg/crane",
+        "//vendor/github.com/google/go-containerregistry/pkg/name",
+        "//vendor/github.com/google/go-containerregistry/pkg/v1:pkg",
+        "//vendor/github.com/google/go-containerregistry/pkg/v1/mutate",
+        "//vendor/github.com/google/go-containerregistry/pkg/v1/remote",
+        "//vendor/github.com/google/go-containerregistry/pkg/v1/static",
+        "//vendor/github.com/google/go-containerregistry/pkg/v1/tarball",
+        "//vendor/github.com/google/go-containerregistry/pkg/v1/types",
+        "//vendor/github.com/spf13/cobra",
+    ],
+)
