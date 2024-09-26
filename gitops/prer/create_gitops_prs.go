@@ -30,6 +30,7 @@ import (
 	"github.com/fasterci/rules_gitops/gitops/git/bitbucket"
 	"github.com/fasterci/rules_gitops/gitops/git/github"
 	"github.com/fasterci/rules_gitops/gitops/git/gitlab"
+	"github.com/nazzzzz/rules_gitops/gitops/git/github_app"
 
 	proto "github.com/golang/protobuf/proto"
 )
@@ -119,6 +120,8 @@ func main() {
 		gitServer = git.ServerFunc(gitlab.CreatePR)
 	case "bitbucket":
 		gitServer = git.ServerFunc(bitbucket.CreatePR)
+	case "github_app":
+		gitServer = git.ServerFunc(github_app.CreatePR)
 	default:
 		log.Fatalf("unknown vcs host: %s", *gitHost)
 	}

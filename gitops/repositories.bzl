@@ -21,9 +21,9 @@ load("@rules_oci//oci:repositories.bzl", "LATEST_CRANE_VERSION", "oci_register_t
 load("@rules_pkg//:deps.bzl", "rules_pkg_dependencies")
 load(
     ":toolchains.bzl",
-    _register_kustomize_toolchains = "register_kustomize_toolchains",
     _DEFAULT_KUSTOMIZE_REPOSITORY = "DEFAULT_KUSTOMIZE_REPOSITORY",
     _DEFAULT_KUSTOMIZE_VERSION = "DEFAULT_KUSTOMIZE_VERSION",
+    _register_kustomize_toolchains = "register_kustomize_toolchains",
 )
 
 def rules_gitops_repositories():

@@ -1,13 +1,17 @@
 module github.com/fasterci/rules_gitops
 
-go 1.20
+go 1.21
+
+toolchain go1.23.0
 
 require (
+	github.com/bradleyfalzon/ghinstallation/v2 v2.11.0
 	github.com/ghodss/yaml v1.0.0
 	github.com/golang/protobuf v1.5.3
-	github.com/google/go-cmp v0.5.9
+	github.com/google/go-cmp v0.6.0
 	github.com/google/go-containerregistry v0.19.1
 	github.com/google/go-github/v32 v32.1.0
+	github.com/google/go-github/v58 v58.0.0
 	github.com/xanzy/go-gitlab v0.80.2
 	golang.org/x/oauth2 v0.8.0
 	k8s.io/api v0.26.1
@@ -28,7 +32,9 @@ require (
 	github.com/go-openapi/jsonreference v0.20.2 // indirect
 	github.com/go-openapi/swag v0.22.3 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
+	github.com/golang-jwt/jwt/v4 v4.5.0 // indirect
 	github.com/google/gnostic v0.6.9 // indirect
+	github.com/google/go-github/v62 v62.0.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
