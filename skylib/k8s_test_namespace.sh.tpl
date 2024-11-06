@@ -39,7 +39,13 @@ NAMESPACE_NAME_FILE=${TEST_UNDECLARED_OUTPUTS_DIR}/namespace
 KUBECONFIG_FILE=${TEST_UNDECLARED_OUTPUTS_DIR}/kubeconfig
 
 # get cluster and username from provided configuration
-CLUSTER=$(cat ${CLUSTER_FILE})
+if [ -n "${K8S_TEST_CLUSTER:-}" ]
+then
+    CLUSTER=${K8S_TEST_CLUSTER}
+else
+    CLUSTER=$(cat ${CLUSTER_FILE})
+fi
+
 USER=$(${KUBECTL} --kubeconfig=${KUBECONFIG} config view -o jsonpath='{.users[?(@.name == '"\"${CLUSTER}\")].name}")
 
 echo "Cluster: ${CLUSTER}" >&2
