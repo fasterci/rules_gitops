@@ -9,13 +9,29 @@
 # governing permissions and limitations under the License.
 
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("@io_bazel_rules_go//proto:def.bzl", "go_proto_library")
+load("@rules_proto//proto:defs.bzl", "proto_library")
 
-licenses(["notice"])  # Apache 2.0
+proto_library(
+    name = "build_proto",
+    srcs = ["build.proto"],
+    visibility = ["//visibility:public"],
+)
+
+go_proto_library(
+    name = "build_go_proto",
+    importpath = "github.com/fasterci/rules_gitops/gitops/blaze_query",
+    proto = ":build_proto",
+    visibility = ["//visibility:public"],
+)
 
 go_library(
-    name = "go_default_library",
+    name = "blaze_query",
     srcs = ["build.pb.go"],
     importpath = "github.com/fasterci/rules_gitops/gitops/blaze_query",
     visibility = ["//visibility:public"],
-    deps = ["//vendor/github.com/golang/protobuf/proto:go_default_library"],
+    deps = [
+        "//vendor/google.golang.org/protobuf/reflect/protoreflect",
+        "//vendor/google.golang.org/protobuf/runtime/protoimpl",
+    ],
 )
