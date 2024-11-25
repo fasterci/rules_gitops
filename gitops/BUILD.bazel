@@ -12,6 +12,8 @@ load("//gitops/private:kustomize_toolchain.bzl", "current_kustomize_toolchain")
 
 package(default_visibility = ["//visibility:public"])
 
+exports_files(["create_gitops_prs.tpl.sh"])
+
 toolchain_type(
     name = "kustomize_toolchain_type",
 )
