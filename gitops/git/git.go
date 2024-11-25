@@ -13,17 +13,13 @@ package git
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	oe "os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/fasterci/rules_gitops/gitops/exec"
-)
-
-var (
-	git = "git"
 )
 
 // Clone clones a repository. Pass the full repository name, such as
@@ -34,7 +30,7 @@ var (
 // mirrorDir: optional (if not empty) local mirror of the repository
 func Clone(repo, dir, mirrorDir, primaryBranch, gitopsPath string) (*Repo, error) {
 	if err := os.RemoveAll(dir); err != nil {
-		return nil, fmt.Errorf("Unable to clone repo: %w", err)
+		return nil, fmt.Errorf("unable to clone repo: %w", err)
 	}
 	if mirrorDir != "" {
 		exec.Mustex("", "git", "clone", "-n", "--reference", mirrorDir, repo, dir)
@@ -43,14 +39,60 @@ func Clone(repo, dir, mirrorDir, primaryBranch, gitopsPath string) (*Repo, error
 	}
 	exec.Mustex(dir, "git", "config", "--local", "core.sparsecheckout", "true")
 	genPath := fmt.Sprintf("%s/\n", gitopsPath)
-	if err := ioutil.WriteFile(filepath.Join(dir, ".git/info/sparse-checkout"), []byte(genPath), 0644); err != nil {
-		return nil, fmt.Errorf("Unable to create .git/info/sparse-checkout: %w", err)
+	if err := os.WriteFile(filepath.Join(dir, ".git/info/sparse-checkout"), []byte(genPath), 0644); err != nil {
+		return nil, fmt.Errorf("unable to create .git/info/sparse-checkout: %w", err)
 	}
 	exec.Mustex(dir, "git", "checkout", primaryBranch)
 
 	return &Repo{
 		Dir: dir,
 	}, nil
+}
+
+func CloneOrCheckout(repo, dir, mirrorDir, primaryBranch, gitopsPath, branchPrefix string) (r *Repo, err error) {
+	newRepo := false
+	if _, err = os.Stat(dir + "/.git"); os.IsNotExist(err) {
+		newRepo = true
+		if err = os.MkdirAll(filepath.Dir(dir), os.ModePerm); err != nil && !os.IsExist(err) {
+			return nil, err
+		}
+		if mirrorDir != "" {
+			exec.Mustex("", "git", "clone", "-n", "--reference", mirrorDir, repo, dir)
+		} else {
+			exec.Mustex("", "git", "clone", "-n", repo, dir)
+		}
+	} else {
+		//existing repo
+		exec.Mustex(dir, "git", "remote", "set-url", "origin", repo)
+		exec.Mustex(dir, "git", "reset", "--hard")
+	}
+	exec.Mustex(dir, "git", "checkout", "-f", primaryBranch)
+	if !newRepo {
+		exec.Mustex(dir, "git", "fetch", "origin", "--prune")
+		DeleteLocalBranches(dir, branchPrefix)
+	}
+
+	return &Repo{
+		Dir: dir,
+	}, nil
+}
+
+// DeleteLocalBranches removes local branches by prefix.
+func DeleteLocalBranches(dir, branchprefix string) {
+	branches := exec.Mustex(dir, "git", "for-each-ref", "--format", "%(refname)", "refs/heads/"+branchprefix)
+	// returned format:
+	// refs/heads/deploy/dev
+	// refs/heads/deploy/prod
+	// refs/heads/master
+	v := strings.Split(branches, "\n")
+	for _, line := range v {
+		ref := strings.TrimSpace(line)
+		if strings.HasPrefix(ref, "refs/heads/"+branchprefix) {
+			ref = strings.TrimPrefix(ref, "refs/heads/")
+			exec.Mustex(dir, "git", "branch", "-D", ref)
+		}
+
+	}
 }
 
 // Repo is a clone of a git repository. Create with Clone, and don't
