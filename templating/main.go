@@ -13,7 +13,7 @@ package main
 
 import (
 	"flag"
-	"io/ioutil"
+	"io"
 	"log"
 	"os"
 	"strings"
@@ -34,6 +34,7 @@ func (i *arrayFlags) Set(value string) error {
 
 var (
 	stampInfoFile     arrayFlags
+	failIfStamped     bool
 	output, template  string
 	variable, imports arrayFlags
 	executable        bool
@@ -42,6 +43,7 @@ var (
 
 func init() {
 	flag.Var(&stampInfoFile, "stamp_info_file", "Paths to info_file and version_file files for stamping. Content of stamp_info_file files will be used to substitute variable values so --variable VAR={BUILD_USER}/value will result in {{VAR}} being expanded to builduser/value")
+	flag.BoolVar(&failIfStamped, "fail_if_stamped", false, "Whether to fail if the template contains a stamp")
 	flag.Var(&variable, "variable", "A variable to expand in the template, in the format NAME=VALUE")
 	flag.Var(&imports, "imports", "A file to import as another template, in the format NAME=filename")
 	flag.StringVar(&output, "output", "", "The output file")
@@ -54,14 +56,18 @@ func init() {
 func workspaceStatusDict(filenames []string) map[string]interface{} {
 	d := map[string]interface{}{}
 	for _, f := range filenames {
-		content, err := ioutil.ReadFile(f)
+		content, err := os.ReadFile(f)
 		if err != nil {
 			log.Fatalf("Unable to read %s: %v", f, err)
 		}
 		for _, l := range strings.Split(string(content), "\n") {
-			sv := strings.SplitN(l, " ", 2)
-			if len(sv) == 2 {
-				d[sv[0]] = sv[1]
+			if key, val, ok := strings.Cut(l, " "); ok {
+				d[key] = func(w io.Writer, tag string) (int, error) {
+					if failIfStamped {
+						log.Fatalf("Template contains a stamp: %s", tag)
+					}
+					return w.Write([]byte(val))
+				}
 			}
 		}
 	}
@@ -72,43 +78,48 @@ func main() {
 	var err error
 	flag.Parse()
 	stamps := workspaceStatusDict(stampInfoFile)
-	ctx := map[string]interface{}{}
+	vars := map[string]interface{}{}
 	for _, v := range variable {
-		sv := strings.SplitN(v, "=", 2)
-		if len(sv) != 2 {
+		k, val, ok := strings.Cut(v, "=")
+		if !ok {
 			log.Fatalf("variable must be VAR=value, got %s", v)
 		}
-		val := fasttemplate.ExecuteString(sv[1], "{", "}", stamps)
-		ctx[sv[0]] = val
-		ctx["variables."+sv[0]] = val
+		if _, ok := vars[k]; !ok {
+			log.Fatalf("Duplicate variable name %s", k)
+		}
+		val = fasttemplate.ExecuteString(val, "{", "}", stamps)
+		vars[k] = val
+		vars["variables."+k] = val
 	}
 
 	for _, v := range imports {
-		sv := strings.SplitN(v, "=", 2)
-		if len(sv) != 2 {
+		k, fname, ok := strings.Cut(v, "=")
+		if !ok {
 			log.Fatalf("imports must be VAR=filename, got %s", v)
 		}
-		imp, err := ioutil.ReadFile(sv[1])
-		if err != nil {
-			log.Fatalf("Unable to parse file %s: %v", sv[1], err)
+		if _, ok := vars[k]; !ok {
+			log.Fatalf("Duplicate variable name %s in imports", k)
 		}
-		val := fasttemplate.ExecuteString(string(imp), startTag, endTag, ctx)
-		// if err != nil {
-		// 	log.Fatalf("Unable to execute template %s: %v", sv[1], err)
-		// }
-		ctx["imports."+sv[0]] = fasttemplate.ExecuteString(val, "{", "}", stamps)
+		imp, err := os.ReadFile(fname)
+		if err != nil {
+			log.Fatalf("Unable to parse file %s: %v", fname, err)
+		}
+		val := fasttemplate.ExecuteString(string(imp), startTag, endTag, vars)
+		val = fasttemplate.ExecuteString(val, "{", "}", stamps)
+		vars[k] = val
+		vars["imports."+k] = val
 	}
 
 	var tpl []byte
 	if template != "" {
-		tpl, err = ioutil.ReadFile(template)
+		tpl, err = os.ReadFile(template)
 		if err != nil {
-			log.Fatalf("Unable to parse template %s: %v", template, err)
+			log.Fatalf("Unable to read template %s: %v", template, err)
 		}
 	} else {
-		tpl, err = ioutil.ReadAll(os.Stdin)
+		tpl, err = io.ReadAll(os.Stdin)
 		if err != nil {
-			log.Fatalf("Unable to parse template from stdin: %v", err)
+			log.Fatalf("Unable to read template from stdin: %v", err)
 		}
 	}
 	outf := os.Stdout
@@ -123,7 +134,7 @@ func main() {
 		}
 		defer outf.Close()
 	}
-	_, err = fasttemplate.Execute(string(tpl), startTag, endTag, outf, ctx)
+	_, err = fasttemplate.Execute(string(tpl), startTag, endTag, outf, vars)
 	if err != nil {
 		log.Fatalf("Unable to execute template %s: %v", template, err)
 	}

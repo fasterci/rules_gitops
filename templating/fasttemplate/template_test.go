@@ -30,14 +30,14 @@ func TestExecuteFunc(t *testing.T) {
 
 func testExecuteFunc(t *testing.T, template, expectedOutput string) {
 	var bb bytes.Buffer
-	executeFunc(template, "{", "}", &bb, func(w io.Writer, tag string) (int, error) {
+	executeFunc(template, "{", "}", &bb, func(w Writer, tag string) (int, error) {
 		if tag == "foo" {
 			return w.Write([]byte("xxxx"))
 		}
 		return w.Write([]byte("zz"))
 	})
 
-	output := string(bb.Bytes())
+	output := string(bb.String())
 	if output != expectedOutput {
 		t.Fatalf("unexpected output for template=%q: %q. Expected %q", template, output, expectedOutput)
 	}
@@ -67,11 +67,64 @@ func TestExecute(t *testing.T) {
 
 func testExecute(t *testing.T, template, expectedOutput string) {
 	var bb bytes.Buffer
-	Execute(template, "{", "}", &bb, map[string]interface{}{"foo": "xxxx"})
-	output := string(bb.Bytes())
+	n, err := Execute(template, "{", "}", &bb, map[string]interface{}{"foo": "xxxx"})
+	if err != nil {
+		t.Fatalf("unexpected error: %s", err)
+	}
+	if n != len(expectedOutput) {
+		t.Fatalf("unexpected number of bytes written: %d. Expected %d", n, len(expectedOutput))
+	}
+	output := bb.String()
 	if output != expectedOutput {
 		t.Fatalf("unexpected output for template=%q: %q. Expected %q", template, output, expectedOutput)
 	}
+
+	// []byte
+	bb.Reset()
+	n, err = Execute(template, "{", "}", &bb, map[string]interface{}{"foo": []byte("xxxx")})
+	if err != nil {
+		t.Fatalf("unexpected error: %s", err)
+	}
+	if n != len(expectedOutput) {
+		t.Fatalf("unexpected number of bytes written: %d. Expected %d", n, len(expectedOutput))
+	}
+	output = bb.String()
+	if output != expectedOutput {
+		t.Fatalf("unexpected output for bytes[] value template=%q: %q. Expected %q", template, output, expectedOutput)
+	}
+
+	// TagFunc
+	bb.Reset()
+	n, err = Execute(template, "{", "}", &bb, map[string]interface{}{"foo": func(w Writer, tag string) (int, error) {
+		return w.WriteString("xxxx")
+	}})
+	if err != nil {
+		t.Fatalf("unexpected error: %s", err)
+	}
+	if n != len(expectedOutput) {
+		t.Fatalf("unexpected number of bytes written: %d. Expected %d", n, len(expectedOutput))
+	}
+	output = bb.String()
+	if output != expectedOutput {
+		t.Fatalf("unexpected output for TagFunc value template=%q: %q. Expected %q", template, output, expectedOutput)
+	}
+
+	// legacy writer
+	bb.Reset()
+	n, err = Execute(template, "{", "}", &bb, map[string]interface{}{"foo": func(w io.Writer, tag string) (int, error) {
+		return w.Write([]byte("xxxx"))
+	}})
+	if err != nil {
+		t.Fatalf("unexpected error: %s", err)
+	}
+	if n != len(expectedOutput) {
+		t.Fatalf("unexpected number of bytes written: %d. Expected %d", n, len(expectedOutput))
+	}
+	output = bb.String()
+	if output != expectedOutput {
+		t.Fatalf("unexpected output for TagFunc value template=%q: %q. Expected %q", template, output, expectedOutput)
+	}
+
 }
 
 func TestExecuteString(t *testing.T) {

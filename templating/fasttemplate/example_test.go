@@ -2,7 +2,6 @@ package fasttemplate
 
 import (
 	"fmt"
-	"io"
 	"net/url"
 )
 
@@ -17,8 +16,8 @@ func ExampleTemplate() {
 
 		// TagFunc - flexible value. TagFunc is called only if the given
 		// tag exists in the template.
-		"query": TagFunc(func(w io.Writer, tag string) (int, error) {
-			return w.Write([]byte(url.QueryEscape(tag + "=world")))
+		"query": TagFunc(func(w Writer, tag string) (int, error) {
+			return w.WriteString(url.QueryEscape(tag + "=world"))
 		}),
 	}
 
@@ -41,7 +40,7 @@ func ExampleTemplateWithSpaces() {
 
 		// TagFunc - flexible value. TagFunc is called only if the given
 		// tag exists in the template.
-		"query": TagFunc(func(w io.Writer, tag string) (int, error) {
+		"query": TagFunc(func(w Writer, tag string) (int, error) {
 			return w.Write([]byte(url.QueryEscape(tag + "=world")))
 		}),
 	}
@@ -60,7 +59,7 @@ func ExampleTagFunc() {
 		// Always wrap the function into TagFunc.
 		//
 		// "baz" tag function writes bazSlice contents into w.
-		"baz": TagFunc(func(w io.Writer, tag string) (int, error) {
+		"baz": TagFunc(func(w Writer, tag string) (int, error) {
 			var nn int
 			for _, x := range bazSlice {
 				n, err := w.Write(x)
