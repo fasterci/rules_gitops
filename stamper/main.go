@@ -13,7 +13,6 @@ package main
 
 import (
 	"flag"
-	"io/ioutil"
 	"log"
 	"os"
 	"strings"
@@ -45,18 +44,18 @@ func init() {
 	flag.StringVar(&format, "format", "", "The format string containing stamp variables")
 }
 
-func workspaceStatusDict(filenames []string) map[string]interface{} {
-	d := map[string]interface{}{}
+func workspaceStatusDict(filenames []string) fasttemplate.TemplateParams {
+	d := fasttemplate.TemplateParams{}
 	for _, f := range filenames {
-		content, err := ioutil.ReadFile(f)
+		content, err := os.ReadFile(f)
 		if err != nil {
 			log.Fatalf("Unable to read %s: %v", f, err)
 		}
 		for _, l := range strings.Split(string(content), "\n") {
-			sv := strings.SplitN(l, " ", 2)
-			if len(sv) == 2 {
-				d[sv[0]] = sv[1]
+			if k, v, ok := strings.Cut(l, " "); ok {
+				d.AddString(k, v)
 			}
+
 		}
 	}
 	return d
@@ -70,7 +69,7 @@ func main() {
 		if format != "" {
 			log.Fatal("only one of --format or --format-file should be used")
 		}
-		imp, err := ioutil.ReadFile(formatFile)
+		imp, err := os.ReadFile(formatFile)
 		if err != nil {
 			log.Fatalf("Unable to read file %s: %v", formatFile, err)
 		}
@@ -85,7 +84,7 @@ func main() {
 		}
 		defer outf.Close()
 	}
-	_, err = fasttemplate.Execute(format, "{", "}", outf, stamps)
+	_, err = stamps.Execute(format, "{", "}", outf)
 	if err != nil {
 		log.Fatalf("Unable to execute template %s: %v", format, err)
 	}

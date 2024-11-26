@@ -2,46 +2,9 @@ package fasttemplate
 
 import (
 	"bytes"
-	"io"
+	"errors"
 	"testing"
 )
-
-func TestExecuteFunc(t *testing.T) {
-	testExecuteFunc(t, "", "")
-	testExecuteFunc(t, "a", "a")
-	testExecuteFunc(t, "abc", "abc")
-	testExecuteFunc(t, "{foo}", "xxxx")
-	testExecuteFunc(t, "a{foo}", "axxxx")
-	testExecuteFunc(t, "{foo}a", "xxxxa")
-	testExecuteFunc(t, "a{foo}bc", "axxxxbc")
-	testExecuteFunc(t, "{foo}{foo}", "xxxxxxxx")
-	testExecuteFunc(t, "{foo}{foo}", "xxxxxxxx")
-	testExecuteFunc(t, "{foo}bar{foo}", "xxxxbarxxxx")
-
-	// unclosed tag
-	testExecuteFunc(t, "{unclosed", "{unclosed")
-	testExecuteFunc(t, "{{unclosed", "{{unclosed")
-	testExecuteFunc(t, "{un{closed", "{un{closed")
-
-	// test unknown tag
-	testExecuteFunc(t, "{unknown}", "zz")
-	testExecuteFunc(t, "{foo}q{unexpected}{missing}bar{foo}", "xxxxqzzzzbarxxxx")
-}
-
-func testExecuteFunc(t *testing.T, template, expectedOutput string) {
-	var bb bytes.Buffer
-	executeFunc(template, "{", "}", &bb, func(w Writer, tag string) (int, error) {
-		if tag == "foo" {
-			return w.Write([]byte("xxxx"))
-		}
-		return w.Write([]byte("zz"))
-	})
-
-	output := string(bb.String())
-	if output != expectedOutput {
-		t.Fatalf("unexpected output for template=%q: %q. Expected %q", template, output, expectedOutput)
-	}
-}
 
 func TestExecute(t *testing.T) {
 	testExecute(t, "", "")
@@ -67,7 +30,18 @@ func TestExecute(t *testing.T) {
 
 func testExecute(t *testing.T, template, expectedOutput string) {
 	var bb bytes.Buffer
-	n, err := Execute(template, "{", "}", &bb, map[string]interface{}{"foo": "xxxx"})
+	params := TemplateParams{}
+	params.AddString("foo", "xxxx")
+
+	if !params.Contains("foo") {
+		t.Fatalf("unexpected missing key: foo")
+	}
+
+	if params.Contains("bar") {
+		t.Fatalf("unexpected key: bar")
+	}
+
+	n, err := params.Execute(template, "{", "}", &bb)
 	if err != nil {
 		t.Fatalf("unexpected error: %s", err)
 	}
@@ -81,7 +55,9 @@ func testExecute(t *testing.T, template, expectedOutput string) {
 
 	// []byte
 	bb.Reset()
-	n, err = Execute(template, "{", "}", &bb, map[string]interface{}{"foo": []byte("xxxx")})
+	params = TemplateParams{}
+	params.AddBytes("foo", []byte("xxxx"))
+	n, err = params.Execute(template, "{", "}", &bb)
 	if err != nil {
 		t.Fatalf("unexpected error: %s", err)
 	}
@@ -95,25 +71,11 @@ func testExecute(t *testing.T, template, expectedOutput string) {
 
 	// TagFunc
 	bb.Reset()
-	n, err = Execute(template, "{", "}", &bb, map[string]interface{}{"foo": func(w Writer, tag string) (int, error) {
+	params = TemplateParams{}
+	params.AddFunc("foo", func(w Writer) (int, error) {
 		return w.WriteString("xxxx")
-	}})
-	if err != nil {
-		t.Fatalf("unexpected error: %s", err)
-	}
-	if n != len(expectedOutput) {
-		t.Fatalf("unexpected number of bytes written: %d. Expected %d", n, len(expectedOutput))
-	}
-	output = bb.String()
-	if output != expectedOutput {
-		t.Fatalf("unexpected output for TagFunc value template=%q: %q. Expected %q", template, output, expectedOutput)
-	}
-
-	// legacy writer
-	bb.Reset()
-	n, err = Execute(template, "{", "}", &bb, map[string]interface{}{"foo": func(w io.Writer, tag string) (int, error) {
-		return w.Write([]byte("xxxx"))
-	}})
+	})
+	n, err = params.Execute(template, "{", "}", &bb)
 	if err != nil {
 		t.Fatalf("unexpected error: %s", err)
 	}
@@ -150,17 +112,29 @@ func TestExecuteString(t *testing.T) {
 }
 
 func testExecuteString(t *testing.T, template, expectedOutput string) {
-	output := ExecuteString(template, "{", "}", map[string]interface{}{"foo": "xxxx"})
+	m := TemplateParams{}
+	m.AddString("foo", "xxxx")
+	output := m.ExecuteString(template, "{", "}")
 	if output != expectedOutput {
 		t.Fatalf("unexpected output for template=%q: %q. Expected %q", template, output, expectedOutput)
 	}
 }
 
-func expectPanic(t *testing.T, f func()) {
-	defer func() {
-		if r := recover(); r == nil {
-			t.Fatalf("missing panic")
-		}
-	}()
-	f()
+var errTest = errors.New("test error")
+
+type errWriter struct{}
+
+func (errWriter) Write(p []byte) (int, error) {
+	return 0, errTest
+}
+func (errWriter) WriteString(s string) (int, error) {
+	return 0, errTest
+}
+func TestWriteError(t *testing.T) {
+	params := TemplateParams{}
+	params.AddString("foo", "xxxx")
+	_, err := params.Execute("a{foo}b", "{", "}", &errWriter{})
+	if err != errTest {
+		t.Fatalf("unexpected error: %s. Expected %s", err, errTest)
+	}
 }

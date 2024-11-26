@@ -8,20 +8,16 @@ import (
 func ExampleTemplate() {
 	template := "http://{{host}}/?foo={{bar}}{{bar}}&q={{query}}&baz={{baz}}"
 
-	// Substitution map.
-	// Since "baz" tag is missing in the map, it will be left unchanged.
-	m := map[string]interface{}{
-		"host": "google.com",     // string - convenient
-		"bar":  []byte("foobar"), // byte slice - the fastest
+	// Substitution parameters.
+	// Since "baz" tag is missing in the parameters, it will be left unchanged.
+	m := TemplateParams{}
+	m.AddString("host", "google.com")   // string
+	m.AddBytes("bar", []byte("foobar")) // byte slice
+	m.AddFunc("query", func(w Writer) (int, error) {
+		return w.WriteString(url.QueryEscape("query=world"))
+	})
 
-		// TagFunc - flexible value. TagFunc is called only if the given
-		// tag exists in the template.
-		"query": TagFunc(func(w Writer, tag string) (int, error) {
-			return w.WriteString(url.QueryEscape(tag + "=world"))
-		}),
-	}
-
-	s := ExecuteString(template, "{{", "}}", m)
+	s := m.ExecuteString(template, "{{", "}}")
 	fmt.Printf("%s", s)
 
 	// Output:
@@ -31,21 +27,16 @@ func ExampleTemplate() {
 func ExampleTemplateWithSpaces() {
 	template := "http://{{ host }}/?foo={{ bar }}{{ bar }}&q={{ query }}&baz={{ baz }}"
 
-	// Substitution map.
-	// Since "baz" tag is missing in the map, it will be substituted
-	// by an empty string.
-	m := map[string]interface{}{
-		"host": "google.com",     // string - convenient
-		"bar":  []byte("foobar"), // byte slice - the fastest
+	// Substitution parameters.
+	// Since "baz" tag is missing in the parameters, it will be left unchanged.
+	m := TemplateParams{}
+	m.AddString("host", "google.com")   // string
+	m.AddBytes("bar", []byte("foobar")) // byte slice
+	m.AddFunc("query", func(w Writer) (int, error) {
+		return w.WriteString(url.QueryEscape("query=world"))
+	})
 
-		// TagFunc - flexible value. TagFunc is called only if the given
-		// tag exists in the template.
-		"query": TagFunc(func(w Writer, tag string) (int, error) {
-			return w.Write([]byte(url.QueryEscape(tag + "=world")))
-		}),
-	}
-
-	s := ExecuteString(template, "{{", "}}", m)
+	s := m.ExecuteString(template, "{{", "}}")
 	fmt.Printf("%s", s)
 
 	// Output:
@@ -54,25 +45,25 @@ func ExampleTemplateWithSpaces() {
 
 func ExampleTagFunc() {
 	template := "foo[baz]bar"
-	bazSlice := [][]byte{[]byte("123"), []byte("456"), []byte("789")}
-	m := map[string]interface{}{
-		// Always wrap the function into TagFunc.
-		//
-		// "baz" tag function writes bazSlice contents into w.
-		"baz": TagFunc(func(w Writer, tag string) (int, error) {
-			var nn int
-			for _, x := range bazSlice {
-				n, err := w.Write(x)
-				if err != nil {
-					return nn, err
-				}
-				nn += n
-			}
-			return nn, nil
-		}),
-	}
 
-	s := ExecuteString(template, "[", "]", m)
+	// Substitution parameters.
+	// Since "baz" tag is missing in the parameters, it will be left unchanged.
+	m := TemplateParams{}
+	bazSlice := [][]byte{[]byte("123"), []byte("456"), []byte("789")}
+	m.AddFunc("baz", func(w Writer) (int, error) {
+		var nn int
+		for _, x := range bazSlice {
+			n, err := w.Write(x)
+			if err != nil {
+				return nn, err
+			}
+			nn += n
+		}
+		return nn, nil
+	})
+
+	s := m.ExecuteString(template, "[", "]")
+
 	fmt.Printf("%s", s)
 
 	// Output:

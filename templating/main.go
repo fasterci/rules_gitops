@@ -53,8 +53,8 @@ func init() {
 	flag.StringVar(&endTag, "end_tag", "}}", "End tag for template placeholders")
 }
 
-func workspaceStatusDict(filenames []string) map[string]interface{} {
-	d := map[string]interface{}{}
+func workspaceStatusDict(filenames []string) fasttemplate.TemplateParams {
+	d := fasttemplate.TemplateParams{}
 	for _, f := range filenames {
 		content, err := os.ReadFile(f)
 		if err != nil {
@@ -62,12 +62,12 @@ func workspaceStatusDict(filenames []string) map[string]interface{} {
 		}
 		for _, l := range strings.Split(string(content), "\n") {
 			if key, val, ok := strings.Cut(l, " "); ok {
-				d[key] = func(w io.Writer, tag string) (int, error) {
+				d.AddFunc(key, func(w fasttemplate.Writer) (int, error) {
 					if failIfStamped {
-						log.Fatalf("Template contains a stamp: %s", tag)
+						log.Fatalf("Template contains a stamp: %s", key)
 					}
-					return w.Write([]byte(val))
-				}
+					return w.WriteString(val)
+				})
 			}
 		}
 	}
@@ -78,18 +78,18 @@ func main() {
 	var err error
 	flag.Parse()
 	stamps := workspaceStatusDict(stampInfoFile)
-	vars := map[string]interface{}{}
+	vars := fasttemplate.TemplateParams{}
 	for _, v := range variable {
 		k, val, ok := strings.Cut(v, "=")
 		if !ok {
 			log.Fatalf("variable must be VAR=value, got %s", v)
 		}
-		if _, ok := vars[k]; !ok {
+		if vars.Contains(k) {
 			log.Fatalf("Duplicate variable name %s", k)
 		}
-		val = fasttemplate.ExecuteString(val, "{", "}", stamps)
-		vars[k] = val
-		vars["variables."+k] = val
+		val = stamps.ExecuteString(val, "{", "}")
+		vars.AddString(k, val)
+		vars.AddString("variables."+k, val)
 	}
 
 	for _, v := range imports {
@@ -97,17 +97,17 @@ func main() {
 		if !ok {
 			log.Fatalf("imports must be VAR=filename, got %s", v)
 		}
-		if _, ok := vars[k]; !ok {
+		if vars.Contains(k) {
 			log.Fatalf("Duplicate variable name %s in imports", k)
 		}
 		imp, err := os.ReadFile(fname)
 		if err != nil {
 			log.Fatalf("Unable to parse file %s: %v", fname, err)
 		}
-		val := fasttemplate.ExecuteString(string(imp), startTag, endTag, vars)
-		val = fasttemplate.ExecuteString(val, "{", "}", stamps)
-		vars[k] = val
-		vars["imports."+k] = val
+		val := vars.ExecuteString(string(imp), startTag, endTag)
+		val = stamps.ExecuteString(val, "{", "}")
+		vars.AddString(k, val)
+		vars.AddString("imports."+k, val)
 	}
 
 	var tpl []byte
@@ -134,7 +134,7 @@ func main() {
 		}
 		defer outf.Close()
 	}
-	_, err = fasttemplate.Execute(string(tpl), startTag, endTag, outf, vars)
+	_, err = vars.Execute(string(tpl), startTag, endTag, outf)
 	if err != nil {
 		log.Fatalf("Unable to execute template %s: %v", template, err)
 	}
