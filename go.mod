@@ -1,11 +1,13 @@
 module github.com/fasterci/rules_gitops
 
-go 1.20
+go 1.21
+
+toolchain go1.22.4
 
 require (
 	github.com/ghodss/yaml v1.0.0
 	github.com/golang/protobuf v1.5.3
-	github.com/google/go-cmp v0.5.9
+	github.com/google/go-cmp v0.6.0
 	github.com/google/go-containerregistry v0.19.1
 	github.com/google/go-github/v32 v32.1.0
 	github.com/xanzy/go-gitlab v0.80.2
@@ -17,6 +19,7 @@ require (
 )
 
 require (
+	github.com/bradleyfalzon/ghinstallation/v2 v2.13.0 // indirect
 	github.com/containerd/stargz-snapshotter/estargz v0.14.3 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/docker/cli v24.0.0+incompatible // indirect
@@ -29,7 +32,9 @@ require (
 	github.com/go-openapi/jsonreference v0.20.2 // indirect
 	github.com/go-openapi/swag v0.22.3 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
+	github.com/golang-jwt/jwt/v4 v4.5.1 // indirect
 	github.com/google/gnostic v0.6.9 // indirect
+	github.com/google/go-github/v68 v68.0.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect

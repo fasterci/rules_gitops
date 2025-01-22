@@ -28,6 +28,7 @@ import (
 	"github.com/fasterci/rules_gitops/gitops/git"
 	"github.com/fasterci/rules_gitops/gitops/git/bitbucket"
 	"github.com/fasterci/rules_gitops/gitops/git/github"
+	"github.com/fasterci/rules_gitops/gitops/git/github_app"
 	"github.com/fasterci/rules_gitops/gitops/git/gitlab"
 	"golang.org/x/sync/errgroup"
 
@@ -51,6 +52,7 @@ func (i *SliceFlags) Set(value string) error {
 }
 
 var (
+	targets                string
 	releaseBranch          = flag.String("release_branch", "master", "filter gitops targets by release branch")
 	bazelCmd               = flag.String("bazel_cmd", "tools/bazel", "bazel binary to use")
 	workspace              = flag.String("workspace", "", "path to workspace root")
@@ -78,6 +80,7 @@ var (
 )
 
 func init() {
+	flag.StringVar(&targets, "targets", "//... except //experimental/...", "targets to scan. Multiple targets can be provided separated by a +")
 	flag.Var(&gitopsKind, "gitops_dependencies_kind", "dependency kind(s) to run during gitops phase. Can be specified multiple times. Default is 'k8s_container_push'")
 	flag.Var(&gitopsRuleName, "gitops_dependencies_name", "dependency name(s) to run during gitops phase. Can be specified multiple times. Default is empty")
 	flag.Var(&gitopsRuleAttr, "gitops_dependencies_attr", "dependency attribute(s) to run during gitops phase. Use attribute=value format. Can be specified multiple times. Default is empty")
@@ -122,6 +125,8 @@ func main() {
 	switch *gitHost {
 	case "github":
 		gitServer = git.ServerFunc(github.CreatePR)
+	case "github_app":
+		gitServer = git.ServerFunc(github_app.CreatePR)
 	case "gitlab":
 		gitServer = git.ServerFunc(gitlab.CreatePR)
 	case "bitbucket":
@@ -141,7 +146,7 @@ func main() {
 		}
 	} else {
 
-		q := fmt.Sprintf("attr(deployment_branch, \".+\", attr(release_branch_prefix, \"%s\", kind(gitops, %s)))", *releaseBranch, *target)
+		q := fmt.Sprintf("attr(deployment_branch, \".+\", attr(release_branch_prefix, \"%s\", kind(gitops, %s)))", *releaseBranch, targets)
 		qr := bazelQuery(q)
 		for _, t := range qr.Results {
 			var releaseTrain string
