@@ -223,6 +223,17 @@ def k8s_deploy(
             tags = tags,
             visibility = visibility,
         )
+        kubectl(
+            name = name + ".diff",
+            srcs = [name],
+            command = "diff",
+            cluster = cluster,
+            push = False,
+            user = user,
+            namespace = namespace,
+            tags = tags,
+            visibility = visibility,
+        )
         show(
             name = name + ".show",
             namespace = namespace,

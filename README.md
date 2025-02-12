@@ -51,6 +51,8 @@ For example, let's look at the [example's k8s_deploy](./e2e/helloworld/BUILD.baz
 cd e2e
 bazel run //helloworld:mynamespace.show
 ```
+We can run `bazel run ///helloworld:mynamespace.diff` to see a difference from source to what is stored in kubernetes.
+
 When you run `bazel run ///helloworld:mynamespace.apply`, it applies this file into your personal (`{BUILD_USER}`) namespace. Viewing the rendered files with `.show` can be useful for debugging issues with invalid or misconfigured manifests.
 
 | Parameter                 | Default        | Description
