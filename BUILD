@@ -13,8 +13,8 @@
 # gazelle:proto disable_global
 # gazelle:go_naming_convention import_alias
 
-load("@bazel_gazelle//:def.bzl", "gazelle")
 load("@buildifier_prebuilt//:rules.bzl", "buildifier")
+load("@gazelle//:def.bzl", "gazelle")
 
 licenses(["notice"])  # Apache 2.0
 
