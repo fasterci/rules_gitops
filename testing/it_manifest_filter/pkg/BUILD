@@ -1,27 +1,33 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
-    name = "go_default_library",
+    name = "pkg",
     srcs = ["filter.go"],
     importpath = "github.com/fasterci/rules_gitops/testing/it_manifest_filter/pkg",
     visibility = ["//visibility:public"],
     deps = [
-        "//vendor/github.com/ghodss/yaml:go_default_library",
-        "//vendor/k8s.io/api/apps/v1:go_default_library",
-        "//vendor/k8s.io/api/core/v1:go_default_library",
-        "//vendor/k8s.io/apimachinery/pkg/apis/meta/v1/unstructured:go_default_library",
-        "//vendor/k8s.io/apimachinery/pkg/runtime:go_default_library",
-        "//vendor/k8s.io/apimachinery/pkg/util/yaml:go_default_library",
-        "//vendor/k8s.io/client-go/util/jsonpath:go_default_library",
+        "@com_github_ghodss_yaml//:yaml",
+        "@io_k8s_api//apps/v1:apps",
+        "@io_k8s_api//core/v1:core",
+        "@io_k8s_apimachinery//pkg/apis/meta/v1/unstructured",
+        "@io_k8s_apimachinery//pkg/runtime",
+        "@io_k8s_apimachinery//pkg/util/yaml",
+        "@io_k8s_client_go//util/jsonpath",
     ],
 )
 
+alias(
+    name = "go_default_library",
+    actual = ":pkg",
+    visibility = ["//visibility:public"],
+)
+
 go_test(
-    name = "go_default_test",
+    name = "pkg_test",
     srcs = ["filter_test.go"],
     data = glob(["testdata/**"]),
     deps = [
-        ":go_default_library",
-        "//vendor/github.com/google/go-cmp/cmp:go_default_library",
+        ":pkg",
+        "@com_github_google_go_cmp//cmp",
     ],
 )

@@ -13,12 +13,18 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 licenses(["notice"])  # Apache 2.0
 
 go_library(
-    name = "go_default_library",
+    name = "git",
     srcs = [
         "git.go",
         "server.go",
     ],
     importpath = "github.com/fasterci/rules_gitops/gitops/git",
     visibility = ["//visibility:public"],
-    deps = ["//gitops/exec:go_default_library"],
+    deps = ["//gitops/exec"],
+)
+
+alias(
+    name = "go_default_library",
+    actual = ":git",
+    visibility = ["//visibility:public"],
 )

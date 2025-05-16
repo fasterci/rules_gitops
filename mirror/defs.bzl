@@ -160,7 +160,7 @@ validate_mirror_test = rule(
             doc = "The destination image location, should include the registry and repository. Either dst_prefix or dst_image must be specified.",
         ),
         "crane_tool": attr.label(
-            default = Label("//vendor/github.com/google/go-containerregistry/cmd/crane:crane"),
+            default = Label("@com_github_google_go_containerregistry//cmd/crane:crane"),
             executable = True,
             cfg = "exec",
         ),

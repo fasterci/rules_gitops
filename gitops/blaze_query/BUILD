@@ -13,9 +13,15 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 licenses(["notice"])  # Apache 2.0
 
 go_library(
-    name = "go_default_library",
+    name = "blaze_query",
     srcs = ["build.pb.go"],
     importpath = "github.com/fasterci/rules_gitops/gitops/blaze_query",
     visibility = ["//visibility:public"],
-    deps = ["//vendor/github.com/golang/protobuf/proto:go_default_library"],
+    deps = ["@com_github_golang_protobuf//proto"],
+)
+
+alias(
+    name = "go_default_library",
+    actual = ":blaze_query",
+    visibility = ["//visibility:public"],
 )
