@@ -11,6 +11,7 @@
 # gazelle:build_tags darwin,linux
 # gazelle:exclude examples e2e
 # gazelle:proto disable_global
+# gazelle:go_naming_convention import_alias
 
 load("@bazel_gazelle//:def.bzl", "gazelle")
 load("@buildifier_prebuilt//:rules.bzl", "buildifier")

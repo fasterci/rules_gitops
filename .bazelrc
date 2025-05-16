@@ -1,4 +1,4 @@
-common --enable_bzlmod
+common --enable_bzlmod --noincompatible_sandbox_hermetic_tmp
 build --nolegacy_external_runfiles
 build --remote_download_all
 build --verbose_failures
