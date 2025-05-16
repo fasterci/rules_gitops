@@ -32,12 +32,13 @@ write_go_proto_srcs(
 
 go_library(
     name = "analysis",
-    embed = [":analysis_go_proto"],
+    srcs = ["analysis.pb.go"],
     importpath = "github.com/fasterci/rules_gitops/gitops/analysis",
     visibility = ["//visibility:public"],
     deps = [
         "//gitops/blaze_query",
-        "@com_github_golang_protobuf//proto",
+        "@org_golang_google_protobuf//reflect/protoreflect",
+        "@org_golang_google_protobuf//runtime/protoimpl",
     ],
 )
 

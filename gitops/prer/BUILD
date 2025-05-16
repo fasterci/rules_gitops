@@ -26,7 +26,7 @@ go_library(
         "//gitops/git/bitbucket",
         "//gitops/git/github",
         "//gitops/git/gitlab",
-        "@com_github_golang_protobuf//proto",
+        "@org_golang_google_protobuf//proto",
         "@org_golang_x_sync//errgroup",
     ],
 )

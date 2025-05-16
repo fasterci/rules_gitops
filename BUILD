@@ -13,12 +13,11 @@
 # gazelle:proto disable_global
 # gazelle:go_naming_convention import_alias
 
+# gazelle:resolve go github.com/fasterci/rules_gitops/gitops/blaze_query //gitops/blaze_query:blaze_query
+# gazelle:resolve go github.com/fasterci/rules_gitops/gitops/analysis //gitops/analysis:analysis
+
 load("@buildifier_prebuilt//:rules.bzl", "buildifier")
 load("@gazelle//:def.bzl", "gazelle")
-
-licenses(["notice"])  # Apache 2.0
-
-exports_files(["WORKSPACE"])
 
 # gazelle:prefix github.com/fasterci/rules_gitops
 gazelle(

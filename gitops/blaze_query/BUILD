@@ -36,10 +36,13 @@ write_go_proto_srcs(
 
 go_library(
     name = "blaze_query",
-    srcs = ["build.pb.go"],
+    srcs = ["build_query.pb.go"],
     importpath = "github.com/fasterci/rules_gitops/gitops/blaze_query",
     visibility = ["//visibility:public"],
-    deps = ["@com_github_golang_protobuf//proto"],
+    deps = [
+        "@org_golang_google_protobuf//reflect/protoreflect",
+        "@org_golang_google_protobuf//runtime/protoimpl",
+    ],
 )
 
 alias(
