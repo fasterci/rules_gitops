@@ -92,7 +92,6 @@ func (s *K8STestSetup) before(wg *sync.WaitGroup) {
 		log.Fatal(fmt.Errorf("unable to read  setup command STDOUT; %w", err))
 	}
 
-
 	go func() {
 		rd := bufio.NewReader(s.er)
 		for {
@@ -133,7 +132,10 @@ waitForReady:
 		if strings.HasPrefix(str, "FORWARD") {
 			// remove the "FORWARD " prefix, and any trailing space, split on ":"
 			parts := strings.Split(strings.TrimSpace(str[8:]), ":")
-			localPort, _ := strconv.Atoi(parts[2])
+			localPort, err := strconv.Atoi(parts[2])
+			if err != nil {
+				log.Fatalf("Unable to parse local port '%s' from setup script stdout. Cannot wait for pods", parts[2])
+			}
 			s.forwards[parts[0]] = localPort
 		}
 		if "READY\n" == str {
