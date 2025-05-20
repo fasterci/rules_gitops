@@ -65,11 +65,13 @@ show = rule(
     executable = True,
 )
 
-def _image_pushes(name_suffix, images, image_registry, image_repository, image_digest_tag, tags = []):
+def _image_pushes(name_suffix, images, image_registry, image_repository, image_digest_tag, remote_tags = None, tags = []):
     image_pushes = []
 
     def process_image(image_label, image_alias = None):
         rule_name_parts = [image_label, image_registry, image_repository]
+        if remote_tags:
+            rule_name_parts = rule_name_parts + remote_tags
         rule_name_parts = [p for p in rule_name_parts if p]
         rule_name = "_".join(rule_name_parts)
         rule_name = rule_name.replace("/", "_").replace(":", "_").replace("@", "_").replace(".", "_")
@@ -82,6 +84,8 @@ def _image_pushes(name_suffix, images, image_registry, image_repository, image_d
                 registry = image_registry,
                 repository = image_repository,
                 tags = tags,
+                tag = bool(remote_tags),
+                remote_tags = remote_tags,
                 visibility = ["//visibility:public"],
             )
         if not image_alias:
@@ -135,6 +139,7 @@ def k8s_deploy(
         image_digest_tag = False,
         image_registry = "docker.io",  # registry to push container to. jenkins will need an access configured for gitops to work. Ignored for mynamespace.
         image_repository = None,  # repository (registry path) to push container to. Generated from the image bazel path if empty.
+        remote_tags = None, # tags to push to the registry
         objects = [],
         gitops = True,  # make sure to use gitops = False to work with individual namespace. This option will be turned False if namespace is '{BUILD_USER}'
         gitops_path = "cloud",
@@ -142,7 +147,7 @@ def k8s_deploy(
         release_branch_prefix = "main",
         start_tag = "{{",
         end_tag = "}}",
-        tags = [],  # tags to add to all generated rules.
+        tags = [],  # bazel tags to add to all generated rules.
         visibility = None):
     """ k8s_deploy
     """
@@ -174,6 +179,7 @@ def k8s_deploy(
             image_registry = image_registry + "/mynamespace",
             image_repository = image_repository,
             image_digest_tag = image_digest_tag,
+            remote_tags = remote_tags,
             tags = tags,
         )
         kustomize(
@@ -251,6 +257,7 @@ def k8s_deploy(
             image_registry = image_registry,
             image_repository = image_repository,
             image_digest_tag = image_digest_tag,
+            remote_tags = remote_tags,
             tags = tags,
         )
         kustomize(
