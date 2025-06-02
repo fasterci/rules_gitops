@@ -23,8 +23,9 @@ def __create_gitops_prs_impl(ctx):
         params += "--git_repo {} ".format(ctx.attr.git_repo)
     if ctx.attr.gitops_path:
         params += "--gitops_path {} ".format(ctx.attr.gitops_path)
-    if ctx.attr.gitopsdir:
-        params += "--gitopsdir {} ".format(ctx.attr.gitopsdir)
+
+    # if ctx.attr.gitopsdir:
+    #     params += "--gitopsdir {} ".format(ctx.attr.gitopsdir)
     params += "--push_parallelism {} ".format(ctx.attr.push_parallelism)
     if ctx.attr.gitops_pr_into:
         params += "--gitops_pr_into {} ".format(ctx.attr.gitops_pr_into)
@@ -83,9 +84,9 @@ create_gitops_prs = rule(
         "gitops_path": attr.string(
             doc = "location to store files in repo.",
         ),
-        "gitopsdir": attr.string(
-            doc = "do not use temporary directory for gitops, use this directory instead.",
-        ),
+        # "gitopsdir": attr.string(
+        #     doc = "do not use temporary directory for gitops, use this directory instead.",
+        # ),
         "push_parallelism": attr.int(
             doc = "number of parallel pushes to registry",
             default = 4,

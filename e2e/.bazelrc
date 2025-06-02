@@ -1,5 +1,8 @@
 build --action_env HOME --test_env HOME
-common:bzlmod --enable_bzlmod
-build --remote_download_all
+common --enable_bzlmod --noincompatible_sandbox_hermetic_tmp
+common --incompatible_disallow_empty_glob=false
 build --nolegacy_external_runfiles
-build --@io_bazel_rules_go//go/config:pure
+build --remote_download_all
+build --verbose_failures
+build --@rules_go//go/config:pure
+test --test_output=errors

@@ -9,9 +9,9 @@
 # OF ANY KIND, either express or implied. See the License for the specific language
 # governing permissions and limitations under the License.
 
-load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
 load("@rules_gitops//gitops:defs.bzl", "k8s_deploy", "k8s_test_setup")
 load("@rules_gitops//lang:go.bzl", "go_image")
+load("@rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
 
 go_library(
     name = "go_default_library",

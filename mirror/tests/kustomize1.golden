@@ -12,7 +12,7 @@ spec:
         app: myapp
     spec:
       containers:
-      - image: localhost:1338/mirror/localhost1338/image@sha256:b812c0570a7c369b2863c64e22760dc1b1dbc025a739f02db376bac62862f4cc
+      - image: localhost:1338/mirror/localhost1338/image@sha256:68c6251593df9b6bfefdc4006e9260a4288ddd942f9b75cbe736088e74f1cb6a
         name: myapp
         ports:
         - containerPort: 8080

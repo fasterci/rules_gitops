@@ -1,6 +1,6 @@
 load("@aspect_bazel_lib//lib:diff_test.bzl", "diff_test")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
-load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+load("@rules_go//go:def.bzl", "go_binary", "go_library")
 load("//transitions:transitions.bzl", "platform_transition_binary", "platform_transition_filegroup")
 
 platform(
@@ -16,7 +16,7 @@ platform(
     constraint_values = [
         "@platforms//os:linux",
         "@platforms//cpu:x86_64",
-        "@io_bazel_rules_go//go/toolchain:cgo_off",  # https://github.com/bazelbuild/rules_go/pull/3390
+        "@rules_go//go/toolchain:cgo_off",  # https://github.com/bazelbuild/rules_go/pull/3390
     ],
 )
 
@@ -25,7 +25,7 @@ platform(
     constraint_values = [
         "@platforms//os:linux",
         "@platforms//cpu:arm64",
-        "@io_bazel_rules_go//go/toolchain:cgo_off",  # https://github.com/bazelbuild/rules_go/pull/3390
+        "@rules_go//go/toolchain:cgo_off",  # https://github.com/bazelbuild/rules_go/pull/3390
     ],
 )
 
@@ -104,7 +104,7 @@ diff_test(
 
 go_binary(
     name = "test_transition_binary",
-    embed = [":go_default_library"],
+    embed = [":tests_lib"],
     tags = ["manual"],
     visibility = ["//visibility:public"],
 )
@@ -151,7 +151,7 @@ go_library(
 )
 
 go_library(
-    name = "go_default_library",
+    name = "tests_lib",
     srcs = ["main.go"],
     importpath = "github.com/fasterci/rules_gitops/transitions/tests",
     visibility = ["//visibility:private"],

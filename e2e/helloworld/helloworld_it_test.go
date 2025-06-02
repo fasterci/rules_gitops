@@ -13,7 +13,7 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"testing"
@@ -42,7 +42,7 @@ func TestSimpleServer(t *testing.T) {
 	if response.StatusCode != 200 {
 		t.Errorf("Expected status code 200, got %d", response.StatusCode)
 	}
-	body, _ := ioutil.ReadAll(response.Body)
+	body, _ := io.ReadAll(response.Body)
 	if !strings.Contains(string(body), "Hello World") {
 		t.Error("Unexpected content returned:", string(body))
 	}

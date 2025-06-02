@@ -1,3 +1,3 @@
 module github.com/fasterci/rules_gitops/client
 
-go 1.20
+go 1.23.0

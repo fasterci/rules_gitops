@@ -1,6 +1,6 @@
-bazel_dep(name = "rules_go", version = "0.46.0", repo_name = "io_bazel_rules_go")
-bazel_dep(name = "bazel_skylib", version = "1.5.0")
-bazel_dep(name = "rules_oci", version = "1.7.2")
+bazel_dep(name = "rules_go", version = "0.54.0")
+bazel_dep(name = "bazel_skylib", version = "1.7.1")
+bazel_dep(name = "rules_oci", version = "2.2.6")
 
 oci = use_extension("@rules_oci//oci:extensions.bzl", "oci")
 oci.pull(
@@ -18,11 +18,10 @@ local_path_override(
     path = "../",
 )
 
-# Only available in bazel 7
-# kubeconfig = use_repo_rule("@rules_gitops//skylib:k8s.bzl", "kubeconfig")
+kubeconfig = use_repo_rule("@rules_gitops//skylib:k8s.bzl", "kubeconfig")
 
-# kubeconfig(
-#     name = "k8s_test",
-#     cluster = "gke_rules-gitops-demo_us-central1_cluster-demo",
-#     use_host_config = True,
-# )
+kubeconfig(
+    name = "k8s_test",
+    cluster = "gke_rules-gitops-demo_us-central1_cluster-demo",
+    use_host_config = True,
+)

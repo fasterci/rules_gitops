@@ -24,7 +24,7 @@ oci_image(
 assert_contains(
     name = "image_sanity_check",
     actual = ":image.digest",
-    expected = "sha256:b812c0570a7c369b2863c64e22760dc1b1dbc025a739f02db376bac62862f4cc",
+    expected = "sha256:68c6251593df9b6bfefdc4006e9260a4288ddd942f9b75cbe736088e74f1cb6a",
 )
 
 oci_push(
@@ -37,7 +37,7 @@ oci_push(
 
 mirror_image(
     name = "image_mirror",
-    digest = "sha256:b812c0570a7c369b2863c64e22760dc1b1dbc025a739f02db376bac62862f4cc",
+    digest = "sha256:68c6251593df9b6bfefdc4006e9260a4288ddd942f9b75cbe736088e74f1cb6a",
     dst_prefix = "localhost:1338/mirror",
     push_timeout = "60s",
     src_image = "localhost:1338/image",
@@ -47,7 +47,7 @@ mirror_image(
 
 mirror_image(
     name = "image_mirror_with_tag",
-    digest = "sha256:b812c0570a7c369b2863c64e22760dc1b1dbc025a739f02db376bac62862f4cc",
+    digest = "sha256:68c6251593df9b6bfefdc4006e9260a4288ddd942f9b75cbe736088e74f1cb6a",
     dst_prefix = "localhost:1338/mirror2",
     src_image = "localhost:1338/image:tag1",
     tags = ["manual"],  # test should be tagged manual since it requires a running registry
@@ -89,7 +89,7 @@ k8s_deploy(
 assert_contains(
     name = "fasterci_gitops_deploy_has_mirrored_image",
     actual = ":fasterci_gitops_deploy",
-    expected = "image: localhost:1338/mirror/localhost1338/image@sha256:b812c0570a7c369b2863c64e22760dc1b1dbc025a739f02db376bac62862f4cc",
+    expected = "image: localhost:1338/mirror/localhost1338/image@sha256:68c6251593df9b6bfefdc4006e9260a4288ddd942f9b75cbe736088e74f1cb6a",
 )
 
 exports_files([
@@ -116,20 +116,20 @@ sh_test(
     name = "fasterci_gitops_setup_test",
     srcs = ["gitops_setup_test.sh"],
     args = [
-        "$(location :fasterci_gitops.setup) localhost:1338/mirror/localhost1338/image@sha256:b812c0570a7c369b2863c64e22760dc1b1dbc025a739f02db376bac62862f4cc",
+        "$(location :fasterci_gitops.setup) localhost:1338/mirror/localhost1338/image@sha256:68c6251593df9b6bfefdc4006e9260a4288ddd942f9b75cbe736088e74f1cb6a",
     ],
     data = [
         ":fasterci_gitops.setup",
         ":kubectl",
         ":push_image",
-        "//vendor/github.com/google/go-containerregistry/cmd/crane",
-        "//vendor/github.com/google/go-containerregistry/cmd/registry",
+        "@com_github_google_go_containerregistry//cmd/crane",
+        "@com_github_google_go_containerregistry//cmd/registry",
     ],
     env = {
         "KUBECTL": "$(location :kubectl)",
         "PUSH_IMAGE": "$(location :push_image)",
-        "CRANE_BIN": "$(location //vendor/github.com/google/go-containerregistry/cmd/crane)",
-        "REGISTRY_BIN": "$(location //vendor/github.com/google/go-containerregistry/cmd/registry)",
+        "CRANE_BIN": "$(location @com_github_google_go_containerregistry//cmd/crane)",
+        "REGISTRY_BIN": "$(location @com_github_google_go_containerregistry//cmd/registry)",
     },
     tags = [
         "exclusive",
@@ -141,20 +141,20 @@ sh_test(
     name = "fasterci_gitops_apply_test",
     srcs = ["gitops_setup_test.sh"],
     args = [
-        "$(location :fasterci_gitops_deploy.apply) localhost:1338/mirror/localhost1338/image@sha256:b812c0570a7c369b2863c64e22760dc1b1dbc025a739f02db376bac62862f4cc",
+        "$(location :fasterci_gitops_deploy.apply) localhost:1338/mirror/localhost1338/image@sha256:68c6251593df9b6bfefdc4006e9260a4288ddd942f9b75cbe736088e74f1cb6a",
     ],
     data = [
         ":fasterci_gitops_deploy.apply",
         ":kubectl",
         ":push_image",
-        "//vendor/github.com/google/go-containerregistry/cmd/crane",
-        "//vendor/github.com/google/go-containerregistry/cmd/registry",
+        "@com_github_google_go_containerregistry//cmd/crane",
+        "@com_github_google_go_containerregistry//cmd/registry",
     ],
     env = {
         "KUBECTL": "$(location :kubectl)",
         "PUSH_IMAGE": "$(location :push_image)",
-        "CRANE_BIN": "$(location //vendor/github.com/google/go-containerregistry/cmd/crane)",
-        "REGISTRY_BIN": "$(location //vendor/github.com/google/go-containerregistry/cmd/registry)",
+        "CRANE_BIN": "$(location @com_github_google_go_containerregistry//cmd/crane)",
+        "REGISTRY_BIN": "$(location @com_github_google_go_containerregistry//cmd/registry)",
     },
     tags = ["exclusive"],  # this test starts a registry on fixed port 1338
 )
@@ -163,20 +163,20 @@ sh_test(
     name = "image_mirror_with_tag_test",
     srcs = ["gitops_setup_test.sh"],
     args = [
-        "$(location :image_mirror_with_tag) localhost:1338/mirror2/localhost1338/image@sha256:b812c0570a7c369b2863c64e22760dc1b1dbc025a739f02db376bac62862f4cc",
+        "$(location :image_mirror_with_tag) localhost:1338/mirror2/localhost1338/image@sha256:68c6251593df9b6bfefdc4006e9260a4288ddd942f9b75cbe736088e74f1cb6a",
     ],
     data = [
         ":image_mirror_with_tag",
         ":kubectl",
         ":push_image",
-        "//vendor/github.com/google/go-containerregistry/cmd/crane",
-        "//vendor/github.com/google/go-containerregistry/cmd/registry",
+        "@com_github_google_go_containerregistry//cmd/crane",
+        "@com_github_google_go_containerregistry//cmd/registry",
     ],
     env = {
         "KUBECTL": "$(location :kubectl)",
         "PUSH_IMAGE": "$(location :push_image)",
-        "CRANE_BIN": "$(location //vendor/github.com/google/go-containerregistry/cmd/crane)",
-        "REGISTRY_BIN": "$(location //vendor/github.com/google/go-containerregistry/cmd/registry)",
+        "CRANE_BIN": "$(location @com_github_google_go_containerregistry//cmd/crane)",
+        "REGISTRY_BIN": "$(location @com_github_google_go_containerregistry//cmd/registry)",
     },
     tags = ["exclusive"],  # this test starts a registry on fixed port 1338
 )
@@ -191,14 +191,14 @@ sh_test(
         ":image_mirror_with_tag",
         ":kubectl",
         ":push_image",
-        "//vendor/github.com/google/go-containerregistry/cmd/crane",
-        "//vendor/github.com/google/go-containerregistry/cmd/registry",
+        "@com_github_google_go_containerregistry//cmd/crane",
+        "@com_github_google_go_containerregistry//cmd/registry",
     ],
     env = {
         "KUBECTL": "$(location :kubectl)",
         "PUSH_IMAGE": "$(location :push_image)",
-        "CRANE_BIN": "$(location //vendor/github.com/google/go-containerregistry/cmd/crane)",
-        "REGISTRY_BIN": "$(location //vendor/github.com/google/go-containerregistry/cmd/registry)",
+        "CRANE_BIN": "$(location @com_github_google_go_containerregistry//cmd/crane)",
+        "REGISTRY_BIN": "$(location @com_github_google_go_containerregistry//cmd/registry)",
     },
     tags = ["exclusive"],  # this test starts a registry on fixed port 1338
 )
@@ -210,17 +210,17 @@ sh_test(
         ":image_mirror",
         ":image_mirror_validate_src",
         ":push_image",
-        "//vendor/github.com/google/go-containerregistry/cmd/crane",
-        "//vendor/github.com/google/go-containerregistry/cmd/registry",
+        "@com_github_google_go_containerregistry//cmd/crane",
+        "@com_github_google_go_containerregistry//cmd/registry",
     ],
     env = {
-        "LOCAL": "localhost:1338/mirror/localhost1338/image@sha256:b812c0570a7c369b2863c64e22760dc1b1dbc025a739f02db376bac62862f4cc",
-        "REMOTE": "localhost:1338/image@sha256:b812c0570a7c369b2863c64e22760dc1b1dbc025a739f02db376bac62862f4cc",
+        "LOCAL": "localhost:1338/mirror/localhost1338/image@sha256:68c6251593df9b6bfefdc4006e9260a4288ddd942f9b75cbe736088e74f1cb6a",
+        "REMOTE": "localhost:1338/image@sha256:68c6251593df9b6bfefdc4006e9260a4288ddd942f9b75cbe736088e74f1cb6a",
         "PUSH_IMAGE": "$(location :push_image)",
         "IMAGE_MIRROR": "$(location :image_mirror)",
         "IMAGE_MIRROR_VALIDATE_SRC": "$(location :image_mirror_validate_src)",
-        "CRANE_BIN": "$(location //vendor/github.com/google/go-containerregistry/cmd/crane)",
-        "REGISTRY_BIN": "$(location //vendor/github.com/google/go-containerregistry/cmd/registry)",
+        "CRANE_BIN": "$(location @com_github_google_go_containerregistry//cmd/crane)",
+        "REGISTRY_BIN": "$(location @com_github_google_go_containerregistry//cmd/registry)",
     },
     tags = ["exclusive"],  # this test starts a registry on fixed port 1338
 )

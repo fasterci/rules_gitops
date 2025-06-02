@@ -37,7 +37,7 @@ Bazel GitOps Rules is an alternative to [rules_k8s](https://github.com/bazelbuil
 
 From the release you wish to use:
 <https://github.com/fasterci/rules_gitops/releases>
-copy the WORKSPACE snippet into your `WORKSPACE` file.
+copy the MODULE.bazel snippet into your `MODULE.bazel` file.
 
 
 <a name="k8s_deploy"></a>
