@@ -84,7 +84,6 @@ def _image_pushes(name_suffix, images, image_registry, image_repository, image_d
                 registry = image_registry,
                 repository = image_repository,
                 tags = tags,
-                tag = bool(remote_tags),
                 remote_tags = remote_tags,
                 visibility = ["//visibility:public"],
             )
