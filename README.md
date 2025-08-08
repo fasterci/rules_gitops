@@ -430,6 +430,8 @@ The `--release_branch` specifies the value of the ***release_branch_prefix*** at
 
 The `create_gitops_prs` tool will query all `gitops` targets which have set the ***deploy_branch*** attribute (see [k8s_deploy](#k8s_deploy)) and the ***release_branch_prefix*** attribute value that matches the `release_branch` parameter.
 
+In case you need to specify a custom Bazel flag during the pull request process, you can add one `--bazel_flag` such as `--bazel_flag --config=ci` or multiple such as `--bazel_flag --config=ci --bazel_flag --color=no`.
+
 The all discovered `gitops` targets are grouped by the value of ***deploy_branch*** attribute. The one deployment branch will accumulate the output of all corresponding `gitops` targets.
 
 For example, we define two deployments: grafana and prometheus. Both deployments share the same namespace. The deployments a grouped by namespace.
