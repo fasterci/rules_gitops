@@ -52,6 +52,7 @@ func (i *SliceFlags) Set(value string) error {
 var (
 	releaseBranch          = flag.String("release_branch", "master", "filter gitops targets by release branch")
 	bazelCmd               = flag.String("bazel_cmd", "tools/bazel", "bazel binary to use")
+	bazelFlags             SliceFlags
 	workspace              = flag.String("workspace", "", "path to workspace root")
 	repo                   = flag.String("git_repo", "", "git repo location")
 	gitMirror              = flag.String("git_mirror", "", "git mirror location, like /mnt/mirror/bitbucket.tubemogul.info/tm/repo.git for jenkins")
@@ -77,6 +78,7 @@ var (
 )
 
 func init() {
+	flag.Var(&bazelFlags, "bazel_flag", "bazel flag to pass during gitops phase. Can be specified multiple times. Default is empty")
 	flag.Var(&gitopsKind, "gitops_dependencies_kind", "dependency kind(s) to run during gitops phase. Can be specified multiple times. Default is 'k8s_container_push'")
 	flag.Var(&gitopsRuleName, "gitops_dependencies_name", "dependency name(s) to run during gitops phase. Can be specified multiple times. Default is empty")
 	flag.Var(&gitopsRuleAttr, "gitops_dependencies_attr", "dependency attribute(s) to run during gitops phase. Use attribute=value format. Can be specified multiple times. Default is empty")
@@ -266,7 +268,20 @@ func main() {
 						exec.Mustex("", bin)
 					} else {
 						log.Println("target", target, "is not a file, running as a command")
-						exec.Mustex("", *bazelCmd, "run", target)
+
+						args := []string{"run"}
+
+						if len(bazelFlags) > 0 {
+							for _, bazelFlag := range bazelFlags {
+								bazelFlagArgs := strings.Split(bazelFlag, " ")
+
+								args = append(args, bazelFlagArgs...)
+							}
+						}
+
+						args = append(args, target)
+
+						exec.Mustex("", *bazelCmd, args...)
 					}
 				}
 			}()

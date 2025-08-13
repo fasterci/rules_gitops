@@ -15,6 +15,8 @@ def __create_gitops_prs_impl(ctx):
         executables = src_by_train[deployment_branch]
         for exe in executables:
             params += "--resolved_binary {}:{} ".format(deployment_branch, exe.short_path)
+    if ctx.attr.bazel_flag:
+        params += "--bazel_flag {} ".format(ctx.attr.bazel_flag)
     for exe in trans_img_pushes:
         params += "--resolved_push {} ".format(exe.files_to_run.executable.short_path)
     if ctx.attr.release_branch:
