@@ -1,9 +1,6 @@
 """
 Implementation of the `k8s_push` rule based on rules_oci
 """
-
-load("@bazel_skylib//rules:write_file.bzl", "write_file")
-
 # TODO: remove this once rules_oci is updated
 # buildifier: disable=bzl-visibility
 load("@rules_oci//oci/private:push.bzl", "oci_push_lib")
@@ -99,22 +96,61 @@ push_oci_rule = rule(
     # provides = [GitopsPushInfo, DefaultInfo],
 )
 
+
+def _write_tag_file_impl(ctx):
+    jq_bin = ctx.toolchains["@aspect_bazel_lib//lib:jq_toolchain_type"].jqinfo.bin
+    remote_tags = "\n".join(ctx.attr.remote_tags)
+    command = ""
+    if ctx.attr.remote_tags:
+        command += 'echo "${3}" > ${4}\n'
+    if ctx.attr.image_digest_tag:
+        command += "${1} --raw-output '.manifests[].digest' ${2}/index.json | cut -d ':' -f 2 | cut -c 1-7 >> ${4}\n"
+
+    ctx.actions.run_shell(
+        inputs = [ctx.file.image],
+        outputs = [ctx.outputs.out],
+        arguments = [jq_bin.path, ctx.file.image.path, remote_tags, ctx.outputs.out.path],
+        command = command,
+        progress_message = "Extracting digest from %s" % ctx.file.image.short_path,
+        tools = [jq_bin],
+    )
+
+    files = depset(direct = [ctx.outputs.out])
+    return [DefaultInfo(files = files)]
+
+write_tag_file_rule = rule(
+    implementation = _write_tag_file_impl,
+    attrs = {
+        "image": attr.label(
+            allow_single_file = True,
+            mandatory = True,
+        ),
+        "remote_tags": attr.string_list(),
+        "image_digest_tag": attr.bool(default = False),
+        "out": attr.output(mandatory = True),
+        "_jq": oci_push_lib.attrs['_jq'],
+    },
+    toolchains = ["@aspect_bazel_lib//lib:jq_toolchain_type"] + oci_push_lib.toolchains,
+)
+
+
 def push_oci(
         name,
         image,
         repository,
         registry = None,
         image_digest_tag = False,  # buildifier: disable=unused-variable either remove parameter or implement
-        tag = None,
         remote_tags = None,  # file with tags to push
         tags = [],  # bazel tags to add to the push_oci_rule
         visibility = None):
-    if tag:
+    if remote_tags or image_digest_tag:
         tags_label = "_{}_write_tags".format(name)
-        write_file(
+        write_tag_file_rule(
             name = tags_label,
+            image = image,
+            remote_tags = remote_tags,
+            image_digest_tag = image_digest_tag,
             out = "_{}.tags.txt".format(name),
-            content = remote_tags,
         )
         remote_tags = tags_label
 
