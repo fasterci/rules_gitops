@@ -30,7 +30,7 @@ RUNFILES="${PYTHON_RUNFILES:-$(guess_runfiles)}"
 PIDS=()
 function async() {
     # Launch the command asynchronously and track its process id.
-    PYTHON_RUNFILES=${RUNFILES} "$@" &
+    PYTHON_RUNFILES=${RUNFILES} RUNFILES_DIR=${RUNFILES} "$@" &
     PIDS+=($!)
 }
 
