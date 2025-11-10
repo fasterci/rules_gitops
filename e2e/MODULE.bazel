@@ -12,7 +12,7 @@ oci.pull(
 # For each oci.pull call, repeat the "name" here to expose them as dependencies.
 use_repo(oci, "go_image_static")
 
-bazel_dep(name = "rules_gitops", version = "0.50.0")
+bazel_dep(name = "rules_gitops", version = "1.0.0")
 local_path_override(
     module_name = "rules_gitops",
     path = "../",
