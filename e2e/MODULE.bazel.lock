@@ -171,7 +171,7 @@
     "@@rules_gitops+//gitops:extensions.bzl%toolchains": {
       "general": {
         "bzlTransitiveDigest": "7KoML+gmGc0zw78Cvm/P9ybt0yMKHvqdlM+SHqm6cn4=",
-        "usagesDigest": "4FjlkCtO+9j85Tl1A0OQwoMNwmzQpyQQ4BP9VM0rTRI=",
+        "usagesDigest": "ap/BmLzPa2F8VN/x3s9AWnuic+KAHtvkTCRP4uN715A=",
         "recordedFileInputs": {},
         "recordedDirentsInputs": {},
         "envVariables": {},
