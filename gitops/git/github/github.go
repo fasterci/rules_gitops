@@ -20,6 +20,47 @@ var (
 	githubEnterpriseHost = flag.String("github_enterprise_host", "", "The host name of the private enterprise github, e.g. git.corp.adobe.com")
 )
 
+func updateExistingPR(ctx context.Context, gh *github.Client, owner, repo, from, to, title, body string) error {
+	log.Println("PR already exists, updating title and body...")
+
+	// List PRs to find the existing one
+	listOpts := &github.PullRequestListOptions{
+		State: "open",
+		Head:  owner + ":" + from,
+		Base:  to,
+	}
+
+	prs, _, err := gh.PullRequests.List(ctx, owner, repo, listOpts)
+	if err != nil {
+		log.Println("Error listing PRs:", err)
+		return err
+	}
+
+	if len(prs) == 0 {
+		return errors.New("could not find open PR matching the head and base branches")
+	}
+
+	// Update the first matching PR
+	existingPR := prs[0]
+	updatePR := &github.PullRequest{
+		Title: &title,
+		Body:  &body,
+	}
+
+	updatedPR, _, err := gh.PullRequests.Edit(ctx, owner, repo, *existingPR.Number, updatePR)
+	if err != nil {
+		log.Println("Error updating PR:", err)
+		return err
+	}
+
+	if updatedPR.URL != nil {
+		log.Println("Updated existing PR:", *updatedPR.URL)
+	} else {
+		log.Println("Updated existing PR #", *existingPR.Number)
+	}
+	return nil
+}
+
 func CreatePR(from, to, title, body string) error {
 	if *repoOwner == "" {
 		return errors.New("github_repo_owner must be set")
@@ -68,8 +109,7 @@ func CreatePR(from, to, title, body string) error {
 
 	if resp.StatusCode == http.StatusUnprocessableEntity {
 		// Handle the case: "Create PR" request fails because it already exists
-		log.Println("Reusing existing PR")
-		return nil
+		return updateExistingPR(ctx, gh, *repoOwner, *repo, from, to, title, body)
 	}
 
 	// All other github responses
