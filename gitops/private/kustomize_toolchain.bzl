@@ -128,7 +128,6 @@ def _resolved_toolchain_impl(ctx):
 resolved_toolchain = rule(
     implementation = _resolved_toolchain_impl,
     toolchains = ["@rules_gitops//gitops:kustomize_toolchain_type"],
-    incompatible_use_toolchain_transition = True,
 )
 """
     rctx.file("defs.bzl", starlark_content)
