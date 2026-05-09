@@ -3,6 +3,7 @@ load("@aspect_bazel_lib//lib:write_source_files.bzl", "write_source_files")
 load("@rules_gitops//gitops:defs.bzl", "k8s_deploy", "k8s_test_setup")
 load("@rules_gitops//skylib/kustomize:kustomize.bzl", "kustomize")
 load("@rules_oci//oci:defs.bzl", "oci_image", "oci_push")
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
 load("//mirror:defs.bzl", "mirror_image")
 
 # create a simple image for testing
