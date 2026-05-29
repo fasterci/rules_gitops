@@ -11,14 +11,47 @@ governing permissions and limitations under the License.
 */
 package bazel
 
-import "strings"
+import (
+	"os"
+	"strings"
+)
 
 // TargetToExecutable converts bazel target name to respective executable name in bazel-bin
 func TargetToExecutable(target string) string {
 	if !strings.HasPrefix(target, "//") {
 		return target
 	}
-	target = "bazel-bin/" + target[2:]
-	target = strings.Replace(target, ":", "/", 1)
-	return target
+	t := target[2:]
+	var pkg, name string
+	idx := strings.Index(t, ":")
+	if idx >= 0 {
+		pkg = t[:idx]
+		name = t[idx+1:]
+	} else {
+		pkg = t
+		lastSlash := strings.LastIndex(pkg, "/")
+		if lastSlash >= 0 {
+			name = pkg[lastSlash+1:]
+		} else {
+			name = pkg
+		}
+	}
+
+	// Candidates in order of preference
+	candidates := []string{
+		"bazel-bin/" + pkg + "/" + name + "_/" + name,
+		"bazel-bin/" + pkg + "/" + name + "_/" + name + ".exe",
+		"bazel-bin/" + pkg + "/" + name,
+		"bazel-bin/" + pkg + "/" + name + ".exe",
+	}
+
+	for _, c := range candidates {
+		if _, err := os.Stat(c); err == nil {
+			return c
+		}
+	}
+
+	// Default fallback (standard layout)
+	return "bazel-bin/" + pkg + "/" + name
 }
+

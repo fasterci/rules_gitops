@@ -11,7 +11,10 @@ governing permissions and limitations under the License.
 */
 package bazel
 
-import "testing"
+import (
+	"os"
+	"testing"
+)
 
 func TestTargetToExecutableHappypath(t *testing.T) {
 	s := TargetToExecutable("//rtb/bidder:rtb-uat-k8s01-iad-1b-bidder-first-uat.gitops")
@@ -19,3 +22,26 @@ func TestTargetToExecutableHappypath(t *testing.T) {
 		t.Error("unexpected result", s)
 	}
 }
+
+func TestTargetToExecutableGoLayout(t *testing.T) {
+	// Create a dummy file to simulate the go binary in bazel-bin
+	dir := "bazel-bin/rtb/bidder/rtb-uat-k8s01-iad-1b-bidder-first-uat.gitops_"
+	err := os.MkdirAll(dir, 0755)
+	if err != nil {
+		t.Fatalf("failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll("bazel-bin")
+
+	filePath := dir + "/rtb-uat-k8s01-iad-1b-bidder-first-uat.gitops"
+	err = os.WriteFile(filePath, []byte("dummy"), 0644)
+	if err != nil {
+		t.Fatalf("failed to create temp file: %v", err)
+	}
+
+	s := TargetToExecutable("//rtb/bidder:rtb-uat-k8s01-iad-1b-bidder-first-uat.gitops")
+	expected := "bazel-bin/rtb/bidder/rtb-uat-k8s01-iad-1b-bidder-first-uat.gitops_/rtb-uat-k8s01-iad-1b-bidder-first-uat.gitops"
+	if s != expected {
+		t.Errorf("expected %s, got %s", expected, s)
+	}
+}
+
