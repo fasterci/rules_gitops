@@ -51,7 +51,7 @@ func (i *SliceFlags) Set(value string) error {
 
 var (
 	releaseBranch          = flag.String("release_branch", "master", "filter gitops targets by release branch")
-	bazelCmd               = flag.String("bazel_cmd", "tools/bazel", "bazel binary to use")
+	bazelCmd               = flag.String("bazel_cmd", "bazel", "bazel binary to use")
 	bazelFlags             SliceFlags
 	workspace              = flag.String("workspace", "", "path to workspace root")
 	repo                   = flag.String("git_repo", "", "git repo location")

@@ -12,6 +12,7 @@ governing permissions and limitations under the License.
 package git
 
 import (
+	"bufio"
 	"fmt"
 	"log"
 	"os"
@@ -32,34 +33,50 @@ func Clone(repo, dir, mirrorDir, primaryBranch, gitopsPath string) (*Repo, error
 	if err := os.RemoveAll(dir); err != nil {
 		return nil, fmt.Errorf("unable to clone repo: %w", err)
 	}
+	remoteName := "origin"
+	args := []string{"clone", "--no-checkout", "--filter=blob:none", "--no-tags", "--origin", remoteName}
 	if mirrorDir != "" {
-		exec.Mustex("", "git", "clone", "-n", "--reference", mirrorDir, repo, dir)
-	} else {
-		exec.Mustex("", "git", "clone", "-n", repo, dir)
+		args = append(args, "--reference", mirrorDir)
 	}
-	exec.Mustex(dir, "git", "config", "--local", "core.sparsecheckout", "true")
-	genPath := fmt.Sprintf("%s/\n", gitopsPath)
-	if err := os.WriteFile(filepath.Join(dir, ".git/info/sparse-checkout"), []byte(genPath), 0644); err != nil {
-		return nil, fmt.Errorf("unable to create .git/info/sparse-checkout: %w", err)
+	args = append(args, repo, dir)
+	exec.Mustex("", "git", args...)
+	// Enable sparse-checkout when restricting to a subdir
+	if !isRootPath(gitopsPath) {
+		exec.Mustex(dir, "git", "config", "--local", "core.sparsecheckout", "true")
+		genPath := fmt.Sprintf("%s/\n", gitopsPath)
+		if err := os.WriteFile(filepath.Join(dir, ".git/info/sparse-checkout"), []byte(genPath), 0644); err != nil {
+			return nil, fmt.Errorf("unable to create .git/info/sparse-checkout: %w", err)
+		}
 	}
 	exec.Mustex(dir, "git", "checkout", primaryBranch)
 
 	return &Repo{
-		Dir: dir,
+		Dir:        dir,
+		RemoteName: remoteName,
 	}, nil
 }
 
 func CloneOrCheckout(repo, dir, mirrorDir, primaryBranch, gitopsPath, branchPrefix string) (r *Repo, err error) {
 	newRepo := false
+	remoteName := "origin"
 	if _, err = os.Stat(dir + "/.git"); os.IsNotExist(err) {
 		newRepo = true
 		if err = os.MkdirAll(filepath.Dir(dir), os.ModePerm); err != nil && !os.IsExist(err) {
 			return nil, err
 		}
+		args := []string{"clone", "--no-checkout", "--filter=blob:none", "--no-tags", "--origin", remoteName}
 		if mirrorDir != "" {
-			exec.Mustex("", "git", "clone", "-n", "--reference", mirrorDir, repo, dir)
-		} else {
-			exec.Mustex("", "git", "clone", "-n", repo, dir)
+			args = append(args, "--reference", mirrorDir)
+		}
+		args = append(args, repo, dir)
+		exec.Mustex("", "git", args...)
+		// Enable sparse-checkout when restricting to a subdir
+		if !isRootPath(gitopsPath) {
+			exec.Mustex(dir, "git", "config", "--local", "core.sparsecheckout", "true")
+			genPath := fmt.Sprintf("%s/\n", gitopsPath)
+			if err := os.WriteFile(filepath.Join(dir, ".git/info/sparse-checkout"), []byte(genPath), 0644); err != nil {
+				return nil, fmt.Errorf("unable to create .git/info/sparse-checkout: %w", err)
+			}
 		}
 	} else {
 		//existing repo
@@ -69,11 +86,13 @@ func CloneOrCheckout(repo, dir, mirrorDir, primaryBranch, gitopsPath, branchPref
 	exec.Mustex(dir, "git", "checkout", "-f", primaryBranch)
 	if !newRepo {
 		exec.Mustex(dir, "git", "fetch", "origin", "--prune")
+		exec.Mustex(dir, "git", "reset", "--hard", "origin/"+primaryBranch)
 		DeleteLocalBranches(dir, branchPrefix)
 	}
 
 	return &Repo{
-		Dir: dir,
+		Dir:        dir,
+		RemoteName: remoteName,
 	}, nil
 }
 
@@ -100,11 +119,20 @@ func DeleteLocalBranches(dir, branchprefix string) {
 type Repo struct {
 	// Dir is the location of the git repo.
 	Dir string
+	// RemoteName is the name of the remote that tracks upstream repository.
+	RemoteName string
 }
 
 // Clean cleans up the repo
 func (r *Repo) Clean() error {
 	return os.RemoveAll(r.Dir)
+}
+
+// Fetch branches from the remote repository based on a specified pattern.
+// The branches will be be added to the list tracked remote branches ready to be pushed.
+func (r *Repo) Fetch(pattern string) {
+	exec.Mustex(r.Dir, "git", "remote", "set-branches", "--add", r.RemoteName, pattern)
+	exec.Mustex(r.Dir, "git", "fetch", "--force", "--filter=blob:none", "--no-tags", r.RemoteName)
 }
 
 // SwitchToBranch switch the repo to specified branch and checkout primaryBranch files over it.
@@ -137,12 +165,38 @@ func (r *Repo) GetLastCommitMessage() (msg string) {
 
 // Commit all changes to the current branch. returns true if there were any changes
 func (r *Repo) Commit(message, gitopsPath string) bool {
-	exec.Mustex(r.Dir, "git", "add", gitopsPath)
+	if isRootPath(gitopsPath) {
+		exec.Mustex(r.Dir, "git", "add", ".")
+	} else {
+		exec.Mustex(r.Dir, "git", "add", gitopsPath)
+	}
 	if r.IsClean() {
 		return false
 	}
 	exec.Mustex(r.Dir, "git", "commit", "-a", "-m", message)
 	return true
+}
+
+// RestoreFile restores the specified file in the repository to its original state
+func (r *Repo) RestoreFile(fileName string) {
+	exec.Mustex(r.Dir, "git", "checkout", "--", fileName)
+}
+
+// GetChangedFiles returns a list of files that have been changed in the repository
+func (r *Repo) GetChangedFiles() []string {
+	s, err := exec.Ex(r.Dir, "git", "diff", "--name-only")
+	if err != nil {
+		log.Fatalf("ERROR: %s", err)
+	}
+	var files []string
+	sc := bufio.NewScanner(strings.NewReader(s))
+	for sc.Scan() {
+		files = append(files, sc.Text())
+	}
+	if err := sc.Err(); err != nil {
+		log.Fatalf("ERROR: %s", err)
+	}
+	return files
 }
 
 // IsClean returns true if there is no local changes (nothing to commit)
@@ -159,6 +213,11 @@ func (r *Repo) IsClean() bool {
 // Push pushes all local changes to the remote repository
 // all changes should be already commited
 func (r *Repo) Push(branches []string) {
-	args := append([]string{"push", "origin", "-f", "--set-upstream"}, branches...)
+	args := append([]string{"push", r.RemoteName, "-f", "--set-upstream"}, branches...)
 	exec.Mustex(r.Dir, "git", args...)
+}
+
+// isRootPath is an internal helper to detect "full repo" case.
+func isRootPath(gitopsPath string) bool {
+	return gitopsPath == "" || gitopsPath == "."
 }
