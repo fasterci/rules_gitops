@@ -224,7 +224,9 @@ func TestRepoBranchOperationsAndCommit(t *testing.T) {
 	}
 
 	// Push the branch
-	repo.Push([]string{"deploy/dev"})
+	if err := repo.Push([]string{"deploy/dev"}); err != nil {
+		t.Fatalf("push failed: %v", err)
+	}
 
 	// Scenario 4: Recreate branch (discard and reset to master)
 	repo.RecreateBranch("deploy/dev", "master")
@@ -279,7 +281,9 @@ func TestCloneUpdatePushVerify(t *testing.T) {
 	}
 
 	// Push the changes to the remote
-	repo.Push([]string{"deploy/prod"})
+	if err := repo.Push([]string{"deploy/prod"}); err != nil {
+		t.Fatalf("push failed: %v", err)
+	}
 
 	// Verify the changes in the remote by cloning to a fresh directory and checking out the branch
 	verifyDir, err := os.MkdirTemp("", "clone-push-verify-*")
@@ -349,7 +353,9 @@ func TestBranchRecreationOnTargetDeletion(t *testing.T) {
 		t.Fatal("expected changes to be committed")
 	}
 
-	repo.Push([]string{branchName})
+	if err := repo.Push([]string{branchName}); err != nil {
+		t.Fatalf("push failed: %v", err)
+	}
 
 	// Step 2: Simulate second run of gitops tool on reused workspace, where target2 has been deleted
 	// Switch back to master
@@ -404,6 +410,127 @@ func TestBranchRecreationOnTargetDeletion(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(localDir, "cloud/target1.yaml")); !os.IsNotExist(err) {
 		t.Error("expected cloud/target1.yaml to be discarded after branch recreation")
 	}
+}
+
+func runPrerSim(t *testing.T, remoteDir string, pushRetryMax int) error {
+	localDir, err := os.MkdirTemp("", "prer-sim-*")
+	if err != nil {
+		t.Fatalf("failed to create temp clone dir: %v", err)
+	}
+	defer os.RemoveAll(localDir)
+
+	var workdir *Repo
+	var pushErr error
+	remoteDeleted := false
+
+	for attempt := 0; attempt <= pushRetryMax; attempt++ {
+		workdir, err = CloneOrCheckout(remoteDir, localDir, "", "master", "cloud", "deploy/")
+		if err != nil {
+			t.Fatalf("failed to clone or checkout: %v", err)
+		}
+		configureGitUser(t, localDir)
+
+		branch := "deploy/dev"
+		_ = workdir.SwitchToBranch(branch, "master")
+
+		// Simulate target generation by creating cloud/app2.yaml
+		err = os.WriteFile(filepath.Join(localDir, "cloud/app2.yaml"), []byte("image: app:v2"), 0644)
+		if err != nil {
+			t.Fatalf("failed to write file: %v", err)
+		}
+
+		// Commit the changes
+		hasChanges := workdir.Commit("GitOps commit", "cloud")
+		if !hasChanges {
+			t.Fatal("expected changes to commit")
+		}
+
+		// Between commit and push, on the first attempt, simulate the merge & deletion of deploy/dev on remote
+		if attempt == 0 && !remoteDeleted {
+			// Go to remote and merge deploy/dev into master
+			mustRun(t, remoteDir, "git", "checkout", "master")
+			mustRun(t, remoteDir, "git", "merge", "deploy/dev")
+			// Delete deploy/dev branch on remote
+			mustRun(t, remoteDir, "git", "branch", "-D", "deploy/dev")
+			remoteDeleted = true
+		}
+
+		pushErr = workdir.Push([]string{branch})
+		if pushErr == nil {
+			break
+		}
+	}
+
+	return pushErr
+}
+
+func TestPushForceWithLeaseOnDeletedBranch(t *testing.T) {
+	// Scenario 1: With pushRetryMax = 0, the push should fail.
+	t.Run("retry_max_0_fails", func(t *testing.T) {
+		remoteDir := createMockRemote(t, map[string]string{
+			"readme.md": "documentation",
+		})
+		defer os.RemoveAll(remoteDir)
+
+		// Create deploy/dev on remote
+		mustRun(t, remoteDir, "git", "checkout", "-b", "deploy/dev")
+		absPath := filepath.Join(remoteDir, "cloud/app1.yaml")
+		if err := os.MkdirAll(filepath.Dir(absPath), 0755); err != nil {
+			t.Fatalf("failed to create directory: %v", err)
+		}
+		if err := os.WriteFile(absPath, []byte("image: app:v1"), 0644); err != nil {
+			t.Fatalf("failed to write file: %v", err)
+		}
+		mustRun(t, remoteDir, "git", "add", "cloud/app1.yaml")
+		mustRun(t, remoteDir, "git", "commit", "-m", "add app1")
+		mustRun(t, remoteDir, "git", "checkout", "master")
+
+		err := runPrerSim(t, remoteDir, 0)
+		if err == nil {
+			t.Error("expected push to fail with retry max 0, but it succeeded")
+		}
+	})
+
+	// Scenario 2: With pushRetryMax = 1, the push should succeed on the second attempt.
+	t.Run("retry_max_1_succeeds", func(t *testing.T) {
+		remoteDir := createMockRemote(t, map[string]string{
+			"readme.md": "documentation",
+		})
+		defer os.RemoveAll(remoteDir)
+
+		// Create deploy/dev on remote
+		mustRun(t, remoteDir, "git", "checkout", "-b", "deploy/dev")
+		absPath := filepath.Join(remoteDir, "cloud/app1.yaml")
+		if err := os.MkdirAll(filepath.Dir(absPath), 0755); err != nil {
+			t.Fatalf("failed to create directory: %v", err)
+		}
+		if err := os.WriteFile(absPath, []byte("image: app:v1"), 0644); err != nil {
+			t.Fatalf("failed to write file: %v", err)
+		}
+		mustRun(t, remoteDir, "git", "add", "cloud/app1.yaml")
+		mustRun(t, remoteDir, "git", "commit", "-m", "add app1")
+		mustRun(t, remoteDir, "git", "checkout", "master")
+
+		err := runPrerSim(t, remoteDir, 1)
+		if err != nil {
+			t.Errorf("expected push to succeed with retry max 1, but it failed: %v", err)
+		}
+
+		// Verify the final pushed state on remote has both app1.yaml and app2.yaml
+		verifyDir, err := os.MkdirTemp("", "verify-remote-*")
+		if err != nil {
+			t.Fatalf("failed to create temp verify dir: %v", err)
+		}
+		defer os.RemoveAll(verifyDir)
+
+		mustRun(t, verifyDir, "git", "clone", "--branch", "deploy/dev", remoteDir, verifyDir)
+		if _, err := os.Stat(filepath.Join(verifyDir, "cloud/app1.yaml")); os.IsNotExist(err) {
+			t.Error("expected cloud/app1.yaml to exist on remote deploy/dev branch")
+		}
+		if _, err := os.Stat(filepath.Join(verifyDir, "cloud/app2.yaml")); os.IsNotExist(err) {
+			t.Error("expected cloud/app2.yaml to exist on remote deploy/dev branch")
+		}
+	})
 }
 
 

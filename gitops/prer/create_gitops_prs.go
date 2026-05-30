@@ -75,6 +75,7 @@ var (
 	dryRun                 = flag.Bool("dry_run", false, "Do not create PRs, just print what would be done")
 	resolvedPushes         SliceFlags
 	resolvedBinaries       SliceFlags
+	pushRetryMax           = flag.Int("push_retry_max", 2, "maximum number of push retries on race conditions")
 )
 
 func init() {
@@ -174,130 +175,144 @@ func main() {
 		}
 		defer os.RemoveAll(gitopsdir)
 	}
-	workdir, err := git.CloneOrCheckout(*repo, gitopsdir, *gitMirror, *prInto, *gitopsPath, *deployBranchPrefix)
-	if err != nil {
-		log.Fatalf("Unable to clone repo: %v", err)
-	}
-
-	var updatedGitopsTargets []string
 	var updatedGitopsBranches []string
+	var pushErr error
+	for attempt := 0; attempt <= *pushRetryMax; attempt++ {
+		if attempt > 0 {
+			log.Printf("Push failed: %v. Retrying checkout, manifest generation, and push (attempt %d/%d)...", pushErr, attempt, *pushRetryMax)
+		}
+		workdir, err := git.CloneOrCheckout(*repo, gitopsdir, *gitMirror, *prInto, *gitopsPath, *deployBranchPrefix)
+		if err != nil {
+			log.Fatalf("Unable to clone repo: %v", err)
+		}
 
-	for train, targets := range releaseTrains {
-		log.Println("train", train)
-		branch := fmt.Sprintf("%s%s%s", *deployBranchPrefix, train, *deploymentBranchSuffix)
-		newBranch := workdir.SwitchToBranch(branch, *prInto)
-		if !newBranch {
-			// Find if we need to recreate the branch because target was deleted
-			msg := workdir.GetLastCommitMessage()
-			targetset := make(map[string]bool)
-			for _, t := range targets {
-				targetset[t] = true
-			}
-			oldtargets := commitmsg.ExtractTargets(msg)
-			for _, t := range oldtargets {
-				if !targetset[t] {
-					// target t is not present in a new list
-					workdir.RecreateBranch(branch, *prInto)
-					break
+		var updatedGitopsTargets []string
+		updatedGitopsBranches = nil
+
+		for train, targets := range releaseTrains {
+			log.Println("train", train)
+			branch := fmt.Sprintf("%s%s%s", *deployBranchPrefix, train, *deploymentBranchSuffix)
+			newBranch := workdir.SwitchToBranch(branch, *prInto)
+			if !newBranch {
+				// Find if we need to recreate the branch because target was deleted
+				msg := workdir.GetLastCommitMessage()
+				targetset := make(map[string]bool)
+				for _, t := range targets {
+					targetset[t] = true
 				}
-			}
-		}
-		for _, target := range targets {
-			log.Println("train", train, "target", target)
-			bin := bazel.TargetToExecutable(target)
-			exec.Mustex("", bin, "--nopush", "--deployment_root", gitopsdir)
-		}
-		if workdir.Commit(fmt.Sprintf("GitOps for release branch %s from %s commit %s\n%s", *releaseBranch, *branchName, *gitCommit, commitmsg.Generate(targets)), *gitopsPath) {
-			log.Println("branch", branch, "has changes, push is required")
-			updatedGitopsTargets = append(updatedGitopsTargets, targets...)
-			updatedGitopsBranches = append(updatedGitopsBranches, branch)
-		}
-	}
-	if len(updatedGitopsTargets) == 0 {
-		log.Println("No gitops changes to push")
-		return
-	}
-
-	// Push images
-	if len(resolvedPushes) > 0 {
-		var eg errgroup.Group
-		eg.SetLimit(*pushParallelism)
-		for _, rp := range resolvedPushes {
-			cmd := rp
-			eg.Go(func() error {
-				exec.Mustex("", cmd)
-				return nil
-			})
-		}
-		eg.Wait()
-	} else {
-
-		// Create space separated set('//a' '//b' ... '//z') of targets.
-		// Target names need to be quoted to protect from + and other special characters
-		depsList := "set('" + strings.Join(updatedGitopsTargets, "' '") + "')"
-		var qv []string
-		for _, kind := range gitopsKind {
-			q := fmt.Sprintf("kind(%s, deps(%s))", kind, depsList)
-			qv = append(qv, q)
-		}
-		for _, name := range gitopsRuleName {
-			q := fmt.Sprintf("filter(%s, deps(%s))", name, depsList)
-			qv = append(qv, q)
-		}
-		for _, attr := range gitopsRuleAttr {
-			name, value, found := strings.Cut(attr, "=")
-			if !found {
-				value = ".*"
-			}
-			q := fmt.Sprintf("attr(%s, %s, deps(%s))", name, value, depsList)
-			qv = append(qv, q)
-		}
-
-		query := strings.Join(qv, " union ")
-		qr := bazelQuery(query)
-		targetsCh := make(chan string)
-		var wg sync.WaitGroup
-		wg.Add(*pushParallelism)
-		for i := 0; i < *pushParallelism; i++ {
-			go func() {
-				defer wg.Done()
-				for target := range targetsCh {
-					bin := bazel.TargetToExecutable(target)
-					fi, err := os.Stat(bin)
-					if err == nil && fi.Mode().IsRegular() {
-						exec.Mustex("", bin)
-					} else {
-						log.Println("target", target, "is not a file, running as a command")
-
-						args := []string{"run"}
-
-						if len(bazelFlags) > 0 {
-							for _, bazelFlag := range bazelFlags {
-								bazelFlagArgs := strings.Split(bazelFlag, " ")
-
-								args = append(args, bazelFlagArgs...)
-							}
-						}
-
-						args = append(args, target)
-
-						exec.Mustex("", *bazelCmd, args...)
+				oldtargets := commitmsg.ExtractTargets(msg)
+				for _, t := range oldtargets {
+					if !targetset[t] {
+						// target t is not present in a new list
+						workdir.RecreateBranch(branch, *prInto)
+						break
 					}
 				}
-			}()
+			}
+			for _, target := range targets {
+				log.Println("train", train, "target", target)
+				bin := bazel.TargetToExecutable(target)
+				exec.Mustex("", bin, "--nopush", "--deployment_root", gitopsdir)
+			}
+			if workdir.Commit(fmt.Sprintf("GitOps for release branch %s from %s commit %s\n%s", *releaseBranch, *branchName, *gitCommit, commitmsg.Generate(targets)), *gitopsPath) {
+				log.Println("branch", branch, "has changes, push is required")
+				updatedGitopsTargets = append(updatedGitopsTargets, targets...)
+				updatedGitopsBranches = append(updatedGitopsBranches, branch)
+			}
 		}
-		for _, t := range qr.Results {
-			targetsCh <- t.Target.Rule.GetName()
+		if len(updatedGitopsTargets) == 0 {
+			log.Println("No gitops changes to push")
+			break
 		}
-		close(targetsCh)
-		wg.Wait()
-	}
 
-	if *dryRun {
-		log.Println("dry-run: updated gitops branches: ", updatedGitopsBranches)
-		log.Println("dry-run: skipping push")
-	} else {
-		workdir.Push(updatedGitopsBranches)
+		// Push images
+		if len(resolvedPushes) > 0 {
+			var eg errgroup.Group
+			eg.SetLimit(*pushParallelism)
+			for _, rp := range resolvedPushes {
+				cmd := rp
+				eg.Go(func() error {
+					exec.Mustex("", cmd)
+					return nil
+				})
+			}
+			eg.Wait()
+		} else {
+
+			// Create space separated set('//a' '//b' ... '//z') of targets.
+			// Target names need to be quoted to protect from + and other special characters
+			depsList := "set('" + strings.Join(updatedGitopsTargets, "' '") + "')"
+			var qv []string
+			for _, kind := range gitopsKind {
+				q := fmt.Sprintf("kind(%s, deps(%s))", kind, depsList)
+				qv = append(qv, q)
+			}
+			for _, name := range gitopsRuleName {
+				q := fmt.Sprintf("filter(%s, deps(%s))", name, depsList)
+				qv = append(qv, q)
+			}
+			for _, attr := range gitopsRuleAttr {
+				name, value, found := strings.Cut(attr, "=")
+				if !found {
+					value = ".*"
+				}
+				q := fmt.Sprintf("attr(%s, %s, deps(%s))", name, value, depsList)
+				qv = append(qv, q)
+			}
+
+			query := strings.Join(qv, " union ")
+			qr := bazelQuery(query)
+			targetsCh := make(chan string)
+			var wg sync.WaitGroup
+			wg.Add(*pushParallelism)
+			for i := 0; i < *pushParallelism; i++ {
+				go func() {
+					defer wg.Done()
+					for target := range targetsCh {
+						bin := bazel.TargetToExecutable(target)
+						fi, err := os.Stat(bin)
+						if err == nil && fi.Mode().IsRegular() {
+							exec.Mustex("", bin)
+						} else {
+							log.Println("target", target, "is not a file, running as a command")
+
+							args := []string{"run"}
+
+							if len(bazelFlags) > 0 {
+								for _, bazelFlag := range bazelFlags {
+									bazelFlagArgs := strings.Split(bazelFlag, " ")
+
+									args = append(args, bazelFlagArgs...)
+								}
+							}
+
+							args = append(args, target)
+
+							exec.Mustex("", *bazelCmd, args...)
+						}
+					}
+				}()
+			}
+			for _, t := range qr.Results {
+				targetsCh <- t.Target.Rule.GetName()
+			}
+			close(targetsCh)
+			wg.Wait()
+		}
+
+		if *dryRun {
+			log.Println("dry-run: updated gitops branches: ", updatedGitopsBranches)
+			log.Println("dry-run: skipping push")
+			break
+		} else {
+			pushErr = workdir.Push(updatedGitopsBranches)
+			if pushErr == nil {
+				break
+			}
+		}
+	}
+	if pushErr != nil {
+		log.Fatalf("Push failed after %d attempts: %v", *pushRetryMax+1, pushErr)
 	}
 
 	for _, branch := range updatedGitopsBranches {

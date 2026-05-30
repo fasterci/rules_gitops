@@ -212,9 +212,10 @@ func (r *Repo) IsClean() bool {
 
 // Push pushes all local changes to the remote repository
 // all changes should be already commited
-func (r *Repo) Push(branches []string) {
-	args := append([]string{"push", r.RemoteName, "-f", "--set-upstream"}, branches...)
-	exec.Mustex(r.Dir, "git", args...)
+func (r *Repo) Push(branches []string) error {
+	args := append([]string{"push", r.RemoteName, "--force-with-lease", "--set-upstream"}, branches...)
+	_, err := exec.Ex(r.Dir, "git", args...)
+	return err
 }
 
 // isRootPath is an internal helper to detect "full repo" case.

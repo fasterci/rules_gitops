@@ -39,6 +39,10 @@ From the release you wish to use:
 <https://github.com/fasterci/rules_gitops/releases>
 copy the MODULE.bazel snippet into your `MODULE.bazel` file.
 
+### Prerequisites
+
+* **Git**: A minimum Git version of **2.19.0** is required for runtime operations due to the use of partial clones (`--filter=blob:none`) and other modern clone/fetch options (e.g. `--no-tags`). If you are running the test suite, Git **2.28.0** or later is required due to test dependencies (specifically `git init --initial-branch`).
+
 
 <a name="k8s_deploy"></a>
 ## k8s_deploy
@@ -427,6 +431,8 @@ The `GIT_*` variables describe the current state of the Git repository.
 The `--git_repo` parameter defines the remote repository URL. In this case remote repository matches the repository of the working copy. The `--git_mirror` parameter is an optimization used to speed up the target repository clone process using reference repository (see `git clone --reference`). The `--git-server` parameter selects the type of Git server.
 
 The `--release_branch` specifies the value of the ***release_branch_prefix*** attribute of `gitops` targets (see [k8s_deploy](#k8s_deploy)). The `--gitops_pr_into` defines the target branch for newly created pull requests. The `--branch_name` and `--git_commit` are the values used in the pull request commit message.
+
+To handle potential race conditions (e.g., if a deployment branch is merged and deleted on the remote server while the tool is running), the `--push_retry_max` flag can be set (defaults to `2`). It will retry cloning/checking out the repository, manifest rendering, committing, and pushing up to the configured limit if the git push fails because of a mismatch (e.g. branch deleted or updated on remote).
 
 The `create_gitops_prs` tool will query all `gitops` targets which have set the ***deploy_branch*** attribute (see [k8s_deploy](#k8s_deploy)) and the ***release_branch_prefix*** attribute value that matches the `release_branch` parameter.
 
