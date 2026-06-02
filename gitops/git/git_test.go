@@ -6,8 +6,10 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/fasterci/rules_gitops/gitops/commitmsg"
+	"github.com/fasterci/rules_gitops/gitops/exec"
 )
 
 func mustRun(t *testing.T, dir string, name string, args ...string) string {
@@ -531,6 +533,53 @@ func TestPushForceWithLeaseOnDeletedBranch(t *testing.T) {
 			t.Error("expected cloud/app2.yaml to exist on remote deploy/dev branch")
 		}
 	})
+}
+
+func TestGitTimeout(t *testing.T) {
+	// 1. Verify exec.ExWithTimeout fails with extremely short timeout
+	_, err := exec.ExWithTimeout(1*time.Microsecond, "", "git", "version")
+	if err == nil {
+		t.Fatal("expected command to fail due to timeout, but got no error")
+	}
+	if !strings.Contains(err.Error(), "killed") && !strings.Contains(err.Error(), "deadline exceeded") && !strings.Contains(err.Error(), "canceled") {
+		t.Errorf("expected timeout/killed/deadline exceeded error, got: %v", err)
+	}
+
+	// 2. Verify git.Repo.Push fails and returns error when Timeout is exceeded
+	files := map[string]string{
+		"cloud/app.yaml": "image: app:v1",
+	}
+	remoteDir := createMockRemote(t, files)
+	defer os.RemoveAll(remoteDir)
+
+	localDir, err := os.MkdirTemp("", "push-timeout-*")
+	if err != nil {
+		t.Fatalf("failed to create temp clone dir: %v", err)
+	}
+	defer os.RemoveAll(localDir)
+
+	repo, err := Clone(remoteDir, localDir, "", "master", "cloud")
+	if err != nil {
+		t.Fatalf("failed to clone: %v", err)
+	}
+	configureGitUser(t, localDir)
+
+	// Save original timeout and restore it afterwards
+	origTimeout := *Timeout
+	defer func() {
+		*Timeout = origTimeout
+	}()
+
+	// Set timeout to 1 microsecond - guaranteed to time out on push
+	*Timeout = 1 * time.Microsecond
+
+	err = repo.Push([]string{"master"})
+	if err == nil {
+		t.Fatal("expected push to fail due to timeout, but it succeeded")
+	}
+	if !strings.Contains(err.Error(), "killed") && !strings.Contains(err.Error(), "deadline exceeded") && !strings.Contains(err.Error(), "canceled") {
+		t.Errorf("expected push to fail with timeout/killed/deadline exceeded error, got: %v", err)
+	}
 }
 
 
