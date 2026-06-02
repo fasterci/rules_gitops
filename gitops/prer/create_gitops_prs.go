@@ -12,6 +12,7 @@ governing permissions and limitations under the License.
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
@@ -22,8 +23,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/fasterci/rules_gitops/gitops/analysis"
-	"github.com/fasterci/rules_gitops/gitops/bazel"
 	"github.com/fasterci/rules_gitops/gitops/commitmsg"
 	"github.com/fasterci/rules_gitops/gitops/exec"
 	"github.com/fasterci/rules_gitops/gitops/git"
@@ -31,7 +30,6 @@ import (
 	"github.com/fasterci/rules_gitops/gitops/git/github"
 	"github.com/fasterci/rules_gitops/gitops/git/gitlab"
 	"golang.org/x/sync/errgroup"
-	"google.golang.org/protobuf/proto"
 )
 
 func init() {
@@ -90,9 +88,26 @@ func init() {
 	flag.StringVar(&gitopsdir, "gitopsdir", "", "do not use temporary directory for gitops, use this directory instead")
 }
 
-func bazelQuery(query string) *analysis.CqueryResult {
+type GitopsTarget struct {
+	Target           string `json:"target"`
+	Binary           string `json:"executable"`
+	DeploymentBranch string `json:"deployment_branch"`
+}
+
+func cleanTarget(target string) string {
+	if strings.HasPrefix(target, "@@//") {
+		return target[2:]
+	}
+	if strings.HasPrefix(target, "@//") {
+		return target[1:]
+	}
+	return target
+}
+
+func bazelQueryTargets(query string) []GitopsTarget {
 	log.Println("Executing bazel cquery ", query)
-	cmd := oe.Command(*bazelCmd, "cquery", query, "--output=proto")
+	starlarkExpr := `json.encode(struct(deployment_branch = getattr(providers(target)['//gitops:provider.bzl%GitopsArtifactsInfo'], 'deployment_branch', '') if '//gitops:provider.bzl%GitopsArtifactsInfo' in providers(target) else '', target = str(target.label), executable = providers(target)['DefaultInfo'].files_to_run.executable.path if providers(target)['DefaultInfo'].files_to_run.executable else ''))`
+	cmd := oe.Command(*bazelCmd, "cquery", "--implicit_deps=false", query, "--output=starlark", "--starlark:expr="+starlarkExpr)
 	stderr, err := cmd.StderrPipe()
 	if err != nil {
 		log.Fatal(err)
@@ -100,15 +115,23 @@ func bazelQuery(query string) *analysis.CqueryResult {
 	go func() {
 		io.Copy(os.Stderr, stderr)
 	}()
-	buildproto, err := cmd.Output()
+	out, err := cmd.Output()
 	if err != nil {
 		log.Fatal(err)
 	}
-	qr := &analysis.CqueryResult{}
-	if err := proto.Unmarshal(buildproto, qr); err != nil {
-		log.Fatal(err)
+	var targets []GitopsTarget
+	for _, line := range strings.Split(string(out), "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+		var gt GitopsTarget
+		if err := json.Unmarshal([]byte(line), &gt); err != nil {
+			log.Fatalf("failed to unmarshal JSON line %q: %v", line, err)
+		}
+		targets = append(targets, gt)
 	}
-	return qr
+	return targets
 }
 
 func bazelQueryPaths(query string) []string {
@@ -158,27 +181,24 @@ func main() {
 		log.Fatalf("unknown vcs host: %s", *gitHost)
 	}
 
-	releaseTrains := make(map[string][]string)
+	releaseTrains := make(map[string][]GitopsTarget)
 	if len(resolvedBinaries) > 0 {
 		for _, rb := range resolvedBinaries {
 			releaseTrain, bin, found := strings.Cut(rb, ":")
 			if !found {
 				log.Fatalf("resolved_binaries: invalid resolved_binary format: %s", rb)
 			}
-			releaseTrains[releaseTrain] = append(releaseTrains[releaseTrain], bin)
+			releaseTrains[releaseTrain] = append(releaseTrains[releaseTrain], GitopsTarget{Target: bin, Binary: bin})
 		}
 	} else {
-
 		q := fmt.Sprintf("attr(deployment_branch, \".+\", attr(release_branch_prefix, \"%s\", kind(gitops, %s)))", *releaseBranch, *target)
-		qr := bazelQuery(q)
-		for _, t := range qr.Results {
-			var releaseTrain string
-			for _, a := range t.Target.GetRule().GetAttribute() {
-				if a.GetName() == "deployment_branch" {
-					releaseTrain = a.GetStringValue()
-				}
-			}
-			releaseTrains[releaseTrain] = append(releaseTrains[releaseTrain], t.Target.Rule.GetName())
+		results := bazelQueryTargets(q)
+		if *dryRun {
+			log.Printf("Found Targets: %v", results)
+		}
+		for _, t := range results {
+			targetName := cleanTarget(t.Target)
+			releaseTrains[t.DeploymentBranch] = append(releaseTrains[t.DeploymentBranch], GitopsTarget{Target: targetName, Binary: t.Binary, DeploymentBranch: t.DeploymentBranch})
 		}
 		if (len(releaseTrains)) == 0 {
 			log.Println("No matching targets found")
@@ -189,7 +209,7 @@ func main() {
 	for train, targets := range releaseTrains {
 		fmt.Println(train)
 		for _, t := range targets {
-			fmt.Println(" ", t)
+			fmt.Println(" ", t.Target)
 		}
 	}
 
@@ -224,7 +244,7 @@ func main() {
 				msg := workdir.GetLastCommitMessage()
 				targetset := make(map[string]bool)
 				for _, t := range targets {
-					targetset[t] = true
+					targetset[t.Target] = true
 				}
 				oldtargets := commitmsg.ExtractTargets(msg)
 				for _, t := range oldtargets {
@@ -235,14 +255,15 @@ func main() {
 					}
 				}
 			}
+			var targetNames []string
 			for _, target := range targets {
-				log.Println("train", train, "target", target)
-				bin := bazel.TargetToExecutable(target)
-				exec.Mustex("", bin, "--nopush", "--deployment_root", gitopsdir)
+				log.Println("train", train, "target", target.Target)
+				exec.Mustex("", target.Binary, "--nopush", "--deployment_root", gitopsdir)
+				targetNames = append(targetNames, target.Target)
 			}
-			if workdir.Commit(fmt.Sprintf("GitOps for release branch %s from %s commit %s\n%s", *releaseBranch, *branchName, *gitCommit, commitmsg.Generate(targets)), *gitopsPath) {
+			if workdir.Commit(fmt.Sprintf("GitOps for release branch %s from %s commit %s\n%s", *releaseBranch, *branchName, *gitCommit, commitmsg.Generate(targetNames)), *gitopsPath) {
 				log.Println("branch", branch, "has changes, push is required")
-				updatedGitopsTargets = append(updatedGitopsTargets, targets...)
+				updatedGitopsTargets = append(updatedGitopsTargets, targetNames...)
 				updatedGitopsBranches = append(updatedGitopsBranches, branch)
 			}
 		}
