@@ -18,6 +18,7 @@ import (
 	"log"
 	"os"
 	oe "os/exec"
+	"path/filepath"
 	"strings"
 	"sync"
 
@@ -73,6 +74,7 @@ var (
 	gitopsRuleName         SliceFlags
 	gitopsRuleAttr         SliceFlags
 	dryRun                 = flag.Bool("dry_run", false, "Do not create PRs, just print what would be done")
+	dryPush                = flag.Bool("dry_push", false, "Do not push, just print what would be done")
 	resolvedPushes         SliceFlags
 	resolvedBinaries       SliceFlags
 	pushRetryMax           = flag.Int("push_retry_max", 2, "maximum number of push retries on race conditions")
@@ -107,6 +109,30 @@ func bazelQuery(query string) *analysis.CqueryResult {
 		log.Fatal(err)
 	}
 	return qr
+}
+
+func bazelQueryPaths(query string) []string {
+	log.Println("Executing bazel cquery ", query)
+	cmd := oe.Command(*bazelCmd, "cquery", "--implicit_deps=false", query, "--output=starlark", `--starlark:expr=target.files.to_list()[0].path if target.files.to_list() else ''`)
+	stderr, err := cmd.StderrPipe()
+	if err != nil {
+		log.Fatal(err)
+	}
+	go func() {
+		io.Copy(os.Stderr, stderr)
+	}()
+	out, err := cmd.Output()
+	if err != nil {
+		log.Fatal(err)
+	}
+	var paths []string
+	for _, line := range strings.Split(string(out), "\n") {
+		line = strings.TrimSpace(line)
+		if line != "" {
+			paths = append(paths, line)
+		}
+	}
+	return paths
 }
 
 func main() {
@@ -261,42 +287,49 @@ func main() {
 			}
 
 			query := strings.Join(qv, " union ")
-			qr := bazelQuery(query)
-			targetsCh := make(chan string)
+			paths := bazelQueryPaths(query)
+			pathsCh := make(chan string)
 			var wg sync.WaitGroup
 			wg.Add(*pushParallelism)
 			for i := 0; i < *pushParallelism; i++ {
 				go func() {
 					defer wg.Done()
-					for target := range targetsCh {
-						bin := bazel.TargetToExecutable(target)
-						fi, err := os.Stat(bin)
-						if err == nil && fi.Mode().IsRegular() {
-							exec.Mustex("", bin)
-						} else {
-							log.Println("target", target, "is not a file, running as a command")
-
-							args := []string{"run"}
-
-							if len(bazelFlags) > 0 {
-								for _, bazelFlag := range bazelFlags {
-									bazelFlagArgs := strings.Split(bazelFlag, " ")
-
-									args = append(args, bazelFlagArgs...)
+					for path := range pathsCh {
+						executed := false
+						absPath, err := filepath.Abs(path)
+						if err == nil {
+							runfilesDir := absPath + ".runfiles"
+							if fi, err := os.Stat(runfilesDir); err == nil && fi.IsDir() {
+								workspaceDir := filepath.Join(runfilesDir, "_main")
+								if fi, err := os.Stat(workspaceDir); err != nil || !fi.IsDir() {
+									workspaceDir = filepath.Join(runfilesDir, "rules_gitops")
+								}
+								if fi, err := os.Stat(workspaceDir); err == nil && fi.IsDir() {
+									log.Printf("Executing %s in %s", absPath, workspaceDir)
+									if !*dryPush {
+										exec.Mustex(workspaceDir, absPath)
+									} else {
+										log.Printf("Skipping execution of %s in %s (dry run)", absPath, workspaceDir)
+									}
+									executed = true
 								}
 							}
-
-							args = append(args, target)
-
-							exec.Mustex("", *bazelCmd, args...)
+						}
+						if !executed {
+							fi, err := os.Stat(path)
+							if err == nil && fi.Mode().IsRegular() {
+								exec.Mustex("", path)
+							} else {
+								log.Fatalf("push binary path %s is not a regular file, cannot run it", path)
+							}
 						}
 					}
 				}()
 			}
-			for _, t := range qr.Results {
-				targetsCh <- t.Target.Rule.GetName()
+			for _, p := range paths {
+				pathsCh <- p
 			}
-			close(targetsCh)
+			close(pathsCh)
 			wg.Wait()
 		}
 
