@@ -90,7 +90,6 @@ push_oci(
     image = "//skylib/kustomize/tests:image",
     registry = "gcr.io",
     repository = "repo/imagethere",
-    tag = "thetag",
 )
 
 k8s_deploy(
