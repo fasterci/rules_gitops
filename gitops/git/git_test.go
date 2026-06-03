@@ -28,7 +28,14 @@ func createMockRemote(t *testing.T, files map[string]string) string {
 		t.Fatalf("failed to create temp remote dir: %v", err)
 	}
 
-	mustRun(t, remoteDir, "git", "init", "--initial-branch=master")
+	// Try using --initial-branch=master (Git 2.28.0+)
+	initCmd := oe.Command("git", "init", "--initial-branch=master")
+	initCmd.Dir = remoteDir
+	if _, err := initCmd.CombinedOutput(); err != nil {
+		// Fallback for older Git versions
+		mustRun(t, remoteDir, "git", "init")
+		mustRun(t, remoteDir, "git", "symbolic-ref", "HEAD", "refs/heads/master")
+	}
 	mustRun(t, remoteDir, "git", "config", "user.name", "Test User")
 	mustRun(t, remoteDir, "git", "config", "user.email", "test@example.com")
 

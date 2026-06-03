@@ -41,7 +41,7 @@ copy the MODULE.bazel snippet into your `MODULE.bazel` file.
 
 ### Prerequisites
 
-* **Git**: A minimum Git version of **2.19.0** is required for runtime operations due to the use of partial clones (`--filter=blob:none`) and other modern clone/fetch options (e.g. `--no-tags`). If you are running the test suite, Git **2.28.0** or later is required due to test dependencies (specifically `git init --initial-branch`).
+* **Git**: A minimum Git version of **2.19.0** is required for runtime operations due to the use of partial clones (`--filter=blob:none`) and other modern clone/fetch options (e.g. `--no-tags`).
 
 
 <a name="k8s_deploy"></a>
