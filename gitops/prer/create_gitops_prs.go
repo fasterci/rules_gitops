@@ -106,7 +106,7 @@ func cleanTarget(target string) string {
 
 func bazelQueryTargets(query string) []GitopsTarget {
 	log.Println("Executing bazel cquery ", query)
-	starlarkExpr := `json.encode(struct(deployment_branch = getattr(([providers(target)[p] for p in providers(target) if p.endswith('//gitops:provider.bzl%GitopsArtifactsInfo')] + [None])[0], 'deployment_branch', ''), target = str(target.label), executable = target.files_to_run.executable.path if target.files_to_run.executable else ''))`
+	starlarkExpr := `json.encode(struct(deployment_branch = getattr(([providers(target)[p] for p in providers(target) if hasattr(providers(target)[p], 'deployment_branch')] + [None])[0], 'deployment_branch', ''), target = str(target.label), executable = target.files_to_run.executable.path if target.files_to_run.executable else ''))`
 	cmd := oe.Command(*bazelCmd, "cquery", "--implicit_deps=false", query, "--output=starlark", "--starlark:expr="+starlarkExpr)
 	stderr, err := cmd.StderrPipe()
 	if err != nil {
