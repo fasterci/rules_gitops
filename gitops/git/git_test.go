@@ -477,7 +477,8 @@ func TestPushForceWithLeaseOnDeletedBranch(t *testing.T) {
 	// Scenario 1: With pushRetryMax = 0, the push should fail.
 	t.Run("retry_max_0_fails", func(t *testing.T) {
 		remoteDir := createMockRemote(t, map[string]string{
-			"readme.md": "documentation",
+			"readme.md":      "documentation",
+			"cloud/app.yaml": "image: app:v0",
 		})
 		defer os.RemoveAll(remoteDir)
 
@@ -503,7 +504,8 @@ func TestPushForceWithLeaseOnDeletedBranch(t *testing.T) {
 	// Scenario 2: With pushRetryMax = 1, the push should succeed on the second attempt.
 	t.Run("retry_max_1_succeeds", func(t *testing.T) {
 		remoteDir := createMockRemote(t, map[string]string{
-			"readme.md": "documentation",
+			"readme.md":      "documentation",
+			"cloud/app.yaml": "image: app:v0",
 		})
 		defer os.RemoveAll(remoteDir)
 
