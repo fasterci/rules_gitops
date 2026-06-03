@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -e
+set -x
 
 # Make sure we are running from the repository root
 WORKSPACE_ROOT=$(git rev-parse --show-toplevel)
