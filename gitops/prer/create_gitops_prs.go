@@ -198,7 +198,11 @@ func main() {
 		}
 		for _, t := range results {
 			targetName := cleanTarget(t.Target)
-			releaseTrains[t.DeploymentBranch] = append(releaseTrains[t.DeploymentBranch], GitopsTarget{Target: targetName, Binary: t.Binary, DeploymentBranch: t.DeploymentBranch})
+			if t.DeploymentBranch != "" {
+				releaseTrains[t.DeploymentBranch] = append(releaseTrains[t.DeploymentBranch], GitopsTarget{Target: targetName, Binary: t.Binary, DeploymentBranch: t.DeploymentBranch})
+			} else {
+				log.Printf("No deployment branch for %s, Skipping", t.Target)
+			}
 		}
 		if (len(releaseTrains)) == 0 {
 			log.Println("No matching targets found")
