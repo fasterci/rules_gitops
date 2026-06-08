@@ -48,7 +48,12 @@ func Clone(repo, dir, mirrorDir, primaryBranch, gitopsPath string) (*Repo, error
 	// Enable sparse-checkout when restricting to a subdir
 	if !isRootPath(gitopsPath) {
 		exec.MustexWithTimeout(*Timeout, dir, "git", "config", "--local", "core.sparsecheckout", "true")
-		genPath := fmt.Sprintf("/*\n!/*/\n/%s/\n", gitopsPath)
+		genPath := fmt.Sprintf("/%s/\n", gitopsPath)
+		if !hasTrackedFiles(dir, primaryBranch, gitopsPath) {
+			if fallback := findFallbackFile(dir, primaryBranch); fallback != "" {
+				genPath = fmt.Sprintf("/%s\n/%s/\n", fallback, gitopsPath)
+			}
+		}
 		if err := os.WriteFile(filepath.Join(dir, ".git/info/sparse-checkout"), []byte(genPath), 0644); err != nil {
 			return nil, fmt.Errorf("unable to create .git/info/sparse-checkout: %w", err)
 		}
@@ -79,7 +84,12 @@ func CloneOrCheckout(repo, dir, mirrorDir, primaryBranch, gitopsPath, branchPref
 		// Enable sparse-checkout when restricting to a subdir
 		if !isRootPath(gitopsPath) {
 			exec.MustexWithTimeout(*Timeout, dir, "git", "config", "--local", "core.sparsecheckout", "true")
-			genPath := fmt.Sprintf("/*\n!/*/\n/%s/\n", gitopsPath)
+			genPath := fmt.Sprintf("/%s/\n", gitopsPath)
+			if !hasTrackedFiles(dir, primaryBranch, gitopsPath) {
+				if fallback := findFallbackFile(dir, primaryBranch); fallback != "" {
+					genPath = fmt.Sprintf("/%s\n/%s/\n", fallback, gitopsPath)
+				}
+			}
 			if err := os.WriteFile(filepath.Join(dir, ".git/info/sparse-checkout"), []byte(genPath), 0644); err != nil {
 				return nil, fmt.Errorf("unable to create .git/info/sparse-checkout: %w", err)
 			}
@@ -244,4 +254,31 @@ func ensureUserConfig(dir string) {
 	if _, err := exec.ExWithTimeout(*Timeout, dir, "git", "config", "--get", "user.email"); err != nil {
 		exec.MustexWithTimeout(*Timeout, dir, "git", "config", "--local", "user.email", "fasterci@example.com")
 	}
+}
+
+func hasTrackedFiles(dir, branch, gitopsPath string) bool {
+	// Try origin/branch, branch, and HEAD in order
+	for _, ref := range []string{"origin/" + branch, branch, "HEAD"} {
+		out, err := exec.ExWithTimeout(*Timeout, dir, "git", "ls-tree", "-r", "--name-only", ref, gitopsPath)
+		if err == nil && strings.TrimSpace(out) != "" {
+			return true
+		}
+	}
+	return false
+}
+
+func findFallbackFile(dir, branch string) string {
+	for _, ref := range []string{"origin/" + branch, branch, "HEAD"} {
+		out, err := exec.ExWithTimeout(*Timeout, dir, "git", "ls-tree", "-r", "--name-only", ref)
+		if err == nil {
+			lines := strings.Split(out, "\n")
+			for _, line := range lines {
+				line = strings.TrimSpace(line)
+				if line != "" {
+					return line
+				}
+			}
+		}
+	}
+	return ""
 }
