@@ -54,6 +54,7 @@ func Clone(repo, dir, mirrorDir, primaryBranch, gitopsPath string) (*Repo, error
 		}
 	}
 	exec.MustexWithTimeout(*Timeout, dir, "git", "checkout", primaryBranch)
+	ensureUserConfig(dir)
 
 	return &Repo{
 		Dir:        dir,
@@ -94,6 +95,7 @@ func CloneOrCheckout(repo, dir, mirrorDir, primaryBranch, gitopsPath, branchPref
 		exec.MustexWithTimeout(*Timeout, dir, "git", "reset", "--hard", "origin/"+primaryBranch)
 		DeleteLocalBranches(dir, branchPrefix)
 	}
+	ensureUserConfig(dir)
 
 	return &Repo{
 		Dir:        dir,
@@ -233,4 +235,13 @@ func (r *Repo) Push(branches []string) error {
 // isRootPath is an internal helper to detect "full repo" case.
 func isRootPath(gitopsPath string) bool {
 	return gitopsPath == "" || gitopsPath == "."
+}
+
+func ensureUserConfig(dir string) {
+	if _, err := exec.ExWithTimeout(*Timeout, dir, "git", "config", "--get", "user.name"); err != nil {
+		exec.MustexWithTimeout(*Timeout, dir, "git", "config", "--local", "user.name", "Faster CI")
+	}
+	if _, err := exec.ExWithTimeout(*Timeout, dir, "git", "config", "--get", "user.email"); err != nil {
+		exec.MustexWithTimeout(*Timeout, dir, "git", "config", "--local", "user.email", "fasterci@example.com")
+	}
 }

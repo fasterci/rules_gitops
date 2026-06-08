@@ -25,14 +25,18 @@ OUTPUT_FILE=$(mktemp)
 trap 'rm -f "$OUTPUT_FILE"' EXIT
 
 echo "Running create_gitops_prs in dry run mode..."
-"./$PRER_BIN" \
+if ! "./$PRER_BIN" \
   --workspace="$WORKSPACE_ROOT" \
   --git_repo="$WORKSPACE_ROOT" \
   --release_branch="gitops_test_release_branch" \
   --gitops_pr_into="main" \
   --target="//gitops/testing/..." \
   --dry_run \
-  --dry_push > "$OUTPUT_FILE" 2>&1
+  --dry_push > "$OUTPUT_FILE" 2>&1; then
+  echo "ERROR: create_gitops_prs failed with exit code $?. Output was:" >&2
+  cat "$OUTPUT_FILE" >&2
+  exit 1
+fi
 
 cat "$OUTPUT_FILE"
 
