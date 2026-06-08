@@ -18,15 +18,12 @@ go_library(
     importpath = "github.com/fasterci/rules_gitops/gitops/prer",
     visibility = ["//visibility:private"],
     deps = [
-        "//gitops/analysis",
-        "//gitops/bazel",
         "//gitops/commitmsg",
         "//gitops/exec",
         "//gitops/git",
         "//gitops/git/bitbucket",
         "//gitops/git/github",
         "//gitops/git/gitlab",
-        "@org_golang_google_protobuf//proto",
         "@org_golang_x_sync//errgroup",
     ],
 )

@@ -41,7 +41,7 @@ copy the MODULE.bazel snippet into your `MODULE.bazel` file.
 
 ### Prerequisites
 
-* **Git**: A minimum Git version of **2.19.0** is required for runtime operations due to the use of partial clones (`--filter=blob:none`) and other modern clone/fetch options (e.g. `--no-tags`). If you are running the test suite, Git **2.28.0** or later is required due to test dependencies (specifically `git init --initial-branch`).
+* **Git**: A minimum Git version of **2.19.0** is required for runtime operations due to the use of partial clones (`--filter=blob:none`) and other modern clone/fetch options (e.g. `--no-tags`).
 
 
 <a name="k8s_deploy"></a>
@@ -433,6 +433,8 @@ The `--git_repo` parameter defines the remote repository URL. In this case remot
 The `--release_branch` specifies the value of the ***release_branch_prefix*** attribute of `gitops` targets (see [k8s_deploy](#k8s_deploy)). The `--gitops_pr_into` defines the target branch for newly created pull requests. The `--branch_name` and `--git_commit` are the values used in the pull request commit message.
 
 To handle potential race conditions (e.g., if a deployment branch is merged and deleted on the remote server while the tool is running), the `--push_retry_max` flag can be set (defaults to `2`). It will retry cloning/checking out the repository, manifest rendering, committing, and pushing up to the configured limit if the git push fails because of a mismatch (e.g. branch deleted or updated on remote).
+
+The `--git_timeout` flag can be used to configure a timeout for Git operations (defaults to `5m`). If any Git operation (like clone, checkout, fetch, commit, or push) exceeds this duration, the execution will fail immediately.
 
 The `create_gitops_prs` tool will query all `gitops` targets which have set the ***deploy_branch*** attribute (see [k8s_deploy](#k8s_deploy)) and the ***release_branch_prefix*** attribute value that matches the `release_branch` parameter.
 

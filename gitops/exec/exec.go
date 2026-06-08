@@ -12,15 +12,36 @@ governing permissions and limitations under the License.
 package exec
 
 import (
+	"context"
 	"log"
 	"os/exec"
 	"strings"
+	"time"
 )
 
 // Ex is a shortcut for executing the command in specified dir
 func Ex(dir, name string, arg ...string) (output string, err error) {
 	log.Println("executing:", name, strings.Join(arg, " "))
 	cmd := exec.Command(name, arg...)
+	if dir != "" {
+		cmd.Dir = dir
+	}
+	b, err := cmd.CombinedOutput()
+	log.Printf("%s", string(b))
+	return string(b), err
+}
+
+// ExWithTimeout executes a command in a specified directory with a given timeout.
+func ExWithTimeout(timeout time.Duration, dir, name string, arg ...string) (output string, err error) {
+	log.Println("executing:", name, strings.Join(arg, " "))
+	var cmd *exec.Cmd
+	if timeout > 0 {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+		cmd = exec.CommandContext(ctx, name, arg...)
+	} else {
+		cmd = exec.Command(name, arg...)
+	}
 	if dir != "" {
 		cmd.Dir = dir
 	}
@@ -37,5 +58,14 @@ func Mustex(dir, name string, arg ...string) string {
 		log.Fatalf("ERROR: %s", err)
 	}
 	return ret
+}
 
+// MustexWithTimeout executes the command name arg... in directory dir with a timeout.
+// it will exit with fatal error if execution was not successful.
+func MustexWithTimeout(timeout time.Duration, dir, name string, arg ...string) string {
+	ret, err := ExWithTimeout(timeout, dir, name, arg...)
+	if err != nil {
+		log.Fatalf("ERROR: %s", err)
+	}
+	return ret
 }

@@ -13,15 +13,20 @@ package git
 
 import (
 	"bufio"
+	"context"
+	"flag"
 	"fmt"
 	"log"
 	"os"
 	oe "os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/fasterci/rules_gitops/gitops/exec"
 )
+
+var Timeout = flag.Duration("git_timeout", 5*time.Minute, "Timeout for git operations")
 
 // Clone clones a repository. Pass the full repository name, such as
 // "https://aleksey.pesternikov@bitbucket.tubemogul.info/scm/tm/repo.git" as the repo.
@@ -39,16 +44,22 @@ func Clone(repo, dir, mirrorDir, primaryBranch, gitopsPath string) (*Repo, error
 		args = append(args, "--reference", mirrorDir)
 	}
 	args = append(args, repo, dir)
-	exec.Mustex("", "git", args...)
+	exec.MustexWithTimeout(*Timeout, "", "git", args...)
 	// Enable sparse-checkout when restricting to a subdir
 	if !isRootPath(gitopsPath) {
-		exec.Mustex(dir, "git", "config", "--local", "core.sparsecheckout", "true")
-		genPath := fmt.Sprintf("%s/\n", gitopsPath)
+		exec.MustexWithTimeout(*Timeout, dir, "git", "config", "--local", "core.sparsecheckout", "true")
+		genPath := fmt.Sprintf("/%s/\n", gitopsPath)
+		if !hasTrackedFiles(dir, primaryBranch, gitopsPath) {
+			if fallback := findFallbackFile(dir, primaryBranch); fallback != "" {
+				genPath = fmt.Sprintf("/%s\n/%s/\n", fallback, gitopsPath)
+			}
+		}
 		if err := os.WriteFile(filepath.Join(dir, ".git/info/sparse-checkout"), []byte(genPath), 0644); err != nil {
 			return nil, fmt.Errorf("unable to create .git/info/sparse-checkout: %w", err)
 		}
 	}
-	exec.Mustex(dir, "git", "checkout", primaryBranch)
+	exec.MustexWithTimeout(*Timeout, dir, "git", "checkout", primaryBranch)
+	ensureUserConfig(dir)
 
 	return &Repo{
 		Dir:        dir,
@@ -69,26 +80,32 @@ func CloneOrCheckout(repo, dir, mirrorDir, primaryBranch, gitopsPath, branchPref
 			args = append(args, "--reference", mirrorDir)
 		}
 		args = append(args, repo, dir)
-		exec.Mustex("", "git", args...)
+		exec.MustexWithTimeout(*Timeout, "", "git", args...)
 		// Enable sparse-checkout when restricting to a subdir
 		if !isRootPath(gitopsPath) {
-			exec.Mustex(dir, "git", "config", "--local", "core.sparsecheckout", "true")
-			genPath := fmt.Sprintf("%s/\n", gitopsPath)
+			exec.MustexWithTimeout(*Timeout, dir, "git", "config", "--local", "core.sparsecheckout", "true")
+			genPath := fmt.Sprintf("/%s/\n", gitopsPath)
+			if !hasTrackedFiles(dir, primaryBranch, gitopsPath) {
+				if fallback := findFallbackFile(dir, primaryBranch); fallback != "" {
+					genPath = fmt.Sprintf("/%s\n/%s/\n", fallback, gitopsPath)
+				}
+			}
 			if err := os.WriteFile(filepath.Join(dir, ".git/info/sparse-checkout"), []byte(genPath), 0644); err != nil {
 				return nil, fmt.Errorf("unable to create .git/info/sparse-checkout: %w", err)
 			}
 		}
 	} else {
 		//existing repo
-		exec.Mustex(dir, "git", "remote", "set-url", "origin", repo)
-		exec.Mustex(dir, "git", "reset", "--hard")
+		exec.MustexWithTimeout(*Timeout, dir, "git", "remote", "set-url", "origin", repo)
+		exec.MustexWithTimeout(*Timeout, dir, "git", "reset", "--hard")
 	}
-	exec.Mustex(dir, "git", "checkout", "-f", primaryBranch)
+	exec.MustexWithTimeout(*Timeout, dir, "git", "checkout", "-f", primaryBranch)
 	if !newRepo {
-		exec.Mustex(dir, "git", "fetch", "origin", "--prune")
-		exec.Mustex(dir, "git", "reset", "--hard", "origin/"+primaryBranch)
+		exec.MustexWithTimeout(*Timeout, dir, "git", "fetch", "origin", "--prune")
+		exec.MustexWithTimeout(*Timeout, dir, "git", "reset", "--hard", "origin/"+primaryBranch)
 		DeleteLocalBranches(dir, branchPrefix)
 	}
+	ensureUserConfig(dir)
 
 	return &Repo{
 		Dir:        dir,
@@ -98,7 +115,7 @@ func CloneOrCheckout(repo, dir, mirrorDir, primaryBranch, gitopsPath, branchPref
 
 // DeleteLocalBranches removes local branches by prefix.
 func DeleteLocalBranches(dir, branchprefix string) {
-	branches := exec.Mustex(dir, "git", "for-each-ref", "--format", "%(refname)", "refs/heads/"+branchprefix)
+	branches := exec.MustexWithTimeout(*Timeout, dir, "git", "for-each-ref", "--format", "%(refname)", "refs/heads/"+branchprefix)
 	// returned format:
 	// refs/heads/deploy/dev
 	// refs/heads/deploy/prod
@@ -108,7 +125,7 @@ func DeleteLocalBranches(dir, branchprefix string) {
 		ref := strings.TrimSpace(line)
 		if strings.HasPrefix(ref, "refs/heads/"+branchprefix) {
 			ref = strings.TrimPrefix(ref, "refs/heads/")
-			exec.Mustex(dir, "git", "branch", "-D", ref)
+			exec.MustexWithTimeout(*Timeout, dir, "git", "branch", "-D", ref)
 		}
 
 	}
@@ -131,17 +148,17 @@ func (r *Repo) Clean() error {
 // Fetch branches from the remote repository based on a specified pattern.
 // The branches will be be added to the list tracked remote branches ready to be pushed.
 func (r *Repo) Fetch(pattern string) {
-	exec.Mustex(r.Dir, "git", "remote", "set-branches", "--add", r.RemoteName, pattern)
-	exec.Mustex(r.Dir, "git", "fetch", "--force", "--filter=blob:none", "--no-tags", r.RemoteName)
+	exec.MustexWithTimeout(*Timeout, r.Dir, "git", "remote", "set-branches", "--add", r.RemoteName, pattern)
+	exec.MustexWithTimeout(*Timeout, r.Dir, "git", "fetch", "--force", "--filter=blob:none", "--no-tags", r.RemoteName)
 }
 
 // SwitchToBranch switch the repo to specified branch and checkout primaryBranch files over it.
 // if branch does not exist it will be created
 func (r *Repo) SwitchToBranch(branch, primaryBranch string) (new bool) {
-	if _, err := exec.Ex(r.Dir, "git", "checkout", branch); err != nil {
+	if _, err := exec.ExWithTimeout(*Timeout, r.Dir, "git", "checkout", branch); err != nil {
 		// error checking out, create new
-		exec.Mustex(r.Dir, "git", "branch", branch, primaryBranch)
-		exec.Mustex(r.Dir, "git", "checkout", branch)
+		exec.MustexWithTimeout(*Timeout, r.Dir, "git", "branch", branch, primaryBranch)
+		exec.MustexWithTimeout(*Timeout, r.Dir, "git", "checkout", branch)
 		return true
 	}
 	return false
@@ -149,14 +166,14 @@ func (r *Repo) SwitchToBranch(branch, primaryBranch string) (new bool) {
 
 // RecreateBranch discards a branch content and reset it from primaryBranch.
 func (r *Repo) RecreateBranch(branch, primaryBranch string) {
-	exec.Mustex(r.Dir, "git", "checkout", primaryBranch)
-	exec.Mustex(r.Dir, "git", "branch", "-f", branch, primaryBranch)
-	exec.Mustex(r.Dir, "git", "checkout", branch)
+	exec.MustexWithTimeout(*Timeout, r.Dir, "git", "checkout", primaryBranch)
+	exec.MustexWithTimeout(*Timeout, r.Dir, "git", "branch", "-f", branch, primaryBranch)
+	exec.MustexWithTimeout(*Timeout, r.Dir, "git", "checkout", branch)
 }
 
 // GetLastCommitMessage fetches the commit message from the most recent change of the branch
 func (r *Repo) GetLastCommitMessage() (msg string) {
-	msg, err := exec.Ex(r.Dir, "git", "log", "-1", "--pretty=%B")
+	msg, err := exec.ExWithTimeout(*Timeout, r.Dir, "git", "log", "-1", "--pretty=%B")
 	if err != nil {
 		return ""
 	}
@@ -166,25 +183,25 @@ func (r *Repo) GetLastCommitMessage() (msg string) {
 // Commit all changes to the current branch. returns true if there were any changes
 func (r *Repo) Commit(message, gitopsPath string) bool {
 	if isRootPath(gitopsPath) {
-		exec.Mustex(r.Dir, "git", "add", ".")
+		exec.MustexWithTimeout(*Timeout, r.Dir, "git", "add", ".")
 	} else {
-		exec.Mustex(r.Dir, "git", "add", gitopsPath)
+		exec.MustexWithTimeout(*Timeout, r.Dir, "git", "add", gitopsPath)
 	}
 	if r.IsClean() {
 		return false
 	}
-	exec.Mustex(r.Dir, "git", "commit", "-a", "-m", message)
+	exec.MustexWithTimeout(*Timeout, r.Dir, "git", "commit", "-a", "-m", message)
 	return true
 }
 
 // RestoreFile restores the specified file in the repository to its original state
 func (r *Repo) RestoreFile(fileName string) {
-	exec.Mustex(r.Dir, "git", "checkout", "--", fileName)
+	exec.MustexWithTimeout(*Timeout, r.Dir, "git", "checkout", "--", fileName)
 }
 
 // GetChangedFiles returns a list of files that have been changed in the repository
 func (r *Repo) GetChangedFiles() []string {
-	s, err := exec.Ex(r.Dir, "git", "diff", "--name-only")
+	s, err := exec.ExWithTimeout(*Timeout, r.Dir, "git", "diff", "--name-only")
 	if err != nil {
 		log.Fatalf("ERROR: %s", err)
 	}
@@ -201,7 +218,14 @@ func (r *Repo) GetChangedFiles() []string {
 
 // IsClean returns true if there is no local changes (nothing to commit)
 func (r *Repo) IsClean() bool {
-	cmd := oe.Command("git", "status", "--porcelain")
+	var cmd *oe.Cmd
+	if *Timeout > 0 {
+		ctx, cancel := context.WithTimeout(context.Background(), *Timeout)
+		defer cancel()
+		cmd = oe.CommandContext(ctx, "git", "status", "--porcelain")
+	} else {
+		cmd = oe.Command("git", "status", "--porcelain")
+	}
 	cmd.Dir = r.Dir
 	b, err := cmd.CombinedOutput()
 	if err != nil {
@@ -214,11 +238,47 @@ func (r *Repo) IsClean() bool {
 // all changes should be already commited
 func (r *Repo) Push(branches []string) error {
 	args := append([]string{"push", r.RemoteName, "--force-with-lease", "--set-upstream"}, branches...)
-	_, err := exec.Ex(r.Dir, "git", args...)
+	_, err := exec.ExWithTimeout(*Timeout, r.Dir, "git", args...)
 	return err
 }
 
 // isRootPath is an internal helper to detect "full repo" case.
 func isRootPath(gitopsPath string) bool {
 	return gitopsPath == "" || gitopsPath == "."
+}
+
+func ensureUserConfig(dir string) {
+	if _, err := exec.ExWithTimeout(*Timeout, dir, "git", "config", "--get", "user.name"); err != nil {
+		exec.MustexWithTimeout(*Timeout, dir, "git", "config", "--local", "user.name", "Faster CI")
+	}
+	if _, err := exec.ExWithTimeout(*Timeout, dir, "git", "config", "--get", "user.email"); err != nil {
+		exec.MustexWithTimeout(*Timeout, dir, "git", "config", "--local", "user.email", "fasterci@example.com")
+	}
+}
+
+func hasTrackedFiles(dir, branch, gitopsPath string) bool {
+	// Try origin/branch, branch, and HEAD in order
+	for _, ref := range []string{"origin/" + branch, branch, "HEAD"} {
+		out, err := exec.ExWithTimeout(*Timeout, dir, "git", "ls-tree", "-r", "--name-only", ref, gitopsPath)
+		if err == nil && strings.TrimSpace(out) != "" {
+			return true
+		}
+	}
+	return false
+}
+
+func findFallbackFile(dir, branch string) string {
+	for _, ref := range []string{"origin/" + branch, branch, "HEAD"} {
+		out, err := exec.ExWithTimeout(*Timeout, dir, "git", "ls-tree", "-r", "--name-only", ref)
+		if err == nil {
+			lines := strings.Split(out, "\n")
+			for _, line := range lines {
+				line = strings.TrimSpace(line)
+				if line != "" {
+					return line
+				}
+			}
+		}
+	}
+	return ""
 }
