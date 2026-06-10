@@ -1,6 +1,5 @@
 common --enable_bzlmod --noincompatible_sandbox_hermetic_tmp
 build --nolegacy_external_runfiles
-build --remote_download_all
 build --verbose_failures
 build --@rules_go//go/config:pure
 test --test_output=errors
