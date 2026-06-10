@@ -21,16 +21,31 @@ load(
 )
 
 def _show_impl(ctx):
-    script_content = "#!/usr/bin/env bash\nset -e\n"
+    script_content = """#!/usr/bin/env bash
+set -e
+
+function guess_runfiles() {
+    if [ -d "${BASH_SOURCE[0]}.runfiles" ]; then
+        # Runfiles are adjacent to the current script.
+        echo "$( cd "${BASH_SOURCE[0]}.runfiles" && pwd )"
+    else
+        # The current script is within some other script's runfiles.
+        mydir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+        echo $mydir | sed -e 's|\\(.*\\.runfiles\\)/.*|\\1|'
+    fi
+}
+
+RUNFILES=${RUNFILES:-$(guess_runfiles)}
+"""
 
     kustomize_outputs = []
     script_template = "{template_engine} --template={infile} --variable=NAMESPACE={namespace} --stamp_info_file={info_file}\n"
     for dep in ctx.attr.src.files.to_list():
         kustomize_outputs.append(script_template.format(
-            infile = dep.short_path,
-            template_engine = ctx.executable._template_engine.short_path,
+            infile = get_runfile_path(ctx, dep),
+            template_engine = get_runfile_path(ctx, ctx.executable._template_engine),
             namespace = ctx.attr.namespace,
-            info_file = ctx.file._info_file.short_path,
+            info_file = get_runfile_path(ctx, ctx.file._info_file),
         ))
 
     # ensure kustomize outputs are separated by '---' delimiters
@@ -467,8 +482,8 @@ def _k8s_test_namespace_impl(ctx):
     ctx.actions.expand_template(
         template = ctx.file._namespace_template,
         substitutions = {
-            "%{kubeconfig}": ctx.file.kubeconfig.path,
-            "%{kubectl}": ctx.file.kubectl.path,
+            "%{kubeconfig}": get_runfile_path(ctx, ctx.file.kubeconfig),
+            "%{kubectl}": get_runfile_path(ctx, ctx.file.kubectl),
         },
         output = namespace_create,
         is_executable = True,
@@ -523,7 +538,7 @@ def _k8s_test_setup_impl(ctx):
             commands.append(get_runfile_path(ctx, obj.files_to_run.executable) + " | ${SET_NAMESPACE} $NAMESPACE | ${IT_MANIFEST_FILTER} | ${KUBECTL} apply -f -")
         else:
             files += obj.files.to_list()
-            commands += [ctx.executable._template_engine.short_path + " --template=" + filename.short_path + " --variable=NAMESPACE=${NAMESPACE} | ${SET_NAMESPACE} $NAMESPACE | ${IT_MANIFEST_FILTER} | ${KUBECTL} apply -f -" for filename in obj.files.to_list()]
+            commands += [get_runfile_path(ctx, ctx.executable._template_engine) + " --template=" + get_runfile_path(ctx, filename) + " --variable=NAMESPACE=${NAMESPACE} | ${SET_NAMESPACE} $NAMESPACE | ${IT_MANIFEST_FILTER} | ${KUBECTL} apply -f -" for filename in obj.files.to_list()]
 
     files.append(ctx.executable._template_engine)
 
@@ -543,13 +558,13 @@ def _k8s_test_setup_impl(ctx):
     ctx.actions.expand_template(
         template = ctx.file._namespace_template,
         substitutions = {
-            "%{it_sidecar}": ctx.executable._it_sidecar.short_path,
-            "%{cluster}": ctx.file.cluster.path,
-            "%{kubeconfig}": ctx.file.kubeconfig.path,
-            "%{kubectl}": ctx.file.kubectl.path,
+            "%{it_sidecar}": get_runfile_path(ctx, ctx.executable._it_sidecar),
+            "%{cluster}": get_runfile_path(ctx, ctx.file.cluster),
+            "%{kubeconfig}": get_runfile_path(ctx, ctx.file.kubeconfig),
+            "%{kubectl}": get_runfile_path(ctx, ctx.file.kubectl),
             "%{push_statements}": push_statements,
-            "%{set_namespace}": ctx.executable._set_namespace.short_path,
-            "%{it_manifest_filter}": ctx.executable._it_manifest_filter.short_path,
+            "%{set_namespace}": get_runfile_path(ctx, ctx.executable._set_namespace),
+            "%{it_manifest_filter}": get_runfile_path(ctx, ctx.executable._it_manifest_filter),
             "%{statements}": "\n".join(commands),
             "%{sidecar_args}": " ".join(sidecar_args),
         },

@@ -535,11 +535,11 @@ def _kubectl_impl(ctx):
     for inattr in ctx.attr.srcs:
         for infile in inattr.files.to_list():
             statements += "{template_engine} --template={infile} --variable=NAMESPACE={namespace} --stamp_info_file={info_file} | kubectl --cluster=\"$CLUSTER\" --user=\"$USER\" {kubectl_command} -f -\n".format(
-                infile = infile.short_path,
+                infile = get_runfile_path(ctx, infile),
                 kubectl_command = kubectl_command_arg,
                 template_engine = get_runfile_path(ctx, ctx.executable._template_engine),
                 namespace = namespace,
-                info_file = ctx.file._info_file.short_path,
+                info_file = get_runfile_path(ctx, ctx.file._info_file),
             )
 
     ctx.actions.expand_template(
