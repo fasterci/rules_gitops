@@ -1,0 +1,22 @@
+load("@rules_img//img:layer.bzl", "image_layer")
+load("@rules_img//img:image.bzl", "image_manifest")
+load("//push_oci:push_oci.bzl", "push_oci")
+
+image_layer(
+    name = "layer",
+    srcs = {
+        "/container_content.txt": ":container_content.txt",
+    },
+)
+
+image_manifest(
+    name = "image",
+    layers = [":layer"],
+    visibility = ["//visibility:public"],
+)
+
+push_oci(
+    name = "image_push",
+    image = ":image",
+    repository = "us-central1-docker.pkg.dev/fasterci/internal/push_img/tests/image_push",
+)

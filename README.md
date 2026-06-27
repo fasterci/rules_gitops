@@ -236,7 +236,9 @@ spec:
 <a name="injecting-docker-images"></a>
 ### Injecting Docker Images
 
-Third-party Docker images can be referenced directly in K8s manifests, but for most apps, we need to run our own images. The images are built in the Bazel build pipeline using [rules_oci](https://github.com/bazel-contrib/rules_oci).
+Third-party Docker images can be referenced directly in K8s manifests, but for most apps, we need to run our own images. The images are built in the Bazel build pipeline using [rules_oci](https://github.com/bazel-contrib/rules_oci) or [rules_img](https://github.com/bazel-contrib/rules_img).
+
+Bazel GitOps Rules automatically detects `rules_img` targets (single-platform `image_manifest` and multi-platform `image_index`) at analysis time. When a `rules_img` target is detected, `push_oci` extracts the digest directly from its output group `digest` and generates a placeholder target (as pushing is handled externally). No changes to the `k8s_deploy` invocation or new macros are needed, making rules_img and rules_oci fully interoperable under the same `push_oci` interface.
 
 Here's a (very contrived) example of how this ties in with `k8s_deploy`. Here's the `BUILD` file located in the package `//e2e`:
 ```starlark
