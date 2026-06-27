@@ -11,9 +11,11 @@
 load("@aspect_bazel_lib//lib:tar.bzl", "tar")
 load("@aspect_bazel_lib//lib:write_source_files.bzl", "write_source_files")
 load("@bazel_tools//tools/build_rules:test_rules.bzl", "file_test")
+load("@rules_img//img:image.bzl", "image_manifest")
+load("@rules_img//img:layer.bzl", "image_layer")
 load("@rules_oci//oci:defs.bzl", "oci_image")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
-load("//push_oci:push_oci.bzl", "push_oci_rule")
+load("//push_oci:push_oci.bzl", "push_oci", "push_oci_rule")
 load("//skylib:push_alias.bzl", "pushed_image_alias")
 load("//skylib/kustomize:kustomize.bzl", "gitops", "kubectl", "kustomize", "push_all")
 
@@ -121,6 +123,56 @@ kustomize(
     ],
     manifests = [
         "deployment_with_alias.yaml",
+    ],
+    namespace = "",
+)
+
+image_layer(
+    name = "img_image_layer",
+    srcs = {
+        "/container_content.txt": ":container_content.txt",
+    },
+)
+
+image_manifest(
+    name = "img_image",
+    layers = [":img_image_layer"],
+    visibility = ["//visibility:public"],
+)
+
+push_oci(
+    name = "img_image_push",
+    image = ":img_image",
+    repository = "gcr.io/bs-dev/test_img_image",
+    visibility = ["//visibility:public"],
+)
+
+pushed_image_alias(
+    name = "img_image_alias",
+    alias = "testimgimage",
+    pushed_image = ":img_image_push",
+)
+
+kustomize(
+    name = "img_image_test",
+    images = [
+        ":img_image_push",
+    ],
+    manifests = [
+        "img_deployment.yaml",
+        "service.yaml",
+        "crb.yaml",
+    ],
+    namespace = "",
+)
+
+kustomize(
+    name = "img_alias_test",
+    images = [
+        ":img_image_alias",
+    ],
+    manifests = [
+        "img_deployment.yaml",
     ],
     namespace = "",
 )
@@ -278,6 +330,16 @@ kustomize(
     ],
 )
 
+kustomize(
+    name = "img_image_vars",
+    images = [
+        ":img_image_alias",
+    ],
+    manifests = [
+        "img_image_variables.yaml",
+    ],
+)
+
 write_source_files(
     name = "write_all",
     files = {
@@ -297,5 +359,8 @@ write_source_files(
         "expected_common_labels.yaml": ":common_labels",
         "expected_job.yaml": ":patch_images",
         "expected_image_vars.yaml": ":image_vars",
+        "expected_img_image_resolved_test.yaml": ":img_image_test",
+        "expected_img_alias_test.yaml": ":img_alias_test",
+        "expected_img_image_vars.yaml": ":img_image_vars",
     },
 )
