@@ -20,3 +20,37 @@ push_oci(
     image = ":image",
     repository = "us-central1-docker.pkg.dev/fasterci/internal/push_img/tests/image_push",
 )
+
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
+
+write_file(
+    name = "tags_file",
+    out = "tags.txt",
+    content = ["testtag"],
+)
+
+push_oci(
+    name = "img_integration_push",
+    image = ":image",
+    remote_tags = ":tags_file",
+    repository = "localhost:1338/repo/img",
+)
+
+sh_test(
+    name = "integration_test",
+    size = "small",
+    srcs = ["integration_test.sh"],
+    args = [
+        "$(location :img_integration_push)",
+    ],
+    data = [
+        ":img_integration_push",
+        "@com_github_google_go_containerregistry//cmd/crane",
+        "@com_github_google_go_containerregistry//cmd/registry",
+    ],
+    env = {
+        "CRANE_BIN": "$(location @com_github_google_go_containerregistry//cmd/crane)",
+        "REGISTRY_BIN": "$(location @com_github_google_go_containerregistry//cmd/registry)",
+    },
+)

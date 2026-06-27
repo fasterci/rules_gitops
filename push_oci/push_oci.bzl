@@ -4,6 +4,14 @@ Implementation of the `k8s_push` rule based on rules_oci and rules_img
 
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@rules_img//img:providers.bzl", "ImageIndexInfo", "ImageManifestInfo")
+# buildifier: disable=bzl-visibility
+load("@rules_img//img/private:push_metadata.bzl", "compute_push_metadata")
+# buildifier: disable=bzl-visibility
+load("@rules_img//img/private:stamp.bzl", "expand_or_write")
+# buildifier: disable=bzl-visibility
+load("@rules_img//img/private:root_symlinks.bzl", "calculate_root_symlinks", "symlink_name_prefix")
+# buildifier: disable=bzl-visibility
+load("@rules_img//img/private/providers:deploy_tool_info.bzl", "DeployToolInfo")
 
 # TODO: remove this once rules_oci is updated
 # buildifier: disable=bzl-visibility
@@ -129,19 +137,92 @@ def _impl(ctx):
 
     # Detect rules_img image manifest / index
     if ImageIndexInfo in ctx.attr.image or ImageManifestInfo in ctx.attr.image:
-        # Write dummy script since pushing is external
-        ctx.actions.write(
-            content = "#!/bin/bash\necho 'push_img target executed (handled externally)'\n",
+        manifest_info = ctx.attr.image[ImageManifestInfo] if ImageManifestInfo in ctx.attr.image else None
+        index_info = ctx.attr.image[ImageIndexInfo] if ImageIndexInfo in ctx.attr.image else None
+
+        # Split repository into registry and repository path
+        parts = ctx.attr.repository.split("/", 1)
+        if len(parts) == 2:
+            registry, repository_path = parts[0], parts[1]
+        else:
+            registry, repository_path = "", ctx.attr.repository
+
+        templates = dict(
+            registry = registry,
+            repository = repository_path,
+            tags = [],
+        )
+
+        newline_delimited_lists_files = None
+        if ctx.file.remote_tags:
+            newline_delimited_lists_files = {"tags": ctx.file.remote_tags}
+
+        configuration_json = expand_or_write(
+            ctx = ctx,
+            templates = templates,
+            output_name = ctx.label.name + ".configuration.json",
+            newline_delimited_lists_files = newline_delimited_lists_files,
+            build_settings_override = {},
+            stamp_override = "disabled",
+            stamp_settings_override = struct(bazel_setting = False, user_preference = "disabled"),
+        )
+
+        deploy_metadata, _ = compute_push_metadata(
+            ctx = ctx,
+            configuration_json = configuration_json,
+            manifest_info = manifest_info,
+            index_info = index_info,
+            strategy = "eager",
+            cross_mount_strategy = "none",
+            cross_mount_from = None,
+            referrers = [],
+            manifest_tags_expanded = [],
+            pull_info = None,
+            destination_file = None,
+            output_prefix = ctx.label.name,
+        )
+
+        root_symlinks_prefix = symlink_name_prefix(ctx)
+        root_symlinks = calculate_root_symlinks(
+            index_info,
+            manifest_info,
+            include_layers = True,
+            symlink_name_prefix = root_symlinks_prefix,
+        )
+
+        deploy_tool_info = ctx.attr._deploy_tool[DeployToolInfo]
+        
+        # Wrap the deploy tool in the script
+        embedded_args = [
+            "deploy",
+            "--runfiles-root-symlinks-prefix",
+            root_symlinks_prefix,
+            "--request-file",
+            get_runfile_path(ctx, deploy_metadata),
+        ]
+
+        ctx.actions.expand_template(
+            template = ctx.file._tag_tpl,
+            substitutions = {
+                "%{args}": " ".join(embedded_args),
+                "%{container_pusher}": get_runfile_path(ctx, deploy_tool_info.img_deploy_exe),
+            },
             output = ctx.outputs.executable,
             is_executable = True,
         )
 
-        # Extract digest directly from rules_img's OutputGroupInfo.digest
         digest = ctx.attr.image[OutputGroupInfo].digest.to_list()[0]
+
+        # Ensure all runfiles (including deploy tool exe and metadata) are captured
+        runfiles = ctx.runfiles(
+            files = [deploy_tool_info.img_deploy_exe, deploy_metadata],
+            root_symlinks = root_symlinks,
+        )
 
         return [
             DefaultInfo(
                 executable = ctx.outputs.executable,
+                runfiles = runfiles,
             ),
             GitopsPushInfo(
                 image_label = orig_image_label,
@@ -181,8 +262,12 @@ push_oci_rule = rule(
             default = Label("//push_oci:tag.sh.tpl"),
             allow_single_file = True,
         ),
+        "_deploy_tool": attr.label(
+            default = Label("@rules_img//img/deploy_tool:deploy_tool"),
+            providers = [DeployToolInfo],
+        ),
     },
-    toolchains = ["@aspect_bazel_lib//lib:jq_toolchain_type"] + oci_push_lib.toolchains,
+    toolchains = ["@aspect_bazel_lib//lib:jq_toolchain_type"] + oci_push_lib.toolchains + ["@rules_img//img:toolchain_type"],
     executable = True,
 )
 
