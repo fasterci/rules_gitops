@@ -62,6 +62,54 @@ k8s_deploy(
     visibility = ["//visibility:public"],
 )
 
+k8s_deploy(
+    name = "img_legacy_alias",
+    cluster = "testcluster",
+    deployment_branch = "test1",
+    gitops = 1,
+    images = {
+        "testimgimage": "//skylib/kustomize/tests:img_image",
+    },
+    manifests = [
+        ":img_deployment_legacy.yaml",
+    ],
+    namespace = "ci",
+    release_branch_prefix = "gitops_test_release_branch",
+    visibility = ["//visibility:public"],
+)
+
+k8s_deploy(
+    name = "img_legacy_label",
+    cluster = "testcluster",
+    deployment_branch = "test1",
+    gitops = 1,
+    images = [
+        "//skylib/kustomize/tests:img_image",
+    ],
+    manifests = [
+        ":img_deployment.yaml",
+    ],
+    namespace = "ci",
+    release_branch_prefix = "gitops_test_release_branch",
+    visibility = ["//visibility:public"],
+)
+
+k8s_deploy(
+    name = "img_label",
+    cluster = "testcluster",
+    deployment_branch = "test1",
+    gitops = 1,
+    images = [
+        "//skylib/kustomize/tests:img_image",
+    ],
+    manifests = [
+        ":img_deployment.yaml",
+    ],
+    namespace = "ci",
+    release_branch_prefix = "gitops_test_release_branch",
+    visibility = ["//visibility:public"],
+)
+
 # using image from external repo
 external_image(
     name = "external_image",
@@ -109,6 +157,30 @@ k8s_deploy(
     visibility = ["//visibility:public"],
 )
 
+push_oci(
+    name = "img_pushed_image",
+    image = "//skylib/kustomize/tests:img_image",
+    registry = "gcr.io",
+    repository = "repo/imagethere",
+    tag = "thetag",
+)
+
+k8s_deploy(
+    name = "img_legacy_renamed_alias",
+    cluster = "testcluster",
+    deployment_branch = "test1",
+    gitops = 1,
+    images = {
+        "testimgimage": ":img_pushed_image",
+    },
+    manifests = [
+        ":img_deployment_legacy.yaml",
+    ],
+    namespace = "ci",
+    release_branch_prefix = "gitops_test_release_branch",
+    visibility = ["//visibility:public"],
+)
+
 k8s_test_setup(
     name = "legacy_renamed_alias_it.setup",
     cluster = "@k8s_test//:cluster",
@@ -126,5 +198,8 @@ write_source_files(
         "legacy_label_expected.yaml": ":legacy_label",
         "external_image_label_expected.yaml": ":external_image_label",
         "legacy_renamed_alias_expected.yaml": ":legacy_renamed_alias",
+        "img_legacy_alias_expected.yaml": ":img_legacy_alias",
+        "img_legacy_label_expected.yaml": ":img_legacy_label",
+        "img_legacy_renamed_alias_expected.yaml": ":img_legacy_renamed_alias",
     },
 )
