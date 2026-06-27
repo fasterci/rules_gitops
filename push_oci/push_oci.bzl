@@ -4,12 +4,16 @@ Implementation of the `k8s_push` rule based on rules_oci and rules_img
 
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@rules_img//img:providers.bzl", "ImageIndexInfo", "ImageManifestInfo")
+
 # buildifier: disable=bzl-visibility
 load("@rules_img//img/private:push_metadata.bzl", "compute_push_metadata")
-# buildifier: disable=bzl-visibility
-load("@rules_img//img/private:stamp.bzl", "expand_or_write")
+
 # buildifier: disable=bzl-visibility
 load("@rules_img//img/private:root_symlinks.bzl", "calculate_root_symlinks", "symlink_name_prefix")
+
+# buildifier: disable=bzl-visibility
+load("@rules_img//img/private:stamp.bzl", "expand_or_write")
+
 # buildifier: disable=bzl-visibility
 load("@rules_img//img/private/providers:deploy_tool_info.bzl", "DeployToolInfo")
 
@@ -21,7 +25,7 @@ load("//skylib:runfile.bzl", "get_runfile_path")
 
 def _gitops_image_adapter_impl(ctx):
     providers = []
-    
+
     # Forward ImageManifestInfo/ImageIndexInfo/GitopsPushInfo/OutputGroupInfo if present
     if ImageManifestInfo in ctx.attr.image:
         providers.append(ctx.attr.image[ImageManifestInfo])
@@ -31,11 +35,11 @@ def _gitops_image_adapter_impl(ctx):
         providers.append(ctx.attr.image[GitopsPushInfo])
     if OutputGroupInfo in ctx.attr.image:
         providers.append(ctx.attr.image[OutputGroupInfo])
-        
+
     # Forward the single file/directory for oci_push_lib compatibility
     files_list = ctx.files.image
     single_file = files_list[0] if files_list else None
-    
+
     executable = ctx.attr.image[DefaultInfo].files_to_run.executable
     dummy_exe = ctx.actions.declare_file(ctx.label.name + ".exe")
     if executable:
@@ -49,6 +53,7 @@ def _gitops_image_adapter_impl(ctx):
             output = dummy_exe,
             is_executable = True,
         )
+
         # Also ensure original executable is in runfiles so it is packaged!
         runfiles = ctx.runfiles(files = [executable]).merge(ctx.attr.image[DefaultInfo].default_runfiles)
     else:
@@ -58,7 +63,7 @@ def _gitops_image_adapter_impl(ctx):
             is_executable = True,
         )
         runfiles = ctx.attr.image[DefaultInfo].default_runfiles
-        
+
     providers.append(DefaultInfo(
         files = depset([single_file]) if single_file else depset(),
         runfiles = runfiles,
@@ -191,7 +196,7 @@ def _impl(ctx):
         )
 
         deploy_tool_info = ctx.attr._deploy_tool[DeployToolInfo]
-        
+
         # Wrap the deploy tool in the script
         embedded_args = [
             "deploy",

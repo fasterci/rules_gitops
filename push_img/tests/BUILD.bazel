@@ -1,5 +1,7 @@
-load("@rules_img//img:layer.bzl", "image_layer")
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@rules_img//img:image.bzl", "image_manifest")
+load("@rules_img//img:layer.bzl", "image_layer")
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
 load("//push_oci:push_oci.bzl", "push_oci")
 
 image_layer(
@@ -20,9 +22,6 @@ push_oci(
     image = ":image",
     repository = "us-central1-docker.pkg.dev/fasterci/internal/push_img/tests/image_push",
 )
-
-load("@bazel_skylib//rules:write_file.bzl", "write_file")
-load("@rules_shell//shell:sh_test.bzl", "sh_test")
 
 write_file(
     name = "tags_file",

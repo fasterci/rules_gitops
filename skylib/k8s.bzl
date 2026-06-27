@@ -10,8 +10,8 @@
 
 load("//gitops:provider.bzl", "GitopsArtifactsInfo")
 load("//push_oci:push_oci.bzl", "push_oci")
-load("//skylib:runfile.bzl", "get_runfile_path")
 load("//skylib:push_alias.bzl", "pushed_image_alias")
+load("//skylib:runfile.bzl", "get_runfile_path")
 load(
     "//skylib/kustomize:kustomize.bzl",
     "imagePushStatements",
