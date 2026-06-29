@@ -10,7 +10,12 @@ registry_pid=$!
 trap "kill -9 $registry_pid" EXIT
 
 # Wait for registry to start up
-sleep 1.5
+for i in {1..50}; do
+  if curl -s -f http://localhost:1338/v2/ >/dev/null; then
+    break
+  fi
+  sleep 0.05
+done
 
 # Run the push rule target (passed as the first argument)
 $1
