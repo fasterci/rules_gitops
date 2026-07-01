@@ -3,7 +3,7 @@ Implementation of the `k8s_push` rule based on rules_oci and rules_img
 """
 
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
-load("@rules_img//img:providers.bzl", "ImageIndexInfo", "ImageManifestInfo")
+load("@rules_img//img:providers.bzl", "ImageIndexInfo", "ImageManifestInfo", "PullInfo")
 
 # buildifier: disable=bzl-visibility
 load("@rules_img//img/private:push_metadata.bzl", "compute_push_metadata")
@@ -26,7 +26,7 @@ load("//skylib:runfile.bzl", "get_runfile_path")
 def _gitops_image_adapter_impl(ctx):
     providers = []
 
-    # Forward ImageManifestInfo/ImageIndexInfo/GitopsPushInfo/OutputGroupInfo if present
+    # Forward ImageManifestInfo/ImageIndexInfo/GitopsPushInfo/OutputGroupInfo/PullInfo if present
     if ImageManifestInfo in ctx.attr.image:
         providers.append(ctx.attr.image[ImageManifestInfo])
     if ImageIndexInfo in ctx.attr.image:
@@ -35,6 +35,8 @@ def _gitops_image_adapter_impl(ctx):
         providers.append(ctx.attr.image[GitopsPushInfo])
     if OutputGroupInfo in ctx.attr.image:
         providers.append(ctx.attr.image[OutputGroupInfo])
+    if PullInfo in ctx.attr.image:
+        providers.append(ctx.attr.image[PullInfo])
 
     # Forward the single file/directory for oci_push_lib compatibility
     files_list = ctx.files.image
@@ -144,6 +146,7 @@ def _impl(ctx):
     if ImageIndexInfo in ctx.attr.image or ImageManifestInfo in ctx.attr.image:
         manifest_info = ctx.attr.image[ImageManifestInfo] if ImageManifestInfo in ctx.attr.image else None
         index_info = ctx.attr.image[ImageIndexInfo] if ImageIndexInfo in ctx.attr.image else None
+        pull_info = ctx.attr.image[PullInfo] if PullInfo in ctx.attr.image else None
 
         # Split repository into registry and repository path
         parts = ctx.attr.repository.split("/", 1)
@@ -182,7 +185,7 @@ def _impl(ctx):
             cross_mount_from = None,
             referrers = [],
             manifest_tags_expanded = [],
-            pull_info = None,
+            pull_info = pull_info,
             destination_file = None,
             output_prefix = ctx.label.name,
         )
