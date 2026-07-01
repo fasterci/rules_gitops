@@ -4,6 +4,10 @@
 # and verifies that the image is present.
 #
 
+export DOCKER_CONFIG="${TEST_TMPDIR}/.docker"
+mkdir -p "${DOCKER_CONFIG}"
+
+
 # Start the local in-memory registry on the default port 1338
 ${REGISTRY_BIN} &
 registry_pid=$!
@@ -22,3 +26,11 @@ $1
 
 # Verify the image is pushed successfully using crane
 ${CRANE_BIN} validate -v --fast --remote localhost:1338/repo/img:testtag
+
+# Run the second push rule target (passed as the second argument) if provided
+if [ -n "$2" ]; then
+  $2
+  # Verify the derived image is pushed successfully using crane
+  ${CRANE_BIN} validate -v --fast --remote localhost:1338/repo/derived_img:testtag
+fi
+

@@ -52,3 +52,12 @@ kubeconfig(
 )
 
 bazel_dep(name = "buildifier_prebuilt", version = "8.0.3", dev_dependency = True)
+
+pull = use_repo_rule("@rules_img//img:pull.bzl", "pull")
+
+pull(
+    name = "distroless_static",
+    digest = "sha256:85554049bdfa232b64a328412dd8909cc3baad08474cf97b2e5cc0a74e23fc5e",
+    registry = "gcr.io",
+    repository = "distroless/static",
+)

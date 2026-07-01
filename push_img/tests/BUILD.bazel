@@ -36,15 +36,32 @@ push_oci(
     repository = "localhost:1338/repo/img",
 )
 
+image_manifest(
+    name = "derived_image",
+    base = "@distroless_static",
+    layers = [":layer"],
+    visibility = ["//visibility:public"],
+)
+
+push_oci(
+    name = "derived_img_integration_push",
+    image = ":derived_image",
+    remote_tags = ":tags_file",
+    repository = "localhost:1338/repo/derived_img",
+)
+
 sh_test(
     name = "integration_test",
     size = "small",
     srcs = ["integration_test.sh"],
+    tags = ["requires-network"],
     args = [
         "$(location :img_integration_push)",
+        "$(location :derived_img_integration_push)",
     ],
     data = [
         ":img_integration_push",
+        ":derived_img_integration_push",
         "@com_github_google_go_containerregistry//cmd/crane",
         "@com_github_google_go_containerregistry//cmd/registry",
     ],
@@ -53,3 +70,4 @@ sh_test(
         "REGISTRY_BIN": "$(location @com_github_google_go_containerregistry//cmd/registry)",
     },
 )
+
