@@ -16,7 +16,6 @@ cloudrun_deploy(
     manifests = ["run.yaml"],
     project = "cloudrun_project",
     region = "us-central1",
-    service = "webhook",
     patches = ["run_patch.yaml"],
 )
 

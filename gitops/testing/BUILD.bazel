@@ -314,7 +314,6 @@ cloudrun_deploy(
     name = "apply_cloudrun_test_target",
     project = "ci",
     region = "us-central1",
-    service = "webhook",
     gitops = False,
     images = {
         "//skylib/tests/cloudrun:image": ":apply_cloudrun_pushed_image",
@@ -355,7 +354,6 @@ cloudrun_deploy(
     name = "prer_cloudrun_target",
     project = "ci",
     region = "us-central1",
-    service = "webhook",
     deployment_branch = "test1",
     gitops = True,
     images = {

@@ -33,6 +33,5 @@ function waitpids() {
 
 PROJECT=%{project}
 REGION=%{region}
-SERVICE=%{service}
 
 %{statements}

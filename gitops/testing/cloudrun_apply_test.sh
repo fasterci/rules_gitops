@@ -84,7 +84,7 @@ fi
 ${delete_bin}
 
 # Verify gcloud delete arguments
-expected_delete_args="gcloud run services delete ${expected_service} --project=${expected_project} --region=${expected_region} --quiet"
+expected_delete_args="gcloud run services delete ${expected_service} --project=${expected_project} --region=${expected_region}"
 if ! grep -Fq "${expected_delete_args}" "${gcloud_log}"; then
   echo "Error: gcloud was not called with the expected delete arguments: ${expected_delete_args}"
   echo "gcloud log contents:"

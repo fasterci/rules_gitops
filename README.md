@@ -110,7 +110,8 @@ When you run a `.gitops` target, it copies the rendered manifest to the location
 It accepts similar parameters to `k8s_deploy`, with the following differences:
 - ***project*** (instead of `namespace`): The GCP project ID. This is also automatically set as the `namespace` field in the Knative Service YAML.
 - ***region*** (instead of `cluster`): The GCP region (e.g. `us-central1`).
-- ***service***: The name of the Cloud Run service.
+
+Note: There is no `service` parameter. The service name is dynamically resolved at runtime from `metadata.name` inside the rendered manifest.
 
 
 <a name="base-manifests-and-overlays"></a>
