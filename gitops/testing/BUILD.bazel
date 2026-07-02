@@ -11,7 +11,7 @@
 load("@aspect_bazel_lib//lib:write_source_files.bzl", "write_source_files")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
-load("//gitops:defs.bzl", "external_image", "k8s_deploy", "k8s_test_setup")
+load("//gitops:defs.bzl", "cloudrun_deploy", "external_image", "k8s_deploy", "k8s_test_setup")
 load("//push_oci:push_oci.bzl", "push_oci")
 
 licenses(["notice"])  # Apache 2.0
@@ -301,3 +301,70 @@ sh_test(
         "REGISTRY_BIN": "$(location @com_github_google_go_containerregistry//cmd/registry)",
     },
 )
+
+push_oci(
+    name = "apply_cloudrun_pushed_image",
+    image = "//skylib/kustomize/tests:image",
+    registry = "localhost:1338",
+    remote_tags = ":apply_tags_file",
+    repository = "repo/apply_cloudrun_pushed_image",
+)
+
+cloudrun_deploy(
+    name = "apply_cloudrun_test_target",
+    project = "ci",
+    region = "us-central1",
+    service = "webhook",
+    gitops = False,
+    images = {
+        "//skylib/tests/cloudrun:image": ":apply_cloudrun_pushed_image",
+    },
+    manifests = [
+        "//skylib/tests/cloudrun:run.yaml",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+sh_test(
+    name = "cloudrun_apply_test",
+    size = "small",
+    srcs = ["cloudrun_apply_test.sh"],
+    tags = ["exclusive"],
+    args = [
+        "$(location :apply_cloudrun_test_target.apply)",
+        "$(location :apply_cloudrun_test_target.delete)",
+        "localhost:1338/repo/apply_cloudrun_pushed_image:testtag",
+        "localhost:1338/repo/apply_cloudrun_pushed_image",
+        "webhook",
+        "ci",
+        "us-central1",
+    ],
+    data = [
+        ":apply_cloudrun_test_target.apply",
+        ":apply_cloudrun_test_target.delete",
+        "@com_github_google_go_containerregistry//cmd/crane",
+        "@com_github_google_go_containerregistry//cmd/registry",
+    ],
+    env = {
+        "CRANE_BIN": "$(location @com_github_google_go_containerregistry//cmd/crane)",
+        "REGISTRY_BIN": "$(location @com_github_google_go_containerregistry//cmd/registry)",
+    },
+)
+
+cloudrun_deploy(
+    name = "prer_cloudrun_target",
+    project = "ci",
+    region = "us-central1",
+    service = "webhook",
+    deployment_branch = "test1",
+    gitops = True,
+    images = {
+        "//skylib/tests/cloudrun:image": ":apply_cloudrun_pushed_image",
+    },
+    manifests = [
+        "//skylib/tests/cloudrun:run.yaml",
+    ],
+    release_branch_prefix = "gitops_test_release_branch",
+    visibility = ["//visibility:public"],
+)
+
