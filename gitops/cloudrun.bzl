@@ -113,15 +113,17 @@ def _gcloud_run_impl(ctx):
                     info_file = get_runfile_path(ctx, ctx.file._info_file),
                 )
             elif command == "delete":
-                statements += ("SERVICE=$({yq_bin_path} '.metadata.name' {infile})\n" +
-                               "if [ -z \"$SERVICE\" ] || [ \"$SERVICE\" = \"null\" ]; then\n" +
-                               "  echo \"Error: Failed to extract service name from manifest {infile}\" >&2\n" +
+                statements += ("SERVICES=$({yq_bin_path} 'select(.kind == \"Service\") | .metadata.name' {infile})\n" +
+                               "if [ -z \"$SERVICES\" ] || [ \"$SERVICES\" = \"null\" ]; then\n" +
+                               "  echo \"Error: Failed to extract any service names from manifest {infile}\" >&2\n" +
                                "  exit 1\n" +
                                "fi\n" +
-                               "gcloud run services delete \"$SERVICE\" --project=\"$PROJECT\" --region=\"$REGION\"\n").format(
-                    yq_bin_path = get_runfile_path(ctx, yq_bin),
-                    infile = get_runfile_path(ctx, infile),
-                )
+                               "for SERVICE in $SERVICES; do\n" +
+                               "  gcloud run services delete \"$SERVICE\" --project=\"$PROJECT\" --region=\"$REGION\"\n" +
+                               "done\n").format(
+                                   yq_bin_path = get_runfile_path(ctx, yq_bin),
+                                   infile = get_runfile_path(ctx, infile),
+                               )
             else:
                 fail("Unsupported command: %s" % command)
 

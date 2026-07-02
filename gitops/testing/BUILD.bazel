@@ -320,6 +320,7 @@ cloudrun_deploy(
     },
     manifests = [
         "//skylib/tests/cloudrun:run.yaml",
+        ":run_second.yaml",
     ],
     visibility = ["//visibility:public"],
 )
@@ -334,9 +335,10 @@ sh_test(
         "$(location :apply_cloudrun_test_target.delete)",
         "localhost:1338/repo/apply_cloudrun_pushed_image:testtag",
         "localhost:1338/repo/apply_cloudrun_pushed_image",
-        "webhook",
         "ci",
         "us-central1",
+        "webhook",
+        "webhook-secondary",
     ],
     data = [
         ":apply_cloudrun_test_target.apply",

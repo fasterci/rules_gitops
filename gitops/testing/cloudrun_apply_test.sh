@@ -7,9 +7,9 @@ apply_bin=$1
 delete_bin=$2
 expected_image_ref=$3
 expected_manifest_sub=$4
-expected_service=$5
-expected_project=$6
-expected_region=$7
+expected_project=$5
+expected_region=$6
+expected_services="${@:7}"
 
 # Start the local in-memory registry on the default port 1338
 ${REGISTRY_BIN} &
@@ -80,16 +80,25 @@ if ! grep -Fq "${expected_apply_args}" "${gcloud_log}"; then
   exit 1
 fi
 
+num_replaces=$(grep -c "gcloud run services replace" "${gcloud_log}")
+if [ "${num_replaces}" -ne 1 ]; then
+  echo "Error: expected gcloud run services replace to be called exactly once, but it was called ${num_replaces} times"
+  cat "${gcloud_log}"
+  exit 1
+fi
+
 # 2. Execute the delete target executable
 ${delete_bin}
 
 # Verify gcloud delete arguments
-expected_delete_args="gcloud run services delete ${expected_service} --project=${expected_project} --region=${expected_region}"
-if ! grep -Fq "${expected_delete_args}" "${gcloud_log}"; then
-  echo "Error: gcloud was not called with the expected delete arguments: ${expected_delete_args}"
-  echo "gcloud log contents:"
-  cat "${gcloud_log}"
-  exit 1
-fi
+for service in ${expected_services}; do
+  expected_delete_args="gcloud run services delete ${service} --project=${expected_project} --region=${expected_region}"
+  if ! grep -Fq "${expected_delete_args}" "${gcloud_log}"; then
+    echo "Error: gcloud was not called with the expected delete arguments: ${expected_delete_args}"
+    echo "gcloud log contents:"
+    cat "${gcloud_log}"
+    exit 1
+  fi
+done
 
 echo "Success!"
