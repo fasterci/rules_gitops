@@ -9,6 +9,8 @@
 # governing permissions and limitations under the License.
 
 load("@aspect_bazel_lib//lib:write_source_files.bzl", "write_source_files")
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
 load("//gitops:defs.bzl", "external_image", "k8s_deploy", "k8s_test_setup")
 load("//push_oci:push_oci.bzl", "push_oci")
 
@@ -62,6 +64,54 @@ k8s_deploy(
     visibility = ["//visibility:public"],
 )
 
+k8s_deploy(
+    name = "img_legacy_alias",
+    cluster = "testcluster",
+    deployment_branch = "test1",
+    gitops = 1,
+    images = {
+        "testimgimage": "//skylib/kustomize/tests:img_image",
+    },
+    manifests = [
+        ":img_deployment_legacy.yaml",
+    ],
+    namespace = "ci",
+    release_branch_prefix = "gitops_test_release_branch",
+    visibility = ["//visibility:public"],
+)
+
+k8s_deploy(
+    name = "img_legacy_label",
+    cluster = "testcluster",
+    deployment_branch = "test1",
+    gitops = 1,
+    images = [
+        "//skylib/kustomize/tests:img_image",
+    ],
+    manifests = [
+        ":img_deployment.yaml",
+    ],
+    namespace = "ci",
+    release_branch_prefix = "gitops_test_release_branch",
+    visibility = ["//visibility:public"],
+)
+
+k8s_deploy(
+    name = "img_label",
+    cluster = "testcluster",
+    deployment_branch = "test1",
+    gitops = 1,
+    images = [
+        "//skylib/kustomize/tests:img_image",
+    ],
+    manifests = [
+        ":img_deployment.yaml",
+    ],
+    namespace = "ci",
+    release_branch_prefix = "gitops_test_release_branch",
+    visibility = ["//visibility:public"],
+)
+
 # using image from external repo
 external_image(
     name = "external_image",
@@ -109,6 +159,30 @@ k8s_deploy(
     visibility = ["//visibility:public"],
 )
 
+push_oci(
+    name = "img_pushed_image",
+    image = "//skylib/kustomize/tests:img_image",
+    registry = "gcr.io",
+    repository = "repo/imagethere",
+    tag = "thetag",
+)
+
+k8s_deploy(
+    name = "img_legacy_renamed_alias",
+    cluster = "testcluster",
+    deployment_branch = "test1",
+    gitops = 1,
+    images = {
+        "testimgimage": ":img_pushed_image",
+    },
+    manifests = [
+        ":img_deployment_legacy.yaml",
+    ],
+    namespace = "ci",
+    release_branch_prefix = "gitops_test_release_branch",
+    visibility = ["//visibility:public"],
+)
+
 k8s_test_setup(
     name = "legacy_renamed_alias_it.setup",
     cluster = "@k8s_test//:cluster",
@@ -126,5 +200,104 @@ write_source_files(
         "legacy_label_expected.yaml": ":legacy_label",
         "external_image_label_expected.yaml": ":external_image_label",
         "legacy_renamed_alias_expected.yaml": ":legacy_renamed_alias",
+        "img_legacy_alias_expected.yaml": ":img_legacy_alias",
+        "img_legacy_label_expected.yaml": ":img_legacy_label",
+        "img_legacy_renamed_alias_expected.yaml": ":img_legacy_renamed_alias",
+    },
+)
+
+write_file(
+    name = "apply_tags_file",
+    out = "apply_tags.txt",
+    content = ["testtag"],
+)
+
+push_oci(
+    name = "apply_pushed_image",
+    image = "//skylib/kustomize/tests:image",
+    registry = "localhost:1338",
+    remote_tags = ":apply_tags_file",
+    repository = "repo/apply_pushed_image",
+)
+
+k8s_deploy(
+    name = "apply_test_target",
+    cluster = "testcluster",
+    deployment_branch = "test1",
+    gitops = 1,
+    images = {
+        "testimage": ":apply_pushed_image",
+    },
+    manifests = [
+        ":deployment_legacy.yaml",
+    ],
+    namespace = "ci",
+    release_branch_prefix = "gitops_test_release_branch",
+    visibility = ["//visibility:public"],
+)
+
+sh_test(
+    name = "apply_test",
+    size = "small",
+    srcs = ["apply_test.sh"],
+    tags = ["exclusive"],
+    args = [
+        "$(location :apply_test_target.apply)",
+        "localhost:1338/repo/apply_pushed_image:testtag",
+        "localhost:1338/repo/apply_pushed_image",
+    ],
+    data = [
+        ":apply_test_target.apply",
+        "@com_github_google_go_containerregistry//cmd/crane",
+        "@com_github_google_go_containerregistry//cmd/registry",
+    ],
+    env = {
+        "CRANE_BIN": "$(location @com_github_google_go_containerregistry//cmd/crane)",
+        "REGISTRY_BIN": "$(location @com_github_google_go_containerregistry//cmd/registry)",
+    },
+)
+
+push_oci(
+    name = "apply_img_pushed_image",
+    image = "//skylib/kustomize/tests:img_image",
+    registry = "localhost:1338",
+    remote_tags = ":apply_tags_file",
+    repository = "repo/apply_img_pushed_image",
+)
+
+k8s_deploy(
+    name = "apply_img_test_target",
+    cluster = "testcluster",
+    deployment_branch = "test1",
+    gitops = 1,
+    images = {
+        "testimgimage": ":apply_img_pushed_image",
+    },
+    manifests = [
+        ":img_deployment_legacy.yaml",
+    ],
+    namespace = "ci",
+    release_branch_prefix = "gitops_test_release_branch",
+    visibility = ["//visibility:public"],
+)
+
+sh_test(
+    name = "apply_img_test",
+    size = "small",
+    srcs = ["apply_test.sh"],
+    tags = ["exclusive"],
+    args = [
+        "$(location :apply_img_test_target.apply)",
+        "localhost:1338/repo/apply_img_pushed_image:testtag",
+        "localhost:1338/repo/apply_img_pushed_image",
+    ],
+    data = [
+        ":apply_img_test_target.apply",
+        "@com_github_google_go_containerregistry//cmd/crane",
+        "@com_github_google_go_containerregistry//cmd/registry",
+    ],
+    env = {
+        "CRANE_BIN": "$(location @com_github_google_go_containerregistry//cmd/crane)",
+        "REGISTRY_BIN": "$(location @com_github_google_go_containerregistry//cmd/registry)",
     },
 )

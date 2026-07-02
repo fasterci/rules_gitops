@@ -1,0 +1,28 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: hello
+spec:
+  template:
+    spec:
+      containers:
+      - command:
+        - sh
+        - -c
+        - echo "Hello, Kubernetes!" && sleep 3600
+        env:
+        - name: FULLNAME
+          value: gcr.io/bs-dev/test_img_image@sha256:b3dfb83649a53af0a634b8474cc33e09c56480470e7e9884340d3541fa95b61e
+        - name: FULLNAME_DIGEST
+          value: b3dfb83649a53af0a634b8474cc33e09c56480470e7e9884340d3541fa95b61e
+        - name: FULLNAME_SHORTDIGEST
+          value: b3dfb83649
+        - name: ALIAS
+          value: gcr.io/bs-dev/test_img_image@sha256:b3dfb83649a53af0a634b8474cc33e09c56480470e7e9884340d3541fa95b61e
+        - name: ALIAS_DIGEST
+          value: b3dfb83649a53af0a634b8474cc33e09c56480470e7e9884340d3541fa95b61e
+        - name: ALIAS_SHORTDIGEST
+          value: b3dfb83649
+        image: busybox
+        name: hello
+      restartPolicy: OnFailure

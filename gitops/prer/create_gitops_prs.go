@@ -166,7 +166,7 @@ func main() {
 		}
 	}
 	if len(gitopsKind) == 0 {
-		gitopsKind = []string{"k8s_container_push", "push_oci"}
+		gitopsKind = []string{"push_oci_rule"}
 	}
 
 	var gitServer git.Server

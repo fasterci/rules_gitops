@@ -1,8 +1,21 @@
 """
-Implementation of the `k8s_push` rule based on rules_oci
+Implementation of the `k8s_push` rule based on rules_oci and rules_img
 """
 
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
+load("@rules_img//img:providers.bzl", "ImageIndexInfo", "ImageManifestInfo", "PullInfo")
+
+# buildifier: disable=bzl-visibility
+load("@rules_img//img/private:push_metadata.bzl", "compute_push_metadata")
+
+# buildifier: disable=bzl-visibility
+load("@rules_img//img/private:root_symlinks.bzl", "calculate_root_symlinks", "symlink_name_prefix")
+
+# buildifier: disable=bzl-visibility
+load("@rules_img//img/private:stamp.bzl", "expand_or_write")
+
+# buildifier: disable=bzl-visibility
+load("@rules_img//img/private/providers:deploy_tool_info.bzl", "DeployToolInfo")
 
 # TODO: remove this once rules_oci is updated
 # buildifier: disable=bzl-visibility
@@ -10,7 +23,72 @@ load("@rules_oci//oci/private:push.bzl", "oci_push_lib")
 load("//gitops:provider.bzl", "GitopsPushInfo")
 load("//skylib:runfile.bzl", "get_runfile_path")
 
+def _gitops_image_adapter_impl(ctx):
+    providers = []
+
+    # Forward ImageManifestInfo/ImageIndexInfo/GitopsPushInfo/OutputGroupInfo/PullInfo if present
+    if ImageManifestInfo in ctx.attr.image:
+        providers.append(ctx.attr.image[ImageManifestInfo])
+    if ImageIndexInfo in ctx.attr.image:
+        providers.append(ctx.attr.image[ImageIndexInfo])
+    if GitopsPushInfo in ctx.attr.image:
+        providers.append(ctx.attr.image[GitopsPushInfo])
+    if OutputGroupInfo in ctx.attr.image:
+        providers.append(ctx.attr.image[OutputGroupInfo])
+    if PullInfo in ctx.attr.image:
+        providers.append(ctx.attr.image[PullInfo])
+
+    # Forward the single file/directory for oci_push_lib compatibility
+    files_list = ctx.files.image
+    single_file = files_list[0] if files_list else None
+
+    executable = ctx.attr.image[DefaultInfo].files_to_run.executable
+    dummy_exe = ctx.actions.declare_file(ctx.label.name + ".exe")
+    if executable:
+        # Wrap the original executable in our own generated script
+        ctx.actions.expand_template(
+            template = ctx.file._tag_tpl,
+            substitutions = {
+                "%{args}": "",
+                "%{container_pusher}": get_runfile_path(ctx, executable),
+            },
+            output = dummy_exe,
+            is_executable = True,
+        )
+
+        # Also ensure original executable is in runfiles so it is packaged!
+        runfiles = ctx.runfiles(files = [executable]).merge(ctx.attr.image[DefaultInfo].default_runfiles)
+    else:
+        ctx.actions.write(
+            content = "#!/bin/bash\n",
+            output = dummy_exe,
+            is_executable = True,
+        )
+        runfiles = ctx.attr.image[DefaultInfo].default_runfiles
+
+    providers.append(DefaultInfo(
+        files = depset([single_file]) if single_file else depset(),
+        runfiles = runfiles,
+        executable = dummy_exe,
+    ))
+    return providers
+
+gitops_image_adapter = rule(
+    implementation = _gitops_image_adapter_impl,
+    attrs = {
+        "image": attr.label(mandatory = True),
+        "_tag_tpl": attr.label(
+            default = Label("//push_oci:tag.sh.tpl"),
+            allow_single_file = True,
+        ),
+    },
+    executable = True,
+)
+
 def _impl(ctx):
+    # Resolve the original image label
+    orig_image_label = ctx.attr.image_label.label if ctx.attr.image_label else ctx.attr.image.label
+
     if GitopsPushInfo in ctx.attr.image:
         # the image was already pushed, just rename if needed. Ignore registry and repository parameters
         kpi = ctx.attr.image[GitopsPushInfo]
@@ -58,8 +136,105 @@ def _impl(ctx):
                 runfiles = runfiles,
             ),
             GitopsPushInfo(
-                image_label = kpi.image_label,
+                image_label = orig_image_label,
                 repository = kpi.repository,
+                digestfile = digest,
+            ),
+        ]
+
+    # Detect rules_img image manifest / index
+    if ImageIndexInfo in ctx.attr.image or ImageManifestInfo in ctx.attr.image:
+        manifest_info = ctx.attr.image[ImageManifestInfo] if ImageManifestInfo in ctx.attr.image else None
+        index_info = ctx.attr.image[ImageIndexInfo] if ImageIndexInfo in ctx.attr.image else None
+        pull_info = ctx.attr.image[PullInfo] if PullInfo in ctx.attr.image else None
+
+        # Split repository into registry and repository path
+        parts = ctx.attr.repository.split("/", 1)
+        if len(parts) == 2:
+            registry, repository_path = parts[0], parts[1]
+        else:
+            registry, repository_path = "", ctx.attr.repository
+
+        templates = dict(
+            registry = registry,
+            repository = repository_path,
+            tags = [],
+        )
+
+        newline_delimited_lists_files = None
+        if ctx.file.remote_tags:
+            newline_delimited_lists_files = {"tags": ctx.file.remote_tags}
+
+        configuration_json = expand_or_write(
+            ctx = ctx,
+            templates = templates,
+            output_name = ctx.label.name + ".configuration.json",
+            newline_delimited_lists_files = newline_delimited_lists_files,
+            build_settings_override = {},
+            stamp_override = "disabled",
+            stamp_settings_override = struct(bazel_setting = False, user_preference = "disabled"),
+        )
+
+        deploy_metadata, _ = compute_push_metadata(
+            ctx = ctx,
+            configuration_json = configuration_json,
+            manifest_info = manifest_info,
+            index_info = index_info,
+            strategy = "eager",
+            cross_mount_strategy = "none",
+            cross_mount_from = None,
+            referrers = [],
+            manifest_tags_expanded = [],
+            pull_info = pull_info,
+            destination_file = None,
+            output_prefix = ctx.label.name,
+        )
+
+        root_symlinks_prefix = symlink_name_prefix(ctx)
+        root_symlinks = calculate_root_symlinks(
+            index_info,
+            manifest_info,
+            include_layers = True,
+            symlink_name_prefix = root_symlinks_prefix,
+        )
+
+        deploy_tool_info = ctx.attr._deploy_tool[DeployToolInfo]
+
+        # Wrap the deploy tool in the script
+        embedded_args = [
+            "deploy",
+            "--runfiles-root-symlinks-prefix",
+            root_symlinks_prefix,
+            "--request-file",
+            get_runfile_path(ctx, deploy_metadata),
+        ]
+
+        ctx.actions.expand_template(
+            template = ctx.file._tag_tpl,
+            substitutions = {
+                "%{args}": " ".join(embedded_args),
+                "%{container_pusher}": get_runfile_path(ctx, deploy_tool_info.img_deploy_exe),
+            },
+            output = ctx.outputs.executable,
+            is_executable = True,
+        )
+
+        digest = ctx.attr.image[OutputGroupInfo].digest.to_list()[0]
+
+        # Ensure all runfiles (including deploy tool exe and metadata) are captured
+        runfiles = ctx.runfiles(
+            files = [deploy_tool_info.img_deploy_exe, deploy_metadata],
+            root_symlinks = root_symlinks,
+        )
+
+        return [
+            DefaultInfo(
+                executable = ctx.outputs.executable,
+                runfiles = runfiles,
+            ),
+            GitopsPushInfo(
+                image_label = orig_image_label,
+                repository = ctx.attr.repository,
                 digestfile = digest,
             ),
         ]
@@ -80,7 +255,7 @@ def _impl(ctx):
     return [
         default_info,
         GitopsPushInfo(
-            image_label = ctx.attr.image.label,
+            image_label = orig_image_label,
             # registry = registry,
             repository = ctx.attr.repository,
             digestfile = digest,
@@ -89,14 +264,19 @@ def _impl(ctx):
 
 push_oci_rule = rule(
     implementation = _impl,
-    attrs = oci_push_lib.attrs |
-            {"_tag_tpl": attr.label(
-                default = Label("//push_oci:tag.sh.tpl"),
-                allow_single_file = True,
-            )},
-    toolchains = ["@aspect_bazel_lib//lib:jq_toolchain_type"] + oci_push_lib.toolchains,
+    attrs = oci_push_lib.attrs | {
+        "image_label": attr.label(mandatory = False),
+        "_tag_tpl": attr.label(
+            default = Label("//push_oci:tag.sh.tpl"),
+            allow_single_file = True,
+        ),
+        "_deploy_tool": attr.label(
+            default = Label("@rules_img//img/deploy_tool:deploy_tool"),
+            providers = [DeployToolInfo],
+        ),
+    },
+    toolchains = ["@aspect_bazel_lib//lib:jq_toolchain_type"] + oci_push_lib.toolchains + ["@rules_img//img:toolchain_type"],
     executable = True,
-    # provides = [GitopsPushInfo, DefaultInfo],
 )
 
 def push_oci(
@@ -109,6 +289,19 @@ def push_oci(
         remote_tags = None,  # file with tags to push
         tags = [],  # bazel tags to add to the push_oci_rule
         visibility = None):
+    """Pushes an OCI or rules_img container image to a registry.
+
+    Args:
+        name: Name of the target.
+        image: Label of the image target.
+        repository: Repository path to push to.
+        registry: Optional registry domain.
+        image_digest_tag: Unused compatibility tag.
+        tag: Optional string tag.
+        remote_tags: Optional file with tags.
+        tags: Optional Bazel tags.
+        visibility: Optional target visibility.
+    """
     if tag:
         tags_label = "_{}_write_tags".format(name)
         write_file(
@@ -123,9 +316,19 @@ def push_oci(
         repository = "{}/{}".format(label.package, label.name)
     if registry:
         repository = "{}/{}".format(registry, repository)
+
+    # Instantiate the single-file/directory image adapter
+    adapter_name = name + ".adapter"
+    gitops_image_adapter(
+        name = adapter_name,
+        image = image,
+        visibility = ["//visibility:private"],
+    )
+
     push_oci_rule(
         name = name,
-        image = image,
+        image = ":" + adapter_name,
+        image_label = image,
         repository = repository,
         remote_tags = remote_tags,
         tags = tags,

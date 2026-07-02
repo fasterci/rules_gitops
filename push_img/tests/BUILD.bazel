@@ -1,0 +1,76 @@
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
+load("@rules_img//img:image.bzl", "image_manifest")
+load("@rules_img//img:layer.bzl", "image_layer")
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
+load("//push_oci:push_oci.bzl", "push_oci")
+
+image_layer(
+    name = "layer",
+    srcs = {
+        "/container_content.txt": ":container_content.txt",
+    },
+)
+
+image_manifest(
+    name = "image",
+    layers = [":layer"],
+    visibility = ["//visibility:public"],
+)
+
+push_oci(
+    name = "image_push",
+    image = ":image",
+    repository = "us-central1-docker.pkg.dev/fasterci/internal/push_img/tests/image_push",
+)
+
+write_file(
+    name = "tags_file",
+    out = "tags.txt",
+    content = ["testtag"],
+)
+
+push_oci(
+    name = "img_integration_push",
+    image = ":image",
+    remote_tags = ":tags_file",
+    repository = "localhost:1338/repo/img",
+)
+
+image_manifest(
+    name = "derived_image",
+    base = "@distroless_static",
+    layers = [":layer"],
+    visibility = ["//visibility:public"],
+)
+
+push_oci(
+    name = "derived_img_integration_push",
+    image = ":derived_image",
+    remote_tags = ":tags_file",
+    repository = "localhost:1338/repo/derived_img",
+)
+
+sh_test(
+    name = "integration_test",
+    size = "small",
+    srcs = ["integration_test.sh"],
+    tags = [
+        "exclusive",
+        "requires-network",
+    ],
+    args = [
+        "$(location :img_integration_push)",
+        "$(location :derived_img_integration_push)",
+    ],
+    data = [
+        ":img_integration_push",
+        ":derived_img_integration_push",
+        "@com_github_google_go_containerregistry//cmd/crane",
+        "@com_github_google_go_containerregistry//cmd/registry",
+    ],
+    env = {
+        "CRANE_BIN": "$(location @com_github_google_go_containerregistry//cmd/crane)",
+        "REGISTRY_BIN": "$(location @com_github_google_go_containerregistry//cmd/registry)",
+    },
+)
+

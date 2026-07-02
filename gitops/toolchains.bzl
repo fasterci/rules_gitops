@@ -11,8 +11,9 @@
 """
 Toolchain registration macros.
 """
-load("//skylib/kustomize:kustomize.bzl", "download_kustomize")
+
 load("//gitops/private:kustomize_toolchain.bzl", "KUSTOMIZE_PLATFORMS", "kustomize_host_alias_repo", "kustomize_platform_repo", "kustomize_toolchains_repo", _DEFAULT_KUSTOMIZE_VERSION = "DEFAULT_KUSTOMIZE_VERSION")
+load("//skylib/kustomize:kustomize.bzl", "download_kustomize")
 
 DEFAULT_KUSTOMIZE_VERSION = _DEFAULT_KUSTOMIZE_VERSION
 DEFAULT_KUSTOMIZE_REPOSITORY = "kustomize"

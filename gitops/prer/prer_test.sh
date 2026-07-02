@@ -43,6 +43,10 @@ cat "$OUTPUT_FILE"
 # Define expected gitops targets
 EXPECTED_TARGETS=(
   "//gitops/testing:external_image_label.gitops"
+  "//gitops/testing:img_label.gitops"
+  "//gitops/testing:img_legacy_alias.gitops"
+  "//gitops/testing:img_legacy_label.gitops"
+  "//gitops/testing:img_legacy_renamed_alias.gitops"
   "//gitops/testing:label.gitops"
   "//gitops/testing:legacy_alias.gitops"
   "//gitops/testing:legacy_label.gitops"
@@ -55,6 +59,9 @@ EXPECTED_PUSH_BINARIES=(
   "gitops/testing/push_skylib_kustomize_tests_image_docker_io.push.sh"
   "gitops/testing/pushed_image_docker_io.push"
   "gitops/testing/push_pushed_image.sh"
+  "gitops/testing/skylib_kustomize_tests_img_image_docker_io.push"
+  "gitops/testing/img_pushed_image"
+  "gitops/testing/img_pushed_image_docker_io.push"
 )
 
 echo "Verifying gitops targets..."

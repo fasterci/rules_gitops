@@ -5,9 +5,10 @@ module(
 )
 
 bazel_dep(name = "aspect_bazel_lib", version = "2.15.3")
-bazel_dep(name = "bazel_skylib", version = "1.7.1")
-bazel_dep(name = "platforms", version = "0.0.11")
+bazel_dep(name = "bazel_skylib", version = "1.9.0")
+bazel_dep(name = "platforms", version = "1.1.0")
 bazel_dep(name = "rules_oci", version = "2.2.6")
+bazel_dep(name = "rules_img", version = "0.3.13")
 bazel_dep(name = "rules_pkg", version = "1.0.1")
 bazel_dep(name = "rules_go", version = "0.54.0")
 bazel_dep(name = "rules_shell", version = "0.8.0")
@@ -52,4 +53,11 @@ kubeconfig(
 
 bazel_dep(name = "buildifier_prebuilt", version = "8.0.3", dev_dependency = True)
 
+pull = use_repo_rule("@rules_img//img:pull.bzl", "pull")
 
+pull(
+    name = "distroless_static",
+    digest = "sha256:85554049bdfa232b64a328412dd8909cc3baad08474cf97b2e5cc0a74e23fc5e",
+    registry = "gcr.io",
+    repository = "distroless/static",
+)

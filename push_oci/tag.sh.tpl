@@ -28,4 +28,10 @@ function guess_runfiles() {
 
 RUNFILES="${PYTHON_RUNFILES:-$(guess_runfiles)}"
 
+export RUNFILES_DIR="${RUNFILES}"
+if [ -f "${RUNFILES}/MANIFEST" ]; then
+    export RUNFILES_MANIFEST_FILE="${RUNFILES}/MANIFEST"
+fi
+
 %{container_pusher} %{args} "$@"
+
