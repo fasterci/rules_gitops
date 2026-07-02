@@ -240,6 +240,7 @@ sh_test(
     name = "apply_test",
     size = "small",
     srcs = ["apply_test.sh"],
+    tags = ["exclusive"],
     args = [
         "$(location :apply_test_target.apply)",
         "localhost:1338/repo/apply_pushed_image:testtag",
@@ -284,6 +285,7 @@ sh_test(
     name = "apply_img_test",
     size = "small",
     srcs = ["apply_test.sh"],
+    tags = ["exclusive"],
     args = [
         "$(location :apply_img_test_target.apply)",
         "localhost:1338/repo/apply_img_pushed_image:testtag",

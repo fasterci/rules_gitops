@@ -54,7 +54,10 @@ sh_test(
     name = "integration_test",
     size = "small",
     srcs = ["integration_test.sh"],
-    tags = ["requires-network"],
+    tags = [
+        "exclusive",
+        "requires-network",
+    ],
     args = [
         "$(location :img_integration_push)",
         "$(location :derived_img_integration_push)",

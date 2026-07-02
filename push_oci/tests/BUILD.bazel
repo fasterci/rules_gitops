@@ -41,6 +41,7 @@ sh_test(
     name = "integration_test",
     size = "small",
     srcs = ["integration_test.sh"],
+    tags = ["exclusive"],
     args = [
         "$(location :oci_integration_push)",
     ],
