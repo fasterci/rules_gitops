@@ -322,6 +322,7 @@ def push_oci(
     gitops_image_adapter(
         name = adapter_name,
         image = image,
+        tags = tags,
         visibility = ["//visibility:private"],
     )
 
