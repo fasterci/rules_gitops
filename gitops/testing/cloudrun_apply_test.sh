@@ -9,12 +9,11 @@ expected_image_ref=$3
 expected_manifest_sub=$4
 expected_project=$5
 expected_region=$6
-expected_services="${@:7}"
 
 # Start the local in-memory registry on the default port 1338
 ${REGISTRY_BIN} &
 registry_pid=$!
-trap "kill -9 $registry_pid" EXIT
+trap "kill -9 $registry_pid 2>/dev/null" EXIT
 
 # Wait for registry to start up
 for i in {1..50}; do
@@ -26,7 +25,7 @@ done
 
 # Create a temporary directory for the mock gcloud and manifest dump
 tmp_dir=$(mktemp -d)
-trap "rm -rf $tmp_dir; kill -9 $registry_pid" EXIT
+trap "rm -rf $tmp_dir; kill -9 $registry_pid 2>/dev/null" EXIT
 
 manifest_out="${tmp_dir}/applied_manifest.yaml"
 gcloud_log="${tmp_dir}/gcloud.log"
@@ -53,10 +52,16 @@ chmod +x "${mock_gcloud}"
 export PATH="${tmp_dir}:${PATH}"
 
 # 1. Execute the apply target executable
-${apply_bin}
+if ! ${apply_bin}; then
+  echo "Error: Apply target failed"
+  exit 1
+fi
 
 # Verify that the image is successfully pushed using crane
-${CRANE_BIN} validate -v --fast --remote ${expected_image_ref}
+if ! ${CRANE_BIN} validate -v --fast --remote ${expected_image_ref}; then
+  echo "Error: Crane validation failed"
+  exit 1
+fi
 
 # Verify that the manifest was applied and has the expected image reference
 if [ ! -f "${manifest_out}" ]; then
@@ -88,10 +93,13 @@ if [ "${num_replaces}" -ne 1 ]; then
 fi
 
 # 2. Execute the delete target executable
-${delete_bin}
+if ! ${delete_bin}; then
+  echo "Error: Delete target failed"
+  exit 1
+fi
 
 # Verify gcloud delete arguments
-for service in ${expected_services}; do
+for service in "${@:7}"; do
   expected_delete_args="gcloud run services delete ${service} --project=${expected_project} --region=${expected_region}"
   if ! grep -Fq "${expected_delete_args}" "${gcloud_log}"; then
     echo "Error: gcloud was not called with the expected delete arguments: ${expected_delete_args}"
