@@ -51,6 +51,7 @@ EXPECTED_TARGETS=(
   "//gitops/testing:legacy_alias.gitops"
   "//gitops/testing:legacy_label.gitops"
   "//gitops/testing:legacy_renamed_alias.gitops"
+  "//gitops/testing:prer_cloudrun_target.gitops"
 )
 
 # Define expected push binaries (relative paths under workspace bazel-out/.../bin)
@@ -62,6 +63,7 @@ EXPECTED_PUSH_BINARIES=(
   "gitops/testing/skylib_kustomize_tests_img_image_docker_io.push"
   "gitops/testing/img_pushed_image"
   "gitops/testing/img_pushed_image_docker_io.push"
+  "gitops/testing/push_apply_cloudrun_pushed_image.sh"
 )
 
 echo "Verifying gitops targets..."

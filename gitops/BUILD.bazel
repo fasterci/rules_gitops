@@ -12,7 +12,10 @@ load("//gitops/private:kustomize_toolchain.bzl", "current_kustomize_toolchain")
 
 package(default_visibility = ["//visibility:public"])
 
-exports_files(["create_gitops_prs.tpl.sh"])
+exports_files([
+    "create_gitops_prs.tpl.sh",
+    "cloudrun.sh.tpl",
+])
 
 toolchain_type(
     name = "kustomize_toolchain_type",

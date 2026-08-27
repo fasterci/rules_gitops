@@ -1,0 +1,14 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: webhook-secondary
+  labels:
+    cloud.googleapis.com/location: us-central1
+spec:
+  template:
+    spec:
+      containers:
+      - name: main
+        image: //skylib/tests/cloudrun:image
+        ports:
+        - containerPort: 8080

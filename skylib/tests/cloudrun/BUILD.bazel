@@ -1,5 +1,7 @@
 load("@aspect_bazel_lib//lib:write_source_files.bzl", "write_source_files")
-load("@rules_gitops//gitops:defs.bzl", "external_image", "k8s_deploy")
+load("@rules_gitops//gitops:defs.bzl", "cloudrun_deploy", "external_image")
+
+exports_files(["run.yaml"])
 
 external_image(
     name = "image",
@@ -7,13 +9,13 @@ external_image(
     image = "gcr.io/repo/someimage:thetag",
 )
 
-k8s_deploy(
+cloudrun_deploy(
     name = "prod",
     gitops = False,
     images = [":image"],
     manifests = ["run.yaml"],
-    namespace = "cloudrun_project",
-    openapi_path = "//skylib:run_schema.json",
+    project = "cloudrun_project",
+    region = "us-central1",
     patches = ["run_patch.yaml"],
 )
 

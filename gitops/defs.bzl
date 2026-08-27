@@ -14,7 +14,9 @@ GitOps rules public interface
 
 load("@rules_gitops//skylib:external_image.bzl", _external_iamge = "external_image")
 load("@rules_gitops//skylib:k8s.bzl", _k8s_deploy = "k8s_deploy", _k8s_test_setup = "k8s_test_setup")
+load("@rules_gitops//gitops:cloudrun.bzl", _cloudrun_deploy = "cloudrun_deploy")
 
 k8s_deploy = _k8s_deploy
 k8s_test_setup = _k8s_test_setup
 external_image = _external_iamge
+cloudrun_deploy = _cloudrun_deploy
